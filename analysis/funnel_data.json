@@ -1,0 +1,42 @@
+{
+ "Qwen-32B · FC + hermes\n(documented default)": {
+  "n": 100,
+  "tight": 80,
+  "parsed": 0,
+  "executed": 0,
+  "obs": 0,
+  "rescue": 0,
+  "final": 68,
+  "fallback": 98
+ },
+ "Qwen-7B · FC + hermes\n(documented default)": {
+  "n": 100,
+  "tight": 21,
+  "parsed": 0,
+  "executed": 0,
+  "obs": 0,
+  "rescue": 0,
+  "final": 53,
+  "fallback": 95
+ },
+ "Qwen-7B · FC + dedicated adapter\n(repaired)": {
+  "n": 100,
+  "tight": null,
+  "parsed": 84,
+  "executed": 83,
+  "obs": 37,
+  "rescue": 9,
+  "final": 62,
+  "fallback": 8
+ },
+ "Qwen-7B · ReAct\n(reference)": {
+  "n": 100,
+  "tight": null,
+  "parsed": 95,
+  "executed": 92,
+  "obs": 41,
+  "rescue": 17,
+  "final": 74,
+  "fallback": 4
+ }
+}
