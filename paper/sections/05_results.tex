@@ -72,7 +72,8 @@ template}: templates are inherited, training is not.
 \includegraphics[width=0.72\linewidth]{fig1_intent_parse_gap.png}
 \caption{\textbf{The undercount grows with scale.} Across a 21$\times$ range the server
 parses zero calls at every size, while well-formed calls the model actually emits rise to
-80/100 at 32B (77 after the human-validation correction factor of 0.957).}
+80/100 at 32B. Human validation brackets the corrected count in [56, 76] (\S3.2); the
+trend is monotone at either end of that bracket.}
 \label{fig:gap}
 \end{figure}
 
@@ -690,18 +691,13 @@ report the interval {[}62, 66{]} and \textbf{no standard deviation}. Worst case:
 versus FC's highest (66) = \textbf{+6}; the direction is consistent across all admissible
 repetitions.
 
-\textbf{Inverted noise structure.} ReAct's turn-1 varies widely (43--56, sd 6.8) while its final
-converges; FC's turn-1 is nearly constant (44--45, sd 0.58) while its final disperses. The
-mechanism is compensation in the rescue count --- 19 / 16 / \textbf{29}, largest where turn-1 was
-worst --- and in all three seeds the count of ``passed at turn 1 but failed finally'' is \textbf{0}:
-the repair loop is monotone.
-
-\textbf{A necessary caveat.} The three identical finals (72) are a \textbf{coincidence of totals, not
-identical item sets}: pairwise Jaccard is 0.71--0.80 (three-way intersection 57, union 87),
-i.e.~15--24 items differ between seeds. \textbf{sd = 0.00 must not be read as ``ReAct is perfectly
-stable.''} The accurate statement is that \textbf{multi-turn repair absorbs turn-1 sampling
-noise, stabilising the total while its composition keeps moving} --- a property that matters
-more for deployment than for leaderboard position.
+\textbf{Inverted noise structure.} ReAct's turn-1 varies widely (43--56, sd 6.8) while its
+final converges; FC's turn-1 is nearly constant (44--45, sd 0.58) while its final disperses.
+The mechanism is compensation in the rescue count --- 19 / 16 / \textbf{29}, largest where
+turn-1 was worst --- and in all three seeds the count of ``passed at turn 1 but failed
+finally'' is \textbf{0}: the repair loop is monotone. \textbf{The three identical finals are a
+coincidence of totals, not identical item sets}, and sd = 0.00 must not be read as ``ReAct is
+perfectly stable''; \S\ref{sec:composition} gives the item-level evidence.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 

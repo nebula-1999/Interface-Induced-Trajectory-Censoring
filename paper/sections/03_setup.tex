@@ -90,18 +90,35 @@ whether it was seen was the order in which the text was scanned. The serving par
 blocked by format; the annotator was blocked by reading order. Both produce the same
 conclusion --- ``the model did not call the tool'' --- from the same bytes.
 
-Three items survived adjudication as genuine disagreements. They mark the criterion's grey
-zone rather than annotation noise, and we do not resolve them.
+\textbf{The adjudication was one-sided, and we do not treat its $\kappa$ as a reliability
+estimate.} Auditing the procedure after the fact: the 13 adjudicated items were selected
+\emph{exactly} as the items where the annotator disagreed with the classifier
+(13/13 overlap), and all 10 reversals moved \emph{toward} the classifier, none away. Under
+that selection rule agreement can only rise, so $0.713 \to 0.936$ is a property of which
+items were re-examined, not independent evidence of reliability. \textbf{The unbiased
+coefficient is round 1's $\kappa = 0.713$}; we report 0.936 only as a description of what
+survived a one-sided second look, and we no longer quote it as the validation headline.
 
-\textbf{Correction applied.} Weighting the per-stratum agreement rates by pool sizes gives a
-correction factor of \textbf{0.957} on \texttt{tight} counts. \S5.2's headline (80/100 at 32B) becomes
-\textbf{$\approx$77} after correction; the monotone trend and the contrast against a flat server-side
-zero are unaffected. We report uncorrected counts in tables with this factor stated, rather
-than silently rescaling.
+\textbf{Consequently the correction factor is a bracket, not a point.} The \texttt{tight}
+stratum's precision is 28/40 = 0.700 under round-1 labels and 38/40 = 0.950 after
+adjudication. \S5.2's headline 80/100 at 32B therefore corrects to somewhere in
+\textbf{[56, 76]}, and we cannot narrow that interval without a rater independent of both
+the classifier and the first annotator. What does \emph{not} depend on the choice is the
+paper's actual claim: under either factor the ladder stays monotone
+($0, 2.8, 14.7, 25.2, 56$ at the pessimistic end) and stays contrasted against a server-side
+zero at every size. We therefore report \textbf{uncorrected classifier counts} in all tables,
+with this bracket stated, rather than silently rescaling to either end.
 
-\textbf{Single annotator.} One person labelled both rounds, so $\kappa$ measures human--classifier
-agreement, not inter-annotator reliability. A second independent annotator would be needed
-for the latter and was not available.
+\textbf{Single annotator --- the load-bearing limitation.} One person labelled both rounds,
+so every $\kappa$ above is \textbf{human--classifier agreement, not inter-annotator
+reliability}, and the adjudication was performed by the same person who produced the
+first-round labels. A blind second-annotator pack over the identical 98 items is prepared
+and released with this paper (\texttt{validation/annotator2\_pack.md}: re-shuffled so item
+numbers carry no information from the first pass, no classifier verdict, no first-round
+labels, identical rubric, with the adjudication rule fixed in advance to review \emph{all}
+inter-annotator disagreements rather than only those that disagree with the classifier).
+It was not completed in time for this version. Until it is, the magnitude of \S5.2's
+headline should be read as the bracket above.
 
 \subsection{Validity gating}
 
