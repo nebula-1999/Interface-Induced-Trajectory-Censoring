@@ -34,12 +34,13 @@ executes **zero** tool calls with `num_turns` pinned at its minimum, while a mat
 run executes 2.05 calls per rollout. Because the reward admits direct answers, no
 trajectory ever rewards tool use — **the tool-using branch is unreachable by gradient**.
 This explains our own training result, where RL improved first-draft quality
-(+2.6–2.8 pp across three runs) while multi-turn rescues stayed flat at 6–9/540.
+(+2.6–2.8 pp; *p*=0.06–0.08, **not significant at α=.05**, direction consistent across three runs) while multi-turn rescues stayed flat at 6–9/540.
 
 Installing a dedicated adapter restores the mechanism (parse 0→84, multi-turn 0→37,
 rescues 0→9), yet a protocol gap remains: with interfaces fully repaired, ReAct still
-beats function calling on two of three families (80 vs 61, *p*=0.0019; 74 vs 62,
-*p*=0.0169). **Interface problems mask protocol problems; only after fixing the former
+beats function calling on both families that admit a comparison (80 vs 61, *p*=0.0019;
+74 vs 62, *p*=0.0169); the third produces no error-free FC run at all. Conditioning on
+items the server actually parsed, that gap survives on one family and not the other. **Interface problems mask protocol problems; only after fixing the former
 does the latter become visible.**
 
 ---
@@ -48,7 +49,9 @@ does the latter become visible.**
 
 We set out to train a multi-turn code agent with RL and ended up unable to explain our own
 training curve. Over 150 GRPO steps on Qwen2.5-Coder-1.5B, pass@1 on a held-out EvalPlus
-split rose 2.6–2.8 points, consistently across three independent runs. But the gain
+split rose 2.6–2.8 points, consistently across three independent runs
+(*p* = 0.064 / 0.078 / 0.077 — **none significant at α = .05**; the evidence is the
+consistent direction and magnitude across two algorithms and two seeds, not any single test). But the gain
 decomposed strangely: **91–94% of newly-passing items passed on the first turn**, and the
 number of items rescued by turn 2 or later stayed flat at **6–9 out of 540** from step 0
 to step 150. RL had improved first-draft quality and left multi-turn debugging untouched.
@@ -330,10 +333,26 @@ This is not a formatting fix: 23 items that previously produced no executable co
 execute and become repairable. All 98 calls under `strict` carry code containing
 `def`/`class`/`import`; none was converted into a well-named call with a malformed payload.
 
-**Where the residual protocol gap lives.** With `strict` enabled, FC and ReAct have
-*identical* execution mechanics — 98 calls, 0 wrong-tool, 97 executed on both sides — yet
-turn-1 pass differs 46 vs 61. Once the interface is equalised, **what remains is
-first-draft code quality under the protocol, not tool-use mechanics.**
+**A three-rung ladder, both rungs significant.** Paired McNemar on the identical 100 items:
+
+| Comparison | b/c | *p* | Attributable to |
+|---|---|---|---|
+| terse-FC → strict-FC (49 → 61) | 15/3 | **0.0075** | **interface repair, +12** |
+| strict-FC → ReAct (61 → 80) | 27/8 | **0.0019** | **protocol, +19** |
+| terse-FC → ReAct (49 → 80) | 38/7 | 3.1e-06 | both, +31 |
+
+Roughly **two fifths of what looked like a protocol effect was an interface effect**, and
+each rung is separately significant. This delivers the quantification claim on a
+fully-configured family without relying on the 32B measurement.
+
+**Where the residual gap lives.** With `strict` enabled, FC and ReAct have *identical*
+execution mechanics — 98 calls, 0 wrong-tool, 97 executed on both sides — yet turn-1 pass
+differs 46 vs 61. Once the interface is equalised, **what remains is first-draft code
+quality under the protocol, not tool-use mechanics.**
+
+*(One `strict` call is issued and syntactically valid but yields no test result: item 53
+imports `seaborn`, unavailable in the sandbox, so the harness collected zero tests. It is
+counted as a failure, not silently dropped.)*
 
 The rich schema explicitly warned *"this tool is not the function you are asked to
 implement; do not pass the task function's parameters"* and supplied an example — the
@@ -392,6 +411,38 @@ adapter can only affect what happens *after* the first turn, and the data show e
 — evidence that we are measuring the interface and not the model.
 
 The pass-rate gain is smaller and **not significant** (53→62, *p*=0.093).
+
+#### Does the residual gap survive conditioning on a successful parse?
+
+The adapter recovers 84/100 parses while ReAct reaches 95/100, so part of the remaining
+74-vs-62 gap may simply be the 11 items FC never got to attempt. Restricting to items
+**both** arms parsed successfully:
+
+| Family | Items both parsed | ReAct | FC | b/c | *p* |
+|---|---|---|---|---|---|
+| Qwen2.5-Coder-7B | 83 | 63 | 56 | 11/4 | **0.119 (n.s.)** |
+| Llama-3.1-8B | 96 | 78 | 60 | 25/7 | **0.0021** |
+
+**The answer differs by family, and we report it as such.** On Llama — where `strict`
+equalises execution at 97/97 — the protocol gap is unambiguous. On Qwen the gap does *not*
+survive conditioning: most of 74 vs 62 is attributable to the residual 11-item parse
+deficit, not to the protocol. **The residual protocol effect is established on one family,
+not two**; §5.4's headline comparison should be read with this decomposition attached.
+
+#### Access to feedback vs. use of feedback
+
+Where the gap does exist, it is not about reaching the second turn (Qwen):
+
+| Arm | Reached turn ≥2 | Rescued | Repair success given feedback |
+|---|---|---|---|
+| ReAct | 40 | 17 | **42%** |
+| FC + adapter | 37 | 9 | **24%** |
+| FC + hermes | **0** | **0** | undefined |
+
+Access is nearly equal (40 vs 37); what differs is what the model does with the
+observation once it arrives. **The interface determines whether feedback arrives; the
+protocol appears to affect whether it is used** — though on Qwen this difference is within
+the non-significant band above, so we state it as an observation, not a result.
 
 **Attribution bound.** The dedicated solution changes **parser, chat template and few-shot
 simultaneously**; it can only be called an *adapter combination*. A template × parser 2×2
@@ -510,10 +561,15 @@ that announces itself. We therefore treat a `tools`-bearing request returning HT
 *and* a server-parsed call under `tool_choice: required` — as a required pre-flight for any
 FC experiment. Template inspection alone is insufficient (§5.1).
 
-**Interface repair precedes protocol comparison.** Before §5.3's `strict` fix, the
-ReAct-vs-FC gap on Llama was 31 points; after, 19. Roughly a third of what looked like a
-protocol effect was an interface effect. Comparisons of agent protocols that do not first
-exhaust the serving configuration matrix are not measuring protocols.
+**Interface repair precedes protocol comparison.** On Llama the ReAct-vs-FC gap was 31
+points before the `strict` fix and 19 after — **two fifths of an apparent protocol effect
+was an interface effect**, and both components are separately significant (*p*=0.0075 and
+*p*=0.0019). On Qwen the decomposition goes further: conditioning on items the server
+parsed, the remaining gap is **not** significant (*p*=0.119), i.e. essentially all of the
+observed difference is attributable to the interface. Comparisons of agent protocols that
+do not first exhaust the serving configuration matrix are not measuring protocols — and
+even after repair, the residual must be re-tested conditionally before it is called a
+protocol effect.
 
 **A cold-start hazard for agentic RL.** §5.6's mechanism generalises beyond this stack:
 whenever (a) tool trajectories are censored at rate ~1 and (b) the reward admits a
@@ -538,7 +594,11 @@ before interpreting any multi-turn result.
 5. **Scale.** Up to 32B; no frontier models. Single A800.
 6. **Training evidence is a mechanism demonstration** (10 and 3 steps), not a 150-step
    outcome comparison. We claim gradient-unreachability, not a quantified final gap.
-7. **Instrumentation errata.** Seven ReAct arms recorded `max_tokens=2048` while actually
+7. **The residual protocol effect rests on one family.** Conditioned on successful parsing
+   it holds on Llama-3.1-8B (*p*=0.0021) but not on Qwen2.5-Coder-7B (*p*=0.119), and
+   Mistral admits no comparison. Claims about "ReAct beats function calling" should be
+   read as family-specific.
+8. **Instrumentation errata.** Seven ReAct arms recorded `max_tokens=2048` while actually
    running at 1024 (an asymmetry that favoured FC; re-running changed final pass by ≤1
    item); Llama's initiation rate required manual correction from 97 to 74; five arms are
    error-bearing and admissible only for error-rate census. All are enumerated in
