@@ -35,6 +35,16 @@ react_agent_loop.py       自定义 verl AgentLoop（ReAct 路径）
 analyze_all.py            EvalPlus 训练结果的唯一来源
 ```
 
+## 上手先跑这个
+
+```bash
+python preflight_toolcall.py --port 8000     # 5 秒，任何 FC 评测之前
+```
+
+一条 canonical 请求验 `tool_calls` 非空、`name` 正确、`arguments` 可解析，
+再用 `tool_choice: required` 做阳性对照区分「模型不调用」与「管线坏了」。
+本文全部静默失败都会被它抓住。
+
 ## 复现
 
 分析与制图（**无需 GPU**，本地可跑）：

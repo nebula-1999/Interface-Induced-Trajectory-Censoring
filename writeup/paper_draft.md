@@ -30,9 +30,12 @@ emits rise from 0 to 80/100 at 32B. Llama's failure is eliminated by a single
 controls failed to identify.
 
 The same mismatch reaches **RL training**: under function calling a 10-step GRPO run
-executes **zero** tool calls with `num_turns` pinned at its minimum, while a matched ReAct
-run executes 2.05 calls per rollout. Because the reward admits direct answers, no
-trajectory ever rewards tool use — **the tool-using branch is unreachable by gradient**.
+executes **zero** tool calls with `num_turns` pinned at its minimum, while a ReAct run
+matched in model, data, hyper-parameters, seed and prompt strength (though not in step
+count — 10 vs 3) executes 2.05 calls per rollout. The training dashboard shows nothing wrong: `critic/rewards/mean` climbs from 0.233 to
+0.281 **while the tool-execution count stays exactly zero**. Because the reward admits
+direct answers, no trajectory ever rewards tool use — **the tool-using branch is
+unreachable by gradient**.
 This explains our own training result, where RL improved first-draft quality
 (+2.6–2.8 pp; *p*=0.06–0.08, **not significant at α=.05**, direction consistent across three runs) while multi-turn rescues stayed flat at 6–9/540.
 
@@ -94,20 +97,22 @@ Under RL this is not a metaphor. The interface sits literally between policy and
 environment, `θ → Y → I(Y) → a → o → r`; when `I(Y) = ∅` holds for every tool-intended
 `Y`, the experience distribution contains no tool-mediated trajectory at all.
 
-*Censoring* is used in its statistical sense. The observation is not noisy or missing at
-random; it is **structurally unobservable beyond a threshold set by the interface**, and
-the threshold correlates with the very quantity being measured. We show below that it
+*Censoring* is borrowed **by analogy**, and we state the analogy's limit. In survival
+analysis censoring is a threshold on a continuous variable; a parser is instead a
+deterministic filter on output *format*. What carries over — and what motivates the term —
+is the structure of the inference error: the observation is not noisy or missing at random,
+it is **systematically unobservable on one side of a boundary**, and the boundary
+correlates with the very quantity being measured. We show below that it
 correlates *positively* with model scale: the more capable the model, the more of its
 behaviour is censored.
 
 ### 1.2 What is and is not new here
 
-The specific observation that Qwen2.5-Coder does not emit `hermes`-format tool calls
-**was reported by hanXen in vLLM issue #32926 on 2026-01-23**, together with a `<tools>`
-parser proposal. That issue was closed as *not planned* and labelled *stale*; the trap is
-still live today. **We did not discover this phenomenon.**
-
-Our contributions are:
+The specific observation that Qwen2.5-Coder does not emit `hermes`-format tool calls was
+reported in vLLM issue #32926 (2026-01-23) together with a `<tools>` parser proposal; that
+issue was closed as *not planned* and labelled *stale*, so the trap is still live today.
+§2 gives full attribution. What this paper adds is measurement, decomposition and
+consequence:
 
 1. **Quantification.** How much capability the censoring removes, across a 21× scale range,
    under a criterion strict enough to exclude schema echo and pseudo-code.
@@ -174,6 +179,10 @@ single `code` string. Schema variants: **terse** (bare `{"type":"string"}`), **r
 `additionalProperties: false`).
 
 **Serving.** vLLM 0.27.1, per-family parser and chat template as documented.
+`temperature=0` is greedy but **not bit-wise deterministic** under continuous batching:
+identical prompts can differ across batch compositions. The main table is a single sample
+per item; §5.8 quantifies sampling variability separately at `temperature=0.6` rather than
+assuming greedy decoding removes it.
 `max_tokens = 2048` for **both** protocols (see `ERRATA.md` §1 — an earlier asymmetry
 favoured FC; re-running under the true shared limit changed final pass by ≤1 item).
 
@@ -233,7 +242,7 @@ that *the pipeline is capable*; it does not establish that the model spontaneous
 
 ## 5. Results
 
-### 5.1 Four families, four failure layers, all silent
+### 5.1 Four families, four failure layers — and the consequential ones are silent
 
 | Family | Layer | Symptom | Detectable in advance? | Remedy |
 |---|---|---|---|---|
@@ -260,9 +269,15 @@ template**: templates are inherited, training is not.
 Qwen2.5-Coder, `tool_choice: auto`, `hermes` (the documented recommendation for Qwen2.5),
 n=100 per size:
 
-| Size | Server-parsed | **tight** | strong | weak | Final pass |
+The three intent columns are **nested, not mutually exclusive**: `tight ⊂ strong`
+(tight adds the requirement that `arguments.code` be a string literal containing real
+Python), and `weak` counts items with JSON structure but *no* `run_tests` name — disjoint
+from both. At 32B, `strong = 100` and `tight = 80` means every item contained a named call
+and 80 of them carried a usable payload.
+
+| Size | Server-parsed | **tight** | strong (⊇ tight) | weak (disjoint) | Final pass |
 |---|---|---|---|---|---|
-| 1.5B | 0 | 0 | 0 | 27 | 31 |
+| 1.5B | 0 | 0 | 0 | 27* | 31 |
 | 3B | 0 | 4 | 5 | 28 | 37 |
 | 7B | 0 | 21 | 22 | 1 | 53 |
 | 14B | 0 | 36 | 42 | 3 | 53 |
@@ -271,6 +286,11 @@ n=100 per size:
 Across a 21× range the server reports a flat zero while well-formed emitted calls rise to
 80/100. **The more capable the model, the more of its behaviour is censored.** Under the
 loose criterion every one of 32B's 100 items contains a `{"name":"run_tests",…}` structure.
+
+\* The 1.5B row uses the **optional** tool instruction. Under the **mandatory** prompt
+used for training (§5.6) the same checkpoint gives weak = 66 and unparsable = 46: coercion
+produces more JSON-shaped debris, not more valid calls. The two numbers describe different
+prompts, not a discrepancy.
 
 Raw-tag counts confirm the mechanism and reproduce hanXen's baseline exactly: across all
 sizes, `<tool_call>` and `<tools>` appear **zero** times; ```json and `"name":` appear
@@ -410,6 +430,15 @@ multi-turn rescues 0→9. **Multi-turn repair is restored from literal zero.**
 adapter can only affect what happens *after* the first turn, and the data show exactly that
 — evidence that we are measuring the interface and not the model.
 
+**Why Llama's turn-1 does move (34→46) while Qwen's does not.** This is not an
+inconsistency; it is the taxonomy making a prediction. Qwen's failure sits at the **parser
+layer**, downstream of generation: the first-turn completion is produced and then
+discarded, so repairing the parser cannot change it — hence 53 vs 53. Llama's failure sits
+at the **schema layer**, inside generation: the model spends its entire first turn calling
+the wrong function, so the first-turn output is itself destroyed and repairing the
+constraint restores it — hence 34 → 46. **Different failure layers leave different
+downstream signatures, and the direction of the turn-1 effect identifies the layer.**
+
 The pass-rate gain is smaller and **not significant** (53→62, *p*=0.093).
 
 #### Does the residual gap survive conditioning on a successful parse?
@@ -514,7 +543,25 @@ never receives tool feedback". Whether the §5.5 adapter also restores the train
 was not tested. The demonstration is 10 and 3 steps — a **mechanism** result, not an
 outcome comparison.
 
-### 5.7 Sampling variance, and an inverted noise structure
+### 5.7 Pressure on a broken interface makes things worse
+
+Two independent controls point the same way. Adding a reasoning scaffold to FC raised
+role confusion from 23 to **59** (§5.3): asked to analyse the task function's signature
+before acting, the model supplied exactly those parameters to the tool. Replacing the
+optional tool instruction with a mandatory one (*"you must call `run_tests`; do not answer
+directly"*) on Qwen2.5-Coder-1.5B moved parser-accepted calls not at all — still 0/100 —
+while final pass fell from **31 to 15** and unparsable outputs rose from ~0 to 46/100.
+
+Neither intervention touches the interface, and both make the observable outcome worse.
+Coercion cannot substitute for a working channel: the model is pushed away from the
+answer it could give and toward a call that will be discarded anyway.
+
+**Practical reading.** When an agent appears reluctant to use tools, strengthening the
+instruction is the cheapest thing to try and the most likely to mislead — it can degrade
+task performance while leaving the tool-call count at zero, which looks like a model that
+is both unwilling *and* incapable.
+
+### 5.8 Sampling variance, and an inverted noise structure
 
 Llama-3.1-8B, `temperature=0.6`, n=100 × 3 seeds:
 
@@ -559,7 +606,11 @@ against, and (ii) is where the 21× scale trend lives.
 **Pre-flight, don't post-hoc.** A missing `--enable-auto-tool-choice` is the only failure
 that announces itself. We therefore treat a `tools`-bearing request returning HTTP 200 —
 *and* a server-parsed call under `tool_choice: required` — as a required pre-flight for any
-FC experiment. Template inspection alone is insufficient (§5.1).
+FC experiment. Template inspection alone is insufficient (§5.1). We ship this check as a
+30-line script (`preflight_toolcall.py`): it issues one canonical request, asserts
+`tool_calls` is non-empty with the expected `name` and parseable `arguments`, then repeats
+under `tool_choice: required` as a positive control. It runs in seconds and would have
+caught every silent failure in this paper.
 
 **Interface repair precedes protocol comparison.** On Llama the ReAct-vs-FC gap was 31
 points before the `strict` fix and 19 after — **two fifths of an apparent protocol effect
@@ -637,6 +688,11 @@ python probe_react_full.py --model <path> --port 8000 --n 100 \
   --temperature 0.0 --seed 0 --out traj.jsonl
 python validate_arms.py            # per-arm admissibility: lines / rc / n_err / provenance / script hash
 ```
+
+Model snapshots must be pinned: `tokenizer_config.json` inheritance is the mechanism
+behind §5.1's false-positive capability check, so a family's behaviour can change with a
+repository revision. Every model path, its HF revision, and the serving flags used are
+recorded per arm in the trajectory provenance and in `runs/final/by_config/README.md`.
 
 Trajectories for all 49 full-length arms, the training logs, the errata, and the
 per-configuration index are in `runs/final/`. Third-party parser: hanXen
