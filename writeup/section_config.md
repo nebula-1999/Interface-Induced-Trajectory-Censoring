@@ -1,400 +1,466 @@
-# 已定稿章节（不依赖 A3/A4 结果）
+# Settled sections (independent of the A3/A4 results)
 
-## 1. 每个模型家族需要一套互不兼容的必需配置，缺任何一项都伪装成"能力不足"
+> 中文版见 [`section_config_zh.md`](section_config_zh.md).
 
-用 vLLM 的 OpenAI 兼容端点评测 function calling 时，四个家族各自要求一套不同的服务端配置。
-关键在于：**缺配置不会报错**。服务照常返回 200，`tool_calls` 是空数组，
-下游只会看到"模型没有调用工具"。
+## 1. Each model family requires its own mutually incompatible configuration, and any missing piece masquerades as "insufficient capability"
 
-| 家族 | 官方必需配置 | 缺失时的表现 | 来源 |
+Evaluating function calling through vLLM's OpenAI-compatible endpoint, each of four families
+demands a different server-side configuration. The decisive point: **a missing setting does not
+raise an error.** The server returns 200 as usual, `tool_calls` is an empty array, and
+everything downstream sees only "the model did not call a tool."
+
+| Family | Officially required configuration | Symptom when missing | Source |
 |---|---|---|---|
-| Llama 3.1 / 3.2 | `--tool-call-parser llama3_json` **+ `--chat-template tool_chat_template_llama3.1_json.jinja`** | 参数格式错误（官方原话："可能生成格式不正确的参数"） | vLLM Tool Calling 文档 |
-| Mistral (HF 格式) | `--tokenizer-mode hf --config-format hf --load-format hf --tool-call-parser mistral` **+ `tool_chat_template_mistral_parallel.jinja`**；另有 tool_call_id 必须恰好 9 位的约束 | 400 / 多轮回传时失败 | 同上 |
-| Qwen2.5-Instruct | `--tool-call-parser hermes`（模板已内置 Hermes 风格） | — | 同上 |
-| **Qwen2.5-Coder** | **无可用配置**：该变体未在 tool call token 上训练，无原生工具调用格式 | **静默返回 0 次调用** | vLLM issue #32926 |
-| DeepSeek-Coder | 无：chat template 根本不注入 tools | 可检测（模板不含 tools） | 本工作实测 |
+| Llama 3.1 / 3.2 | `--tool-call-parser llama3_json` **+ `--chat-template tool_chat_template_llama3.1_json.jinja`** | malformed arguments (official wording: "may generate incorrectly formatted arguments") | vLLM Tool Calling docs |
+| Mistral (HF format) | `--tokenizer-mode hf --config-format hf --load-format hf --tool-call-parser mistral` **+ `tool_chat_template_mistral_parallel.jinja`**; plus the constraint that `tool_call_id` must be exactly 9 characters | 400 / failure when passing results back across turns | ibid. |
+| Qwen2.5-Instruct | `--tool-call-parser hermes` (the template already carries the Hermes style) | — | ibid. |
+| **Qwen2.5-Coder** | **no working configuration**: this variant was not trained on tool-call tokens and has no native tool-call format | **silently returns 0 calls** | vLLM issue #32926 |
+| DeepSeek-Coder | none: the chat template never injects tools at all | detectable (the template contains no tools) | measured in this work |
 
-`--enable-auto-tool-choice` 缺失是唯一会硬报错的一项（`tool_choice:auto` 返回 400），
-其余全部静默降级。因此**每个 FC 实验都应有 preflight**：发一个带 `tools` 的请求，
-断言 HTTP 200，再断言服务端确实解析出了调用。
+A missing `--enable-auto-tool-choice` is the only setting that fails loudly (`tool_choice:auto`
+returns 400); everything else degrades silently. **Every FC experiment therefore needs a
+preflight**: send one request carrying `tools`, assert HTTP 200, then assert that the server
+actually parsed a call out of the response.
 
-## 2. "chat template 引用了 tools" 不等于"模型受过工具调用训练"
+## 2. "The chat template references tools" does not mean "the model was trained for tool calling"
 
-判断一个 checkpoint 是否支持 FC，常见做法是检查 `apply_chat_template(tools=...)` 是否
-把 schema 渲染进 prompt。本工作最初也是这么做的（`supports_native_fc()`），它把
-DeepSeek-Coder 正确判为不支持（模板不注入），但对 **Qwen2.5-Coder 给出假阳性**：
+The common way to decide whether a checkpoint supports FC is to check whether
+`apply_chat_template(tools=...)` renders the schema into the prompt. This work started there
+too (`supports_native_fc()`). It correctly classifies DeepSeek-Coder as unsupported (the
+template does not inject), but gives a **false positive on Qwen2.5-Coder**:
 
-- Qwen2.5-Coder 的 `tokenizer_config.json` 从 Qwen2.5-Instruct 继承了 Hermes 工具脚手架
-  → 模板检查返回 True
-- 但该变体从未在 tool call token 上训练 → 模型不会产出 `<tool_call>` 标签
-- hermes parser 找不到标签 → `tool_calls: []`
-- 记录为 **0% 发起率**
+- Qwen2.5-Coder's `tokenizer_config.json` inherits the Hermes tool scaffold from
+  Qwen2.5-Instruct, so the template check returns True
+- but the variant was never trained on tool-call tokens, so the model does not emit
+  `<tool_call>` markers
+- the hermes parser finds no markers, so `tool_calls: []`
+- recorded as a **0% initiation rate**
 
-**协议支持是逐 checkpoint 的属性，且无法从 chat template 推断。** 模板来自继承，
-训练不来自继承。
+**Protocol support is a per-checkpoint property, and it cannot be inferred from the chat
+template.** Templates are inherited; training is not.
 
-## 3. 严格的服务端 parser 会静默低估模型能力
+## 3. A strict server-side parser silently underestimates model capability
 
-Qwen2.5-Coder-7B，hermes parser，`tool_choice: auto`，n=100：
+Qwen2.5-Coder-7B, hermes parser, `tool_choice: auto`, n=100:
 
-| 判据 | 计数 |
+| Criterion | Count |
 |---|---|
-| 服务端解析出的 `tool_calls` | **0/100** |
-| **严判据**合格调用 | **21/100** |
-| 宽松强证据（含 `"name":"run_tests"` 或 `<tools>` 标签） | 22/100 |
-| 弱启发（仅有 JSON 结构，可能只是普通回答） | 1/100 |
+| `tool_calls` parsed by the server | **0/100** |
+| Well-formed under the **strict** criterion | **21/100** |
+| Loose strong evidence (contains `"name":"run_tests"` or a `<tools>` marker) | 22/100 |
+| Weak heuristic (JSON structure only; may be an ordinary answer) | 1/100 |
 
-典型的一条：
+A typical instance:
 
 ```json
 {"name": "run_tests", "arguments": {"code": "def flatten_list(...)..."}}
 ```
 
-函数名正确、`arguments` 结构正确、`code` 字段正确 —— 唯一"不合规"之处是没有包在
-`<tool_call>` 标签里。
+Correct function name, correct `arguments` structure, correct `code` field — the sole
+non-compliance is that it is not wrapped in `<tool_call>` markers.
 
-低估幅度按严判据为 **21 个百分点**，且**无任何错误信号**。
+The underestimate is **21 percentage points** under the strict criterion, **with no error
+signal of any kind**.
 
-> **口径统一说明**：本报告全部意图统计出自 `analysis/intent.py` 的单一分类函数
-> （三档：tight / strong / weak），正文、表格与图片共用。此前草稿中出现过
-> 18 / 23 / 24 等数值，来自不同时期的临时脚本，**一律以本函数为准**。
+> **A note on consistency of measurement.** Every intent statistic in this report comes from a
+> single classifier function in `analysis/intent.py` (three tiers: tight / strong / weak),
+> shared by the prose, the tables and the figures. Earlier drafts carried figures such as
+> 18 / 23 / 24 that came from ad-hoc scripts written at different times; **this function is
+> authoritative and supersedes all of them.**
 
-**方法论主张**：评测 agent 协议合规性时，必须把「模型试图调用」与「服务端解析成功」
-拆成两个独立指标。只报后者，会把工程配置问题记成模型能力缺陷。
-本工作为此加入了协议无关的意图检测器（`_detect_tool_intent`）。
+**Methodological claim**: when evaluating an agent's protocol compliance, "the model attempted
+a call" and "the server parsed a call" must be reported as two independent metrics. Reporting
+only the latter records an engineering configuration problem as a model capability defect.
+This work added a protocol-agnostic intent detector (`_detect_tool_intent`) for that purpose.
 
-## 4. 三种失败模式的分类
+## 4. A taxonomy of three failure modes
 
-| 类型 | 代表 | 是否可检测 | 表现 |
+| Type | Representative | Detectable? | Presentation |
 |---|---|---|---|
-| 模板不注入 | DeepSeek-Coder | ✅ 模板检查即可 | 无工具意识 |
-| 模板注入但未训练 | Qwen2.5-Coder | ❌ 模板检查假阳性 | 自创 JSON 格式，被 parser 吞掉 |
-| 已训练但参数错 | Llama-3.1-8B | ❌ 需检查参数内容 | 发起调用（97%）但 23% 把题目函数的形参当成工具参数 |
-| 已训练但输出不合规 | Mistral-7B-v0.3 | ⚠️ 部分报错部分静默 | 重复 `[TOOL_CALLS]` 触发 400、17% 格式完好但无标记、幻觉出 schema 外的工具名 |
+| template does not inject | DeepSeek-Coder | yes — a template check suffices | no tool awareness |
+| template injects but the model was not trained | Qwen2.5-Coder | no — the template check is a false positive | invents its own JSON format, swallowed by the parser |
+| trained but wrong arguments | Llama-3.1-8B | no — requires inspecting argument contents | initiates calls (97%) but 23% pass the task function's own parameters as tool arguments |
+| trained but non-compliant output | Mistral-7B-v0.3 | partly — some errors, some silent | repeats `[TOOL_CALLS]` triggering 400; 17% well-formed but unmarked; hallucinates tool names outside the schema |
 
-## 5. Llama 的 schema 混淆不是 prompt 写得潦草
+## 5. Llama's schema confusion is not sloppy prompt writing
 
-最直接的质疑是：`code` 参数原本没有 `description`，模型填错是因为没说清楚。
-为此做了配对对照（同模型、同 100 题、同服务端配置，只换工具 schema）：
+The most immediate objection: the `code` parameter originally had no `description`, so the
+model fills it wrongly because it was not told clearly. A paired control (same model, same 100
+items, same server configuration, changing only the tool schema):
 
-| schema | 发起 | 空参数 | 最终通过 |
+| Schema | Initiated | Empty args | Final pass |
 |---|---|---|---|
-| terse（`code: {"type": "string"}`，无描述） | 97 | **23** | 49 |
-| rich（补齐参数描述 + 反例警告 + 代码示例） | 97 | **22** | 49 |
+| terse (`code: {"type": "string"}`, no description) | 97 | **23** | 49 |
+| rich (full parameter descriptions + counter-example warning + code sample) | 97 | **22** | 49 |
 
-McNemar 10 vs 10，**p = 1.000**。
+McNemar 10 vs 10, **p = 1.000**.
 
-rich 版的工具描述里写明："这个工具不是你要实现的那个函数，不要把题目函数的参数
-传进来；唯一的参数 code 是你写的完整源代码文本"，参数描述里还给了
-`"def add(a, b):\n    return a + b"` 作为例子。在这样的显式警告下，
-仍有 22/100 填入题目函数的形参（`['s']`、`['tiles','word']`、
-`['columnName','filePath']`），且与 terse 版错的是同一批参数名。
+The rich version's tool description says explicitly: "this tool is not the function you are
+being asked to implement; do not pass the task function's parameters into it — the single
+parameter `code` is the complete source text you wrote," and the parameter description supplies
+`"def add(a, b):\n    return a + b"` as an example. Under that explicit warning, 22/100 still
+fill in the task function's parameters (`['s']`, `['tiles','word']`,
+`['columnName','filePath']`), and they are the same parameter names that the terse version got
+wrong.
 
-### 5b. 也不是服务端配置问题
+### 5b. Nor is it a server-configuration problem
 
-vLLM 文档为 Llama 3.1 推荐 `--tool-call-parser llama3_json` **加上**
-`--chat-template examples/tool_chat_template_llama3.1_json.jinja`。上文各臂只给了
-parser。补齐官方模板后重跑（同 100 题配对）：
+vLLM's documentation recommends, for Llama 3.1, `--tool-call-parser llama3_json` **together
+with** `--chat-template examples/tool_chat_template_llama3.1_json.jinja`. The arms above supply
+only the parser. Re-running with the official template added (paired, same 100 items):
 
-| 臂 | 发起 | 空参数 | 首轮通过 | 最终通过 |
+| Arm | Initiated | Empty args | turn-1 pass | Final pass |
 |---|---|---|---|---|
 | ReAct | 98 | **0** | 61 | **80** |
-| FC 配置不足（仅 parser） | 97 | 23 | 34 | 49 |
-| FC 官方完整配置（+ chat template） | 95 | **22** | 33 | 44 |
+| FC underconfigured (parser only) | 97 | 23 | 34 | 49 |
+| FC full official configuration (+ chat template) | 95 | **22** | 33 | 44 |
 
-官方配置 vs 配置不足：McNemar b=1 c=6，**p = 0.125，无差别**；错填的参数名与
-配置不足时是同一批。ReAct vs FC 官方配置：b=42 c=6，**p < 0.0001**。
+Official vs underconfigured: McNemar b=1, c=6, **p = 0.125, no difference**; the wrongly-filled
+parameter names are the same set as before. ReAct vs official-configuration FC: b=42, c=6,
+**p < 0.0001**.
 
-### 5c. 三重否定
+### 5c. Three negations
 
-| 替代解释 | 对照实验 | 空参数率 | 结论 |
+| Alternative explanation | Control | Empty-argument rate | Verdict |
 |---|---|---|---|
-| schema 参数缺描述 | rich vs terse schema | 23 → 22（p=1.000） | 排除 |
-| ReAct 只是多了思考步骤 | FC + Thought 脚手架 | 23 → 59（p<0.001，反向恶化） | 排除 |
-| 服务端配置不合官方推荐 | + 官方 chat template | 23 → 22（p=0.125） | 排除 |
+| the schema's parameters lack descriptions | rich vs terse schema | 23 -> 22 (p=1.000) | ruled out |
+| ReAct merely adds a thinking step | FC + Thought scaffold | 23 -> 59 (p<0.001, worse) | ruled out |
+| the server does not follow the official recommendation | + official chat template | 23 -> 22 (p=0.125) | ruled out |
 
-### 5d. 第四重检验推翻了前三重的结论
+### 5d. A fourth test overturned the conclusion of the first three
 
-vLLM 文档：`tool_choice="auto"` 下要施加 schema 级约束，需 `VLLM_ENFORCE_STRICT_TOOL_CALLING=true`
-（默认）**且至少一个工具带 `strict: true`**；否则 vLLM 从纯文本抽取调用，
-"arguments may occasionally be malformed or **violate the function's parameter schema**"。
+From the vLLM documentation: to impose schema-level constraints under `tool_choice="auto"`,
+`VLLM_ENFORCE_STRICT_TOOL_CALLING=true` (the default) is required **and at least one tool must
+carry `strict: true`**; otherwise vLLM extracts calls from plain text, and "arguments may
+occasionally be malformed or **violate the function's parameter schema**."
 
-上述所有臂都没带 `strict: true`。补上后（官方模板 + strict，同 100 题配对）：
+None of the arms above carried `strict: true`. With it added (official template + strict,
+paired, same 100 items):
 
-| 臂 | 发起 | 空参数 | 首轮通过 | 最终通过 |
+| Arm | Initiated | Empty args | turn-1 pass | Final pass |
 |---|---|---|---|---|
 | ReAct | 98 | 0 | 61 | **80** |
-| FC terse（仅 parser） | 97 | 23 | 34 | 49 |
-| FC 官方模板 | 95 | 22 | 33 | 44 |
-| **FC 官方模板 + `strict:true`** | 98 | **0** | 46 | **61** |
+| FC terse (parser only) | 97 | 23 | 34 | 49 |
+| FC official template | 95 | 22 | 33 | 44 |
+| **FC official template + `strict:true`** | 98 | **0** | 46 | **61** |
 
-McNemar strict vs 官方模板：b=18 c=1，**p = 0.0001**。函数名 98/98 均为 `run_tests`，
-`_fc_arg_err` 为空，错填参数名 0 条。
+McNemar, strict vs official template: b=18, c=1, **p = 0.0001**. Function names are
+`run_tests` on 98/98, `_fc_arg_err` is empty, and zero calls carry wrong parameter names.
 
-**结论更正**：那 22% 不是模型的角色混淆，**是缺 `strict: true` 的配置伪影**，
-正是 vLLM 文档字面描述的情形。5a–5c 三重否定全部没有覆盖到真正的原因，
-其"这是模型问题"的结论**作废**。
+**Corrected conclusion**: those 22% are not the model's role confusion. **They are a
+configuration artefact of the missing `strict: true`** — precisely the situation the vLLM
+documentation describes in so many words. None of the three negations in 5a–5c touched the
+actual cause, and their conclusion that "this is a model problem" **is withdrawn**.
 
-**但协议差距未消失**：ReAct 80 vs 完整配置 FC 61，McNemar b=27 c=8，**p = 0.0019**。
-差距由 31 个点缩至 19 个点，仍然显著。
+**But the protocol gap does not disappear**: ReAct 80 vs fully-configured FC 61, McNemar b=27,
+c=8, **p = 0.0019**. The gap narrows from 31 points to 19, and remains significant.
 
-### 5e. 本节自身即为论点的例证
+### 5e. This section is itself an instance of the thesis
 
-本工作带着明确怀疑、连做三个单变量配对对照（schema 描述、推理脚手架、官方
-chat template），仍将一个配置问题写成了"模型能力缺陷"，直到第四个对照才发现。
-**工具接口错配伪装成模型缺乏智能体能力——这一机制的受害者包括本工作自身。**
-任何声称"某模型不会用工具"的评测，都应先穷尽服务端配置矩阵。
+We came in with an explicit suspicion, ran three single-variable paired controls (schema
+descriptions, reasoning scaffold, official chat template), and still wrote up a configuration
+problem as a "model capability defect" until the fourth control caught it. **Tool-interface
+mismatch masquerading as a model lacking agentic ability — this work is among that mechanism's
+victims.** Any evaluation claiming "model X cannot use tools" should first exhaust the
+server-side configuration matrix.
 
-## 6. ReAct 的优势不来自 Thought 脚手架——加上它反而使 FC 更差
+## 6. ReAct's advantage does not come from the Thought scaffold — adding it makes FC worse
 
-第二个明显的质疑是：ReAct 的 system prompt 含 `Thought:` 步骤，FC 没有，所以这个
-对比测的是「协议 + 思维链」vs「纯协议」，两个变量绑在一起。
+The second obvious objection: ReAct's system prompt contains a `Thought:` step and FC's does
+not, so the comparison measures "protocol + chain of thought" against "protocol alone," with
+two variables tied together.
 
-对照做法：给 FC 换上一段要求先写 Thought 的 system prompt（"先用一段 Thought 写出
-你的思路：题目要求什么、边界情况有哪些、打算用什么算法。想清楚之后，再调用
-run_tests 工具……"），其余全部不变。Llama-3.1-8B，同 100 题配对：
+The control: give FC a system prompt demanding a Thought first ("first write out your reasoning
+in a Thought: what the problem asks for, what the edge cases are, what algorithm you intend to
+use. Once you have thought it through, call the run_tests tool..."), changing nothing else.
+Llama-3.1-8B, paired on the same 100 items:
 
-| 臂 | 发起 | 空参数 | 首轮通过 | 最终通过 | 平均轮数 | 首轮码长中位 |
+| Arm | Initiated | Empty args | turn-1 pass | Final pass | Mean turns | Median turn-1 code length |
 |---|---|---|---|---|---|---|
 | ReAct | 98 | **0** | 61 | **80** | 1.83 | 509 |
 | FC terse | 97 | 23 | 34 | 49 | 1.59 | 272 |
 | FC + Thought | 95 | **59** | 12 | **24** | 0.84 | 182 |
 
-McNemar：FC+Thought vs FC terse，b=4 c=29，**p < 0.001，显著更差**。
+McNemar: FC+Thought vs FC terse, b=4, c=29, **p < 0.001, significantly worse**.
 
-若 ReAct 的优势来自思维链，把思维链搬到 FC 上应当缩小差距；实际差距由 31 个点
-（80 vs 49）**扩大到 56 个点**（80 vs 24），schema 混淆由 23% 升到 59%。
+If ReAct's advantage came from the chain of thought, moving the chain of thought onto FC should
+narrow the gap. Instead the gap widens from 31 points (80 vs 49) **to 56 points** (80 vs 24),
+and schema confusion rises from 23% to 59%.
 
-**机制**：Thought 要求模型先分析题目函数的签名、参数与边界情况；带着这个语境去
-构造工具调用时，它把刚刚推理过的那些形参直接填进了工具的 arguments。
-**对一个角色定义模糊的接口，加强推理会放大误用而非纠正它。**
+**Mechanism**: the Thought instruction makes the model first analyse the task function's
+signature, parameters and edge cases; carrying that context into the construction of a tool
+call, it drops the very parameters it just reasoned about straight into the tool's arguments.
+**Against an interface whose role definition is ambiguous, strengthening reasoning amplifies
+misuse rather than correcting it.**
 
-**边界**：这只证明了本文这一种 CoT 措辞会损害 FC，不能推广为"任何推理脚手架都有害"。
-但足以排除"ReAct 的优势只是多了一个思考步骤"这一替代解释——该对照臂的目的即此。
+**Boundary**: this shows only that this particular CoT wording harms FC; it does not generalise
+to "any reasoning scaffold is harmful." It is nonetheless sufficient to rule out the
+alternative explanation that "ReAct's advantage is just an extra thinking step," which is what
+this control arm exists to do.
 
-## 7. 阳性对照：0% 不是管线故障
+## 7. Positive control: 0% is not a pipeline fault
 
-"服务端解析出 0 次调用"最先该被怀疑的是配置错误。为此在**同一个活跃服务**上做了
-阳性对照——同模型、同 tools、同 system prompt，只改 `tool_choice`：
+The first thing to suspect about "the server parsed 0 calls" is a misconfiguration. A positive
+control was therefore run **on the same live server** — same model, same tools, same system
+prompt, changing only `tool_choice`:
 
 ```
-tool_choice=auto      → finish=stop        tool_calls=0
-                        content: "好的，下面是一个实现 count_distinct 的示例代码：```python..."
+tool_choice=auto      -> finish=stop        tool_calls=0
+                         content: "好的，下面是一个实现 count_distinct 的示例代码：```python..."
 
-tool_choice=required  → finish=tool_calls  tool_calls=1
-                        name=run_tests
-                        args={"code": "def count_distinct(nums):\n    return len(set(nums))"}
+tool_choice=required  -> finish=tool_calls  tool_calls=1
+                         name=run_tests
+                         args={"code": "def count_distinct(nums):\n    return len(set(nums))"}
 ```
 
-`required` 下 hermes 解析完全正常（函数名、`arguments` 结构、`code` 字段均正确），
-证明服务端 flag、tool parser、chat template 三者功能完好。因此 `auto` 下的 0%
-是模型行为，不是配置故障。
+(The assistant content is reproduced verbatim; our task prompts are in Chinese, and model
+output in transcripts is not translated.)
 
-**但该对照的证明力有边界**：`required` 通过受约束解码**强制**输出符合 tool-call
-格式，因此它只证明"管线可用"，不证明"模型自发地知道该用 `<tool_call>` 标签"。
-两者必须分开陈述。
+Under `required`, hermes parsing works perfectly (function name, `arguments` structure and
+`code` field all correct), proving that the server flag, the tool parser and the chat template
+are all functional. The 0% under `auto` is therefore model behaviour, not a configuration
+fault.
 
-综合 `auto` 下的行为分布（Qwen2.5-Coder，n=100/档）：
+**But this control's force has a boundary**: `required` uses constrained decoding to **force**
+output into tool-call format, so it proves only "the pipeline works," not "the model
+spontaneously knows to use `<tool_call>` markers." The two must be stated separately.
 
-| 行为 | 1.5B | 3B |
+The behaviour distribution under `auto` (Qwen2.5-Coder, n=100 per size):
+
+| Behaviour | 1.5B | 3B |
 |---|---|---|
-| 服务端解析出调用 | 0% | 0% |
-| 自创 JSON 格式调用（parser 不认） | 27% | 33% |
-| 放弃调用，直接写代码 | 74% | 68% |
+| server parsed a call | 0% | 0% |
+| invented its own JSON call format (parser rejects) | 27% | 33% |
+| abandoned the call and wrote code directly | 74% | 68% |
 
-两类相加约等于 100%（重叠 1 例），即模型在 `auto` 下只有两种状态：
-**用自创格式尝试调用**，或**彻底放弃工具直接作答**。没有第三种。
-后者仍能通过 `cross_family` 提取执行（最终通过 31%/37%），但工具结果永不回流，
-多轮修复完全不存在（平均轮数 0.95）。
+The two categories sum to roughly 100% (one overlap), meaning that under `auto` the model has
+only two states: **attempting a call in a self-invented format**, or **abandoning the tool
+entirely and answering directly**. There is no third. The latter can still be extracted and
+executed by `cross_family` (final pass 31%/37%), but the tool result never flows back and
+multi-turn repair does not exist at all (mean turns 0.95).
 
-## 8. 闭环：换上专用适配器，被吞掉的能力回来了多少
+## 8. Closing the loop: how much of the swallowed capability does a dedicated adapter return?
 
-Qwen2.5-Coder 无法用 hermes 解析（第 2、3、7 节）。社区为此提供了 `<tools>` 标签
-方案（vLLM issue #32926 / hanXen），该提案已被 close as not planned（标签 stale），
-即该陷阱至今仍然生效。本节用它做正面对照。
+Qwen2.5-Coder cannot be parsed by hermes (§§2, 3, 7). The community proposed a `<tools>`-marker
+solution for this (vLLM issue #32926 / hanXen); that proposal was closed as *not planned*
+(stale label), meaning the trap is still live today. This section uses it as a positive
+comparison.
 
-**注意归因边界**：该方案同时更换 **parser、chat template 与 few-shot 示例**三者，
-因此只能称为「专用适配器组合」，不能把提升单独归因于 parser。严格拆解需要
-模板 × parser 的 2×2 消融（未做）。此外原模板的 few-shot 用的是 `get_weather`，
-与本实验唯一合法工具 `run_tests` 不符，会诱导模型调用不存在的工具；已改写为
-`run_tests` 示例，原件保留为 `.orig`，两版 SHA256 均已记录。探针同时增加了
-函数名校验（非 `run_tests` 记为 `unknown_tool`，不计入 L1、不执行）。
+**Note the attribution boundary.** The solution replaces **parser, chat template and few-shot
+examples** all at once, so it can only be called an "adapter combination" — the improvement
+cannot be attributed to the parser alone. A strict decomposition needs a template x parser 2x2
+ablation, which was not run. In addition, the original template's few-shot examples call
+`get_weather`, which is not this experiment's single legal tool (`run_tests`) and would induce
+calls to a non-existent tool; they were rewritten to `run_tests`, the original is retained as
+`.orig`, and SHA256 for both versions is recorded. The probe also gained function-name
+validation (anything other than `run_tests` is recorded as `unknown_tool`, excluded from L1 and
+not executed).
 
-Qwen2.5-Coder-7B，同 100 题配对，`tool_choice: auto` 全程固定：
+Qwen2.5-Coder-7B, paired on the same 100 items, `tool_choice: auto` held fixed throughout:
 
-| 臂 | 解析出 | 平均轮数 | ≥2 轮题数 | 首轮通过 | 最终通过 | 多轮救回 |
+| Arm | Parsed | Mean turns | Items reaching >=2 turns | turn-1 pass | Final pass | Multi-turn rescues |
 |---|---|---|---|---|---|---|
 | ReAct | 95 | 1.92 | 40 | 57 | **74** | 17 |
 | FC + hermes | **0** | 0.96 | **0** | 53 | 53 | **0** |
-| FC + 专用适配器 | **84** | 1.82 | **37** | 53 | **62** | **9** |
+| FC + dedicated adapter | **84** | 1.82 | **37** | 53 | **62** | **9** |
 
-请求错误 0；`unknown_tool` 0。
+Request errors: 0. `unknown_tool`: 0.
 
-**机制层面无歧义**：解析 0→84、进入第二轮的题 0→37、多轮救回 0→9。
-**多轮修复由字面意义上的零被恢复。**
+**At the mechanism level there is no ambiguity**: parsed 0->84, items reaching a second turn
+0->37, multi-turn rescues 0->9. **Multi-turn repair is restored from literally zero.**
 
-**内部效度检验**：两个 FC 臂的**首轮通过完全相同（53 vs 53）**。适配器只影响
-第一轮之后发生什么，不应影响模型首次写出的代码质量——数据正是如此。
-这佐证了本节测量的是接口而非模型能力。
+**Internal-validity check**: the two FC arms have **identical turn-1 pass (53 vs 53)**. The
+adapter can only affect what happens after the first turn and should not affect the quality of
+the model's first program — and the data says exactly that. This corroborates that what this
+section measures is the interface, not model capability.
 
-**但通过率提升未达显著**：53 → 62（+9 点），McNemar b=16 c=7，**p = 0.093**。
+**But the pass-rate gain is not significant**: 53 -> 62 (+9 points), McNemar b=16, c=7,
+**p = 0.093**.
 
-**且 ReAct 仍然领先**：74 vs 62，b=17 c=5，**p = 0.0169**；与 Llama 侧一致
-（ReAct 80 vs 官方配置+strict 的 FC 61，p = 0.0019）。
+**And ReAct still leads**: 74 vs 62, b=17, c=5, **p = 0.0169**; consistent with the Llama side
+(ReAct 80 vs official-configuration + strict FC 61, p = 0.0019).
 
-### 三层结论
+### Three layers of conclusion
 
-1. **接口错配吞掉的**：Qwen 0→84 解析、0→37 多轮、0→9 救回；
-   Llama 的 23 条参数污染被 `strict: true` 清零（第 5d 节）
-2. **接口修好后仍存在的协议差距**：两个家族一致，ReAct > 完整配置的 FC
-3. **修接口的收益真实但有限**：机制全部恢复，通过率只回收一部分
+1. **What the interface mismatch swallowed**: on Qwen, 0->84 parsed, 0->37 multi-turn, 0->9
+   rescued; on Llama, the 23 argument-contaminated calls zeroed by `strict: true` (§5d)
+2. **The protocol gap that remains after the interface is repaired**: consistent across both
+   families, ReAct > fully-configured FC
+3. **The benefit of repairing the interface is real but bounded**: every mechanism is restored;
+   only part of the pass rate comes back
 
-**接口问题掩盖了协议问题；修好接口，才看得见后者。**
+**The interface problem masked the protocol problem; only by repairing the interface does the
+latter become visible.**
 
-## 9. 训练侧：接口错配使 RL 收不到任何工具反馈
+## 9. Training side: interface mismatch means RL receives no tool feedback at all
 
-前八节都在评测层。本节把同一机制在 **RL 训练的 rollout 阶段**直接测出来。
+The first eight sections are all at the evaluation layer. This one measures the same mechanism
+directly **inside the rollout phase of RL training**.
 
-被训模型 Qwen2.5-Coder-1.5B，verl 0.9.0，batch 16 × rollout.n 8 = 128 条轨迹/步，
-两臂除协议外全部超参、数据题目、seed 相同。**两侧 system prompt 强度对齐**
-（FC 用 mandatory 版："**你必须先调用 run_tests 工具验证你的代码**，不要直接给出答案"）。
+Model under training: Qwen2.5-Coder-1.5B, verl 0.9.0, batch 16 x rollout.n 8 = 128 trajectories
+per step; the two arms share every hyperparameter, data item and seed apart from the protocol.
+**System-prompt strength is aligned on both sides** (FC uses the mandatory wording: "**you must
+first call the run_tests tool to verify your code**; do not answer directly").
 
-| 臂 | 步数 | `num_turns/mean` | 工具耗时 | 工具调用次数 | 每 rollout |
+| Arm | Steps | `num_turns/mean` | Tool time | Tool calls | Per rollout |
 |---|---|---|---|---|---|
-| FC（tool_agent + hermes） | 10 | **2.000**（首末不变） | **0.00 s** | **0** | **0.000** |
-| ReAct（react_agent） | 3 | 5.883（5.34→6.35） | 12.21 s | 788 | **2.052** |
+| FC (tool_agent + hermes) | 10 | **2.000** (unchanged first to last) | **0.00 s** | **0** | **0.000** |
+| ReAct (react_agent) | 3 | 5.883 (5.34->6.35) | 12.21 s | 788 | **2.052** |
 
-两臂 rc=0、无崩溃。步数不对等不影响结论——**10 步跑不出一次调用**。
+Both arms rc=0, no crashes. The unequal step counts do not affect the conclusion — **ten steps
+did not produce a single call**.
 
-**计数的可信度**：verl 0.9.0 的 step 指标里**没有** `tool_calls` 次数（只有
-`timing_s/agent_loop/tool_calls`，那是**耗时秒数**；把它当次数是硬错误）。
-因此在 agent 侧两个调用点分别插桩——`CodeTool.execute`（FC 路径）与
-`ReActAgentLoop._run_tests`（ReAct 路径），每次写一行带标签。
-**不能在 `sandbox.run_tests` 计数**：奖励函数评测最终代码也走该函数，
-那样会把奖励评测混进工具调用数。结果：FC 侧计数文件 0 行，
-ReAct 侧 788 行且标签全部为 `react`，来源无污染。
+**Credibility of the count**: verl 0.9.0's step metrics contain **no** tool-call count (only
+`timing_s/agent_loop/tool_calls`, which is **elapsed seconds**; reading it as a count is a hard
+error). Instrumentation was therefore added at the two agent-side call sites —
+`CodeTool.execute` (FC path) and `ReActAgentLoop._run_tests` (ReAct path) — each writing one
+labelled line per call. **The counter must not go in `sandbox.run_tests`**: the reward function
+evaluates the final program through that same function, which would mix reward evaluation into
+the tool-call count. Result: the FC-side counter file has 0 lines; the ReAct side has 788, all
+labelled `react`, so the provenance is uncontaminated.
 
-三条互相独立的证据一致：`num_turns` 恒为最小值 2、工具耗时精确 0.00 秒、
-专用计数 0。
+Three mutually independent pieces of evidence agree: `num_turns` pinned at its minimum of 2,
+tool time exactly 0.00 s, and a dedicated counter at 0.
 
-### 措辞的边界
+### The boundary of the wording
 
-本节测得的是 **parser 接受并执行的工具调用数为 0**，**不是**"模型从未尝试调用"。
-FC3 未保存原始 rollout 文本，因此以下三种情况无法区分：
+What this section measures is that **tool calls accepted and executed by the parser number
+zero** — **not** that "the model never attempted a call." FC3 did not save the raw rollout
+text, so the following three cases cannot be distinguished:
 
-1. 模型直接输出代码（不尝试调用）；
-2. 模型输出了畸形 `<tool_call>`（尝试了但格式不合规）；
-3. 模型有调用意图，但被 parser 丢弃。
+1. the model output code directly (no attempt);
+2. the model output a malformed `<tool_call>` (attempted, non-compliant format);
+3. the model had call intent, but the parser discarded it.
 
-被训模型是 Qwen2.5-Coder-**1.5B**，而第 3 节的探针在该规模上测得：
-严判据合格调用 **0/100**、宽松强证据 **0/100**、弱启发式（仅有 JSON 结构）**27/100**。
-故第 2、3 类很可能存在，但该规模下**格式完好的调用本就为零**。
+The model under training is Qwen2.5-Coder-**1.5B**, and the §3 probe measured at that scale:
+well-formed under the strict criterion **0/100**, loose strong evidence **0/100**, weak
+heuristic (JSON structure only) **27/100**. Cases 2 and 3 very likely exist, but at that scale
+**well-formed calls were zero to begin with**.
 
-正确写法：*FC produced 0 parser-accepted / executed tool calls despite mandatory
+Correct phrasing: *FC produced 0 parser-accepted / executed tool calls despite mandatory
 instructions and correctly injected tool schemas.*
-错误写法：*The model never attempted to call tools.*
+Incorrect phrasing: *The model never attempted to call tools.*
 
-### 这反而强化了主结论：协议/解析的冷启动
+### This strengthens rather than weakens the main conclusion: a protocol/parsing cold start
 
-有效调用**从第 1 步起就是 0**，而奖励函数允许直接输出代码拿到分数
-（本次 FC 臂 `critic/rewards/mean` 0.233→0.281，确实在涨）。于是策略梯度里
-**不存在任何把策略推向工具调用的信号**——工具路径的回报恒为零样本，
-直接作答路径持续获得正回报。
+Valid calls are **zero from step 1 onward**, while the reward function permits scoring by
+emitting code directly (this FC arm's `critic/rewards/mean` went 0.233 -> 0.281 — it really was
+rising). So the policy gradient contains **no signal at all pushing the policy toward tool
+use**: the tool path has a constant zero-return sample, while the direct-answer path keeps
+collecting positive reward.
 
-**强制性 prompt 加 GRPO 不足以跨过这个冷启动**：模型无法通过探索发现
-工具路径，因为它的每一次尝试都在协议层被丢弃，从未产生过一条带正回报的
-工具轨迹供强化。这是接口错配在训练中的具体作用机制，比"少了一些信号"
-严重得多——**它使某条策略分支在优化过程中不可达。**
+**A mandatory prompt plus GRPO is not enough to cross this cold start**: the model cannot
+discover the tool path by exploration, because every attempt is discarded at the protocol layer
+and no positively-rewarded tool trajectory has ever existed to reinforce. This is the concrete
+mechanism by which interface mismatch acts during training, and it is far worse than "some
+signal is missing" — **it renders a policy branch unreachable during optimisation.**
 
-### 完整因果链
+### Full causal chain
 
 ```
-Qwen2.5-Coder-1.5B（受训模型）不产出 hermes 可解析的调用
-  （本节探针复刻，同 mandatory prompt：解析 0/100，严判据合格调用 0/100，
-   66/100 含 JSON 片段但无一写出 "name":"run_tests"）
-  → 训练 rollout 中 parser 接受的工具调用为 0（本节；num_turns 恒为 2）
-    → Observation 永不回流，轨迹退化为单轮
-      → RL 只能在单轮信号上优化
-        → 评测中多轮救回全程横盘 6–9/540，新通过题 91–94% 为首轮即过
+Qwen2.5-Coder-1.5B (the model being trained) does not emit hermes-parseable calls
+  (probe replication in this section, same mandatory prompt: parsed 0/100, well-formed
+   under the strict criterion 0/100, 66/100 contain a JSON fragment and none writes
+   "name":"run_tests")
+  -> tool calls accepted by the parser during training rollout = 0 (this section;
+     num_turns constant at 2)
+    -> Observation never flows back, trajectories degenerate to a single turn
+      -> RL can only optimise on single-turn signal
+        -> in evaluation, multi-turn rescues stay flat at 6-9/540 throughout, and
+           91-94% of newly-passing items pass on turn 1
 ```
-**注意口径**：上式首环用的是**受训模型 1.5B** 的数值。§3 那条升到 80/100 的曲线是**跨规模现象**（32B），不可代入本训练的因果链——1.5B 在严判据下合格调用为 0。
 
+**A note on which numbers belong where**: the first link uses figures for **the 1.5B model
+actually being trained**. The curve in §3 rising to 80/100 is a **cross-scale phenomenon**
+(32B) and must not be substituted into this training's causal chain — at 1.5B, well-formed
+calls under the strict criterion are zero.
 
-末两环来自本工作的 150 步 × 3 run 训练结果（EvalPlus，GRPO×2 seed + RLOO），
-中间两环由本节直接测得。**"接口错配污染 RL 训练"由此从推断变为实测。**
+The last two links come from this work's 150-step x 3-run training results (EvalPlus,
+GRPO x 2 seeds + RLOO); the middle two are measured directly in this section. **"Interface
+mismatch contaminates RL training" thereby moves from inference to measurement.**
 
-**限定**：结论成立于 Qwen2.5-Coder + hermes parser 这一具体组合，
-不可泛化为"所有 FC 训练都收不到工具反馈"。对该模型而言，
-换用第 8 节的专用适配器可使解析率由 0% 升至 84%，训练侧是否同样恢复未测。
+**Scope**: the conclusion holds for the specific combination Qwen2.5-Coder + hermes parser. It
+does not generalise to "all FC training receives no tool feedback." For this model, switching
+to §8's dedicated adapter raises the parse rate from 0% to 84%; whether the training side
+recovers likewise was not measured.
 
-## 10. 主表（统一配置）与 Mistral 的特殊性
+## 10. Main table (unified configuration) and Mistral's special status
 
-三组核心配对，全部真实 `max_tokens=2048`、同一 100 题、`temperature=0`：
+Three core pairings, all genuinely at `max_tokens=2048`, same 100 items, `temperature=0`:
 
-| 模型 | ReAct 首轮 | ReAct 最终 | FC 首轮 | FC 最终 | b/c | p | FC 臂 |
+| Model | ReAct turn-1 | ReAct final | FC turn-1 | FC final | b/c | p | FC arm |
 |---|---|---|---|---|---|---|---|
-| Llama-3.1-8B | 61 | **80** | 46 | 61 | 27/8 | **0.0019** | 官方模板 + strict |
-| Qwen2.5-Coder-7B | 57 | **74** | 53 | 62 | 17/5 | **0.0169** | 专用适配器 |
-| Mistral-7B-v0.3 | 26 | 33 | **N/A** | **N/A** | **N/A** | **N/A** | 见下 |
+| Llama-3.1-8B | 61 | **80** | 46 | 61 | 27/8 | **0.0019** | official template + strict |
+| Qwen2.5-Coder-7B | 57 | **74** | 53 | 62 | 17/5 | **0.0169** | dedicated adapter |
+| Mistral-7B-v0.3 | 26 | 33 | **N/A** | **N/A** | **N/A** | **N/A** | see below |
 
-**ReAct 数字取自 v14 臂**（真实 2048）。此前 v3 版本实跑 1024（见 `ERRATA.md`），
-重跑后数值为 80 / 74 / 33，与 1024 版的 80 / 74 / 32 几乎相同——**上限不对称的
-实证影响为零**，因为这些编程题的 ReAct 响应中位长度约 1000 token。
+**ReAct figures are taken from the v14 arms** (genuinely 2048). The earlier v3 versions
+actually ran at 1024 (see `ERRATA.md`); re-running gives 80 / 74 / 33 against the 1024
+versions' 80 / 74 / 32 — **the empirical effect of the asymmetric limit is zero**, because the
+median ReAct response on these programming problems is about 1000 tokens.
 
-### Mistral 没有一个可用于通过率比较的 FC 臂
+### Mistral has no FC arm usable for pass-rate comparison
 
-四种配置全部试过，**每一种都产生请求错误**：
+All four configurations were tried, and **every one produces request errors**:
 
-| 配置 | n_err |
+| Configuration | n_err |
 |---|---|
-| 仅 `--tool-call-parser mistral` | 2 |
-| 官方模板（`tool_chat_template_mistral_parallel.jinja` + hf 三参数） | **42** |
+| `--tool-call-parser mistral` only | 2 |
+| official template (`tool_chat_template_mistral_parallel.jinja` + the three hf flags) | **42** |
 | parser + `strict: true` | 3 |
-| 官方模板 + `strict: true` | **39** |
+| official template + `strict: true` | **39** |
 
-含缺失数据的臂**不计算通过率与 p 值**（本工作早期版本曾在此类臂上照算 p=0.648，
-该数值作废）。因此正确的表述不是"Mistral 上两协议无差别"，而是：
+Arms containing missing data get **no pass rate and no p-value** (an early version of this work
+computed p=0.648 on such an arm anyway; that number is withdrawn). The correct statement is
+therefore not "the two protocols do not differ on Mistral," but:
 
-> **Mistral-7B-v0.3 在 function calling 下无法产出一份无错误的 100 题数据。**
-> 四种配置、含 vLLM 官方推荐配置在内，全部失败。其失败不是"分数低"，
-> 而是**接口层跑不完**。错误全部为同一种：重复 `[TOOL_CALLS]` 标记触发 400
-> （官方推荐的 parallel 模板反而使错误率由 2% 升至 42%）。
+> **Mistral-7B-v0.3 cannot produce a single error-free 100-item run under function calling.**
+> All four configurations fail, including vLLM's officially recommended one. The failure is not
+> "a low score" but **an inability to finish at the interface layer**. Every error is the same
+> kind: a repeated `[TOOL_CALLS]` marker triggering 400 (and the officially recommended
+> parallel template raises the error rate from 2% to 42%).
 
-## 11. 采样方差
+## 11. Sampling variance
 
-此前全部结论建立在 `temperature=0` 单次采样上。取配置最完整的一对
-（Llama-3.1-8B，ReAct vs 官方模板+strict）在 `temperature=0.6` 下重复 3 次：
+Every conclusion above rests on single-sample runs at `temperature=0`. Taking the
+most-completely-configured pair (Llama-3.1-8B, ReAct vs official template + strict) and
+repeating three times at `temperature=0.6`:
 
-| 臂 | seed 1 | seed 2 | seed 3 | 有效臂 |
+| Arm | seed 1 | seed 2 | seed 3 | valid arms |
 |---|---|---|---|---|
-| ReAct 首轮 | 53 | 56 | 43 | 3/3 |
-| ReAct 最终 | 72 | 72 | 72 | 3/3 |
-| FC 首轮 | 44 | 44 | 45 | — |
-| FC 最终 | 62 | 66 | ~~57~~ | **2/3** |
+| ReAct turn-1 | 53 | 56 | 43 | 3/3 |
+| ReAct final | 72 | 72 | 72 | 3/3 |
+| FC turn-1 | 44 | 44 | 45 | — |
+| FC final | 62 | 66 | ~~57~~ | **2/3** |
 
-FC 的 seed 3 含 1 条请求错误（模型输出并行工具调用，vLLM 报
-*"This model only supports single tool-calls at once"*——官方文档载明 Llama 3
-不支持并行调用），按上节规则记为无效。FC 仅剩 2 个有效臂，**不足以报告标准差**，
-只给区间 [62, 66]。
+FC seed 3 contains one request error (the model emitted parallel tool calls and vLLM reported
+*"This model only supports single tool-calls at once"* — the official documentation states
+Llama 3 does not support parallel calls), marked invalid by the rule in the previous section.
+With only 2 valid FC arms remaining, **a standard deviation cannot be reported**; only the
+interval [62, 66].
 
-**最坏情况**：ReAct 最低 72 vs FC 最高 66 = **+6 个点**，差距在全部有效重复中方向一致。
+**Worst case**: ReAct's lowest 72 vs FC's highest 66 = **+6 points**, and the direction is
+consistent across every valid replicate.
 
-### 两种协议的噪声结构相反
+### The two protocols have opposite noise structures
 
-| | 首轮通过 | 最终通过 |
+| | turn-1 pass | Final pass |
 |---|---|---|
-| ReAct | 43–56（标准差 6.8） | 72 / 72 / 72 |
-| FC | 44–45（标准差 0.58） | 62 / 66（/ 57 无效） |
+| ReAct | 43–56 (sd 6.8) | 72 / 72 / 72 |
+| FC | 44–45 (sd 0.58) | 62 / 66 (/ 57 invalid) |
 
-**ReAct 首轮波动大而最终收敛；FC 首轮极稳而最终发散。** 机制在救回数上：
-ReAct 三个 seed 的救回分别为 19 / 16 / **29**，与首轮质量反向补偿——
-首轮最差的那次（43）救回最多。且三个 seed 中"首轮通过但最终未通过"均为 **0**，
-多轮循环是单调的。
+**ReAct's turn-1 fluctuates widely yet its final converges; FC's turn-1 is extremely stable yet
+its final diverges.** The mechanism is in the rescue counts: ReAct's three seeds rescue
+19 / 16 / **29** respectively, compensating inversely with turn-1 quality — the run with the
+worst first turn (43) rescues the most. And across all three seeds, items that passed on turn 1
+but failed at the end number **0**: the multi-turn loop is monotone.
 
-**必要的限定**：三次最终值同为 72 是**总数的巧合，不是同一批题**。
-三个 seed 的通过集合两两 Jaccard 仅 0.71–0.80（三者交集 57、并集 87），
-题目级差异 15–24 道。因此 **不可将标准差 0.00 表述为"ReAct 结果完全稳定"**；
-准确的说法是：**多轮修复吸收了首轮的采样噪声，使总量稳定而成分仍在变动。**
+**A necessary qualification**: the three identical final values of 72 are **a coincidence of
+totals, not the same set of items**. Pairwise Jaccard between the three seeds' passing sets is
+only 0.71–0.80 (intersection 57, union 87), differing on 15–24 items. A standard deviation of
+0.00 **must not be stated as "ReAct's results are perfectly stable."** The accurate statement
+is: **multi-turn repair absorbs turn-1 sampling noise, holding the total steady while the
+composition still moves.**
 
-这对工程部署的含义大于对分数的含义——多轮的价值不只是提分，
-还包括**降低结果对采样的敏感度**。
+The implication is larger for engineering deployment than for scores — the value of multi-turn
+is not only a higher number, but **a lower sensitivity of the result to sampling**.

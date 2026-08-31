@@ -6,10 +6,11 @@ Wenbo Wang · City University of Hong Kong · `wenbwang3-c@my.cityu.edu.hk`
 
 > **Language.** The paper, this README, [`RESULTS.md`](RESULTS.md) and
 > [`runs/final/ERRATA.md`](runs/final/ERRATA.md) are in English; each has a `_zh` counterpart.
-> The lab notebooks under `writeup/` and the operational checklists remain in Chinese —
-> they are working records, not claims, and translating them would risk laundering their
-> hedges. One Chinese passage is load-bearing and deliberately untranslated: the verbatim
-> model output in §4 of the paper, which is data.
+> [`writeup/section_config.md`](writeup/section_config.md) — the full evidence and control
+> design, 11 sections — is in English too. What stays Chinese is the interview narrative and
+> the operational checklists: working records rather than claims, where translation would risk
+> laundering the hedges. One Chinese passage is load-bearing and deliberately untranslated: the
+> verbatim model output in §7 there and §4 of the paper, which is data.
 
 ![Intent–parse gap](figures/fig1_intent_parse_gap.png)
 

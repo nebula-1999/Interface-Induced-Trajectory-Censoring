@@ -6,7 +6,7 @@
 >
 > This document is the top-level summary. Full evidence, control design and the exact
 > boundaries of every claim are in [`writeup/section_config.md`](writeup/section_config.md)
-> (11 sections, Chinese); data errata in [`runs/final/ERRATA.md`](runs/final/ERRATA.md);
+> (11 sections); data errata in [`runs/final/ERRATA.md`](runs/final/ERRATA.md);
 > figures in [`figures/`](figures/).
 >
 > The previous framing ("three-layer negation") was refuted by this work itself and is kept
