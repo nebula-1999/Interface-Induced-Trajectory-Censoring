@@ -59,6 +59,32 @@ traj_v11_Llama32_3B_fc_strict.jsonl        rc=2
 
 ## 5. 已核验为正确的事项
 
-- **37 个正式臂共用同一个 100 题集合**（`clean[:100]`，唯一集合数 = 1），配对有效
+- **49 个满 100 题的正式臂共用同一个 100 题集合**（`clean[:100]`，唯一集合数 = 1），配对有效
+  - 另有 `traj_v8_Llama8B_recheck.jsonl` 为 23 题定性重跑（按设计只跑那 23 条），
+    以及 8 个 `*smoke*` 的 n=3 冒烟文件，二者均不计入正式臂
+  - 此前本文件写"37 个"，系统计时实验尚未跑完的快照数，已更正
 - 所有 FC 臂的 `max_tokens` 确为 2048
 - A9 的采样确实生效：temp 0.6 下两个 seed 间首轮代码 95/100 不同、最终结果 16/100 翻转
+
+
+## 6. 第三方组件版本
+
+Qwen2.5-Coder `<tools>` parser 取自
+[hanXen/vllm-qwen2.5-coder-tool-parser](https://github.com/hanXen/vllm-qwen2.5-coder-tool-parser)
+（Apache 2.0），下载时间 2026-08-31 00:45，对应分支 `main` 当时的最新提交：
+
+```
+commit 1b921501f30cbfe347dccb1db7de3c82a1d55131  (1b92150, 2026-04-29)
+        "fix: buffer partial <tools> prefix in streaming to prevent tag leak"
+```
+
+本地文件 SHA256（前 20 位）：
+
+```
+c16bb1f88936a2d96c7c  qwen2_5_coder_tool_parser.py              （未修改）
+736bd175adbf90942c1d  tool_chat_template_qwen2_5_coder.jinja    （**已修改**：few-shot 由 get_weather 改为 run_tests）
+a95b2a9b91e65b3d452f  tool_chat_template_qwen2_5_coder.jinja.orig（原件）
+```
+
+修改原因：原模板的 few-shot 示例调用 `get_weather`，与本实验唯一合法工具 `run_tests`
+不符，会诱导模型调用不存在的工具，从而同时虚高 L1 与污染"空参数"统计。
