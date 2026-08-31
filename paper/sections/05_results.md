@@ -5,7 +5,7 @@
 | Family | Layer | Symptom | Detectable in advance? | Remedy |
 |---|---|---|---|---|
 | DeepSeek-Coder | template | chat template never injects tools | ✅ template inspection | none |
-| Qwen2.5-Coder | parser | emits ```json, not `<tool_call>` | ❌ template check **false-positives** | dedicated adapter |
+| Qwen2.5-Coder | parser | emits a fenced JSON block, not `<tool_call>` | ❌ template check **false-positives** | dedicated adapter |
 | Llama-3.1-8B | schema | calls the *task function* as a tool (23%) | ❌ requires argument inspection | `strict: true` |
 | Mistral-7B-v0.3 | token | repeats `[TOOL_CALLS]` → HTTP 400 | ⚠️ errors, but only sometimes | **none found** |
 

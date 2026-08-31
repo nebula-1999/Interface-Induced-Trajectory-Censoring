@@ -63,6 +63,11 @@ seeded and the annotator saw only the raw output, never the classifier's label.
 We report \textbf{two rounds}, because the first one is itself a finding.
 
 \begin{longtable}[]{@{}lllllll@{}}
+\caption{Human validation of the intent criterion. Two annotation rounds on a stratified sample; round 2 supplied the model's own preceding turn as context. The classifier is used only to count what the server discarded, so its recall matters more than its precision --- and after correction it misses almost nothing.}\label{tab:validation}\\
+\toprule
+& agreement & Cohen's $\kappa$ & precision & recall & FP & FN \\
+\midrule
+\endfirsthead
 \toprule
 & agreement & Cohen's $\kappa$ & precision & recall & FP & FN \\
 \midrule

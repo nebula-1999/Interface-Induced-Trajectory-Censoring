@@ -9,6 +9,19 @@ decomposed strangely: \textbf{91--94\% of newly-passing items passed on the firs
 number of items rescued by turn 2 or later stayed flat at \textbf{6--9 out of 540} from step 0
 to step 150. RL had improved first-draft quality and left multi-turn debugging untouched.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{fig4_training_curves.png}
+\caption{The anomaly this paper explains. Left: pass@1 rises over 150 steps on all three
+runs, driven by first drafts (dashed) rather than final answers. \textbf{Centre: the count of
+items rescued by turn 2 or later never moves} --- 6--9 out of 540 from step 0 to step 150,
+across two algorithms and two seeds. Right: the seeded-bug repair channel does improve,
+confirming the model is learning something about fixing code; it simply never does so
+\emph{across turns}. Section~\ref{sec:results} shows the tool was never successfully
+called in any of these runs.}
+\label{fig:training_curves}
+\end{figure}
+
 The natural reading is that a 1.5B model cannot learn multi-turn repair. The actual reason
 is that \textbf{the tool was never successfully called}. Not rarely --- never. And nothing in the
 stack said so: the server returned HTTP 200, \texttt{tool\_calls} was an empty array, and the

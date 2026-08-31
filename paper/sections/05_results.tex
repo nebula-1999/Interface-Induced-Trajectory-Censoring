@@ -1,4 +1,5 @@
 \section{Results}
+\label{sec:results}
 
 \subsection{Four families, four failure layers --- and the consequential ones are silent}
 
@@ -13,20 +14,42 @@ into \texttt{tool\_calls} and empties \texttt{content} --- so those cells are N/
 \label{fig:funnel}
 \end{figure}
 
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.20}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.20}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.20}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.20}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.20}}@{}}
+\begin{table}[htbp]
+\centering
+\caption{Four families, four layers. Only Mistral's failure announces itself. The
+``detectable in advance'' column is the operationally important one: a template check
+clears DeepSeek-Coder correctly but \emph{passes} Qwen2.5-Coder, and nothing short of
+inspecting argument contents catches Llama.}
+\label{tab:taxonomy}
+\small
+\begin{tabular}{@{}p{2.4cm}p{1.4cm}p{4.0cm}p{3.4cm}p{2.6cm}@{}}
 \toprule
 Family & Layer & Symptom & Detectable in advance? & Remedy \\
 \midrule
-\endhead
-DeepSeek-Coder & template & chat template never injects tools &  template inspection & none \\
-Qwen2.5-Coder & parser & emits ``\texttt{json,\ not}\texttt{\textbar{}\ \ template\ check\ **false-positives**\ \textbar{}\ dedicated\ adapter\ \textbar{}\ \textbar{}\ Llama-3.1-8B\ \textbar{}\ schema\ \textbar{}\ calls\ the\ *task\ function*\ as\ a\ tool\ (23\%)\ \textbar{}\ \ requires\ argument\ inspection\ \textbar{}}strict: true\texttt{\textbar{}\ \textbar{}\ Mistral-7B-v0.3\ \textbar{}\ token\ \textbar{}\ repeats}{[}TOOL\_CALLS{]}` $\to$ HTTP 400 &  errors, but only sometimes & \textbf{none found} \\
+DeepSeek-Coder & template & chat template never injects tools
+  & $\checkmark$ template inspection & none \\
+Qwen2.5-Coder & parser & emits a fenced JSON block, not \texttt{<tool\_call>}
+  & $\times$ template check \textbf{false-positives} & dedicated adapter \\
+Llama-3.1-8B & schema & calls the \emph{task function} as a tool (23\%)
+  & $\times$ requires argument inspection & \texttt{strict: true} \\
+Mistral-7B-v0.3 & token & repeats \texttt{[TOOL\_CALLS]} $\to$ HTTP 400
+  & $\sim$ errors, but only sometimes & \textbf{none found} \\
 \bottomrule
-\end{longtable}
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{fig2_family_taxonomy.png}
+\caption{The same four failures, quantified. Grey is the configuration a reader arrives at by
+following the documentation; green is the best configuration we found. DeepSeek-Coder has no
+remedy at all; Qwen goes 0 $\to$ 84 with a dedicated adapter; Llama's initiation is already
+high and the repair is to its \emph{arguments} (23 $\to$ 0 contaminated calls), not its rate;
+Mistral never produces an error-free run under any of four configurations, so its bars are
+not comparable with the others and are drawn in orange.}
+\label{fig:taxonomy}
+\end{figure}
+
 
 Mistral is the one family whose failure announces itself (HTTP 400 on a repeated
 \texttt{{[}TOOL\_CALLS{]}} marker). The other three --- and a missing \texttt{-\/-enable-auto-tool-choice} aside ---
@@ -63,6 +86,11 @@ from both. At 32B, \texttt{strong\ =\ 100} and \texttt{tight\ =\ 80} means every
 and 80 of them carried a usable payload.
 
 \begin{longtable}[]{@{}llllll@{}}
+\caption{Censoring against scale, Qwen2.5-Coder under the documented \texttt{hermes} configuration. The server column is flat zero across a 21$\times$ range while emitted well-formed calls rise to 80/100. *At 1.5B the 27 weak-tier items are JSON-shaped answers, not attempted calls.}\label{tab:scale}\\
+\toprule
+Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) & Final pass \\
+\midrule
+\endfirsthead
 \toprule
 Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) & Final pass \\
 \midrule
@@ -92,6 +120,11 @@ throughout.
 re-parsed the \emph{same stored bytes} under four rules (\texttt{analysis/reparse\_matrix.py}, no GPU):
 
 \begin{longtable}[]{@{}llllll@{}}
+\caption{The same bytes, re-parsed offline under four rules. Where the server already parsed a call, \texttt{content} is empty and offline replay has nothing to read; those cells are N/A rather than zero. The gap is a parser mismatch, not a claim that no parser could have read the output.}\label{tab:reparse}\\
+\toprule
+Arm (server-parsed = 0) & server & hermes replay & \texttt{\textless{}tools\textgreater{}} replay & bare JSON & tight \\
+\midrule
+\endfirsthead
 \toprule
 Arm (server-parsed = 0) & server & hermes replay & \texttt{\textless{}tools\textgreater{}} replay & bare JSON & tight \\
 \midrule
@@ -130,6 +163,11 @@ rate is 74/100, not 97/100} (\texttt{ERRATA.md} \S2).
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.25}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.25}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.25}}@{}}
+\caption{Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion.}\label{tab:controls}\\
+\toprule
+Alternative explanation & Control & Empty-argument rate & Verdict \\
+\midrule
+\endfirsthead
 \toprule
 Alternative explanation & Control & Empty-argument rate & Verdict \\
 \midrule
@@ -147,6 +185,11 @@ Adding the official template alone changes nothing; adding \texttt{strict} on to
 everything. Isolating the single variable:
 
 \begin{longtable}[]{@{}llllll@{}}
+\caption{Llama-3.1-8B arms, paired on the same 100 items. Adding the official chat template changes nothing; adding \texttt{strict: true} eliminates the wrong-tool calls entirely and lifts final pass by 12 points.}\label{tab:llama_arms}\\
+\toprule
+Arm & Calls issued & Wrong-tool & Executed & Turn-1 & Final \\
+\midrule
+\endfirsthead
 \toprule
 Arm & Calls issued & Wrong-tool & Executed & Turn-1 & Final \\
 \midrule
@@ -168,6 +211,11 @@ execute and become repairable. All 98 calls under \texttt{strict} carry code con
 \textbf{A three-rung ladder, both rungs significant.} Paired McNemar on the identical 100 items:
 
 \begin{longtable}[]{@{}llll@{}}
+\caption{Decomposing the ReAct--FC gap on Llama. Interface repair accounts for 12 of the original 31 points; the remaining 19 survive a fully-configured interface and are attributable to the protocol itself.}\label{tab:decomposition}\\
+\toprule
+Comparison & b/c & \emph{p} & Attributable to \\
+\midrule
+\endfirsthead
 \toprule
 Comparison & b/c & \emph{p} & Attributable to \\
 \midrule
@@ -215,6 +263,11 @@ problem into a draft as a model deficiency.
 All arms: true \texttt{max\_tokens=2048}, identical 100 items, \texttt{temperature=0}.
 
 \begin{longtable}[]{@{}llllllll@{}}
+\caption{Main table. All arms genuinely at \texttt{max\_tokens}=2048, one shared 100-item set, \texttt{temperature}=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no \emph{p}-value are computed.}\label{tab:main}\\
+\toprule
+Model & ReAct turn-1 & ReAct final & FC turn-1 & FC final & b/c & \emph{p} & FC arm \\
+\midrule
+\endfirsthead
 \toprule
 Model & ReAct turn-1 & ReAct final & FC turn-1 & FC final & b/c & \emph{p} & FC arm \\
 \midrule
@@ -240,6 +293,11 @@ Qwen2.5-Coder-7B, identical items, \texttt{tool\_choice:\ auto} throughout, chan
 adapter combination:
 
 \begin{longtable}[]{@{}lllllll@{}}
+\caption{Repair loop on Qwen2.5-Coder-7B, \texttt{tool\_choice: auto} held fixed, changing only the adapter. Every mechanism is restored from literal zero; the pass rate recovers only partly. The two FC arms' identical turn-1 pass (53 vs 53) is the internal-validity check: an adapter can only affect what happens after the first turn.}\label{tab:repair}\\
+\toprule
+Arm & Parsed & Mean turns & $\geq$2 turns & Turn-1 & Final & Rescued \\
+\midrule
+\endfirsthead
 \toprule
 Arm & Parsed & Mean turns & $\geq$2 turns & Turn-1 & Final & Rescued \\
 \midrule
@@ -275,6 +333,11 @@ The adapter recovers 84/100 parses while ReAct reaches 95/100, so part of the re
 \textbf{both} arms parsed successfully:
 
 \begin{longtable}[]{@{}llllll@{}}
+\caption{Conditioning on items where both protocols parsed successfully. The residual protocol gap holds on Llama and does not reach significance on Qwen --- the honest reading is one family out of two, not a general law.}\label{tab:conditioned}\\
+\toprule
+Family & Items both parsed & ReAct & FC & b/c & \emph{p} \\
+\midrule
+\endfirsthead
 \toprule
 Family & Items both parsed & ReAct & FC & b/c & \emph{p} \\
 \midrule
@@ -295,6 +358,11 @@ not two}; \S5.4's headline comparison should be read with this decomposition att
 Where the gap does exist, it is not about reaching the second turn (Qwen):
 
 \begin{longtable}[]{@{}llll@{}}
+\caption{Repair success given that feedback was actually received. Conditioned this way the two protocols are much closer, which locates the gap in \emph{how often feedback arrives} rather than in what the model does with it.}\label{tab:given_feedback}\\
+\toprule
+Arm & Reached turn $\geq$2 & Rescued & Repair success given feedback \\
+\midrule
+\endfirsthead
 \toprule
 Arm & Reached turn $\geq$2 & Rescued & Repair success given feedback \\
 \midrule
@@ -339,6 +407,11 @@ mandatory instruction (\emph{``you must call \texttt{run\_tests} to verify your 
 directly''}):
 
 \begin{longtable}[]{@{}lllll@{}}
+\caption{RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength. Three independent signals agree that the FC arm never executed a tool: \texttt{num\_turns} pinned at its minimum, tool time exactly zero, and a dedicated counter at zero.}\label{tab:training}\\
+\toprule
+Arm & Steps & \texttt{num\_turns/mean} & Tool time & Tool calls / rollout \\
+\midrule
+\endfirsthead
 \toprule
 Arm & Steps & \texttt{num\_turns/mean} & Tool time & Tool calls / rollout \\
 \midrule
@@ -411,6 +484,11 @@ condition (1.5B, mandatory prompt, $n{=}100$) it lifts recoverable calls from
 \textbf{0/100 (hermes) to 52/100}. Of those 52, \textbf{zero name} \texttt{run\_tests}.
 
 \begin{longtable}[]{@{}lll@{}}
+\caption{Probe replication on the 1.5B model actually being trained, same mandatory prompt (n=100). Not one output names \texttt{run\_tests}, so at this scale the missing calls are not a parser mismatch --- there was nothing well-formed to censor.}\label{tab:probe_categories}\\
+\toprule
+Category & n & \% \\
+\midrule
+\endfirsthead
 \toprule
 Category & n & \% \\
 \midrule
@@ -432,6 +510,11 @@ wrong call and the right call side by side, with an explicit warning that the ta
 is not a tool. Same model, same 100 items, same server; only the system prompt changes.
 
 \begin{longtable}[]{@{}llll@{}}
+\caption{Increasing pressure on the 1.5B model. Stronger instruction and few-shot examples raise the number of recoverable code payloads but never produce a call that names the tool; the count that matters stays at zero.}\label{tab:pressure}\\
+\toprule
+& recoverable calls & \textbf{naming \texttt{run\_tests}} & final pass \\
+\midrule
+\endfirsthead
 \toprule
 & recoverable calls & \textbf{naming \texttt{run\_tests}} & final pass \\
 \midrule
@@ -484,6 +567,11 @@ is both unwilling \emph{and} incapable.
 Llama-3.1-8B, \texttt{temperature=0.6}, n=100 $\times$ 3 seeds:
 
 \begin{longtable}[]{@{}lllll@{}}
+\caption{Sampling variance at \texttt{temperature}=0.6, Llama-3.1-8B. FC seed 3 is inadmissible (a parallel tool call vLLM rejects), leaving two arms --- too few for a standard deviation, so only the interval is reported. ReAct's three identical finals are a coincidence of totals: pairwise Jaccard between the passing sets is 0.71--0.80.}\label{tab:variance}\\
+\toprule
+& seed 1 & seed 2 & seed 3 & admissible \\
+\midrule
+\endfirsthead
 \toprule
 & seed 1 & seed 2 & seed 3 & admissible \\
 \midrule
