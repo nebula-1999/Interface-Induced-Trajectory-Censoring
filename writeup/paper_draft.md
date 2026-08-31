@@ -227,7 +227,46 @@ is shared by all text, tables and figures:
 - **weak** — JSON-shaped fragments only; at 1.5B these are almost entirely false positives
   and we report them separately rather than merging them.
 
-### 3.2 Validity gating
+### 3.2 Human validation of the intent criterion
+
+The scale trend in §5.2 rests entirely on an automated classifier, so we validated it
+against human judgement. 98 outputs were sampled **stratified by classifier verdict**
+(40 `tight`, 28 `strong`-but-not-`tight`, 30 neither) — deliberately over-sampling the
+decision boundary so both false positives and false negatives are estimable. Sampling is
+seeded and the annotator saw only the raw output, never the classifier's label.
+
+We report **two rounds**, because the first one is itself a finding.
+
+| | agreement | Cohen's κ | precision | recall | FP | FN |
+|---|---|---|---|---|---|---|
+| Round 1 (raw output only) | 86.7% | 0.713 | 70.0% | 96.6% | 12 | 1 |
+| After adjudication | **96.9%** | **0.936** | **95.0%** | 97.4% | 2 | 1 |
+
+All 12 round-1 false positives shared one cause: **the tool call sits mid-document, after a
+fenced ```python block** (match positions 1209–2585 in outputs of median length ~2000). The
+annotator read the code block, concluded "this is a direct answer, not a call", and stopped.
+Re-shown the matched span alone, 10 of 13 disputed items were reversed.
+
+We report this rather than only the adjudicated figure because **it reproduces the paper's
+mechanism on a human reader**: the evidence was present in every case, and what determined
+whether it was seen was the order in which the text was scanned. The serving parser is
+blocked by format; the annotator was blocked by reading order. Both produce the same
+conclusion — "the model did not call the tool" — from the same bytes.
+
+Three items survived adjudication as genuine disagreements. They mark the criterion's grey
+zone rather than annotation noise, and we do not resolve them.
+
+**Correction applied.** Weighting the per-stratum agreement rates by pool sizes gives a
+correction factor of **0.957** on `tight` counts. §5.2's headline (80/100 at 32B) becomes
+**≈77** after correction; the monotone trend and the contrast against a flat server-side
+zero are unaffected. We report uncorrected counts in tables with this factor stated, rather
+than silently rescaling.
+
+**Single annotator.** One person labelled both rounds, so κ measures human–classifier
+agreement, not inter-annotator reliability. A second independent annotator would be needed
+for the latter and was not available.
+
+### 3.3 Validity gating
 
 An arm is admissible for pass-rate comparison only if it has exactly 100 items, exit code 0,
 **zero request errors**, and provenance (model / protocol / temperature / `max_tokens` /
