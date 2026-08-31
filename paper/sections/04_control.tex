@@ -4,10 +4,10 @@ Before attributing a zero to a model we verify the measuring instrument. On the 
 server}, same model, same tools, same system prompt, changing only \texttt{tool\_choice}:
 
 \begin{verbatim}
-tool_choice = auto      $\to$ finish_reason = stop        tool_calls = 0
-                          content: "好的，下面是一个实现 count_distinct 的示例代码：```python\ldots"
+tool_choice = auto      -> finish_reason = stop        tool_calls = 0
+                          content: "好的，下面是一个实现 count_distinct 的示例代码：```python..."
 
-tool_choice = required  $\to$ finish_reason = tool_calls  tool_calls = 1
+tool_choice = required  -> finish_reason = tool_calls  tool_calls = 1
                           name = run_tests
                           arguments = {"code": "def count_distinct(nums):\n    return len(set(nums))"}
 \end{verbatim}

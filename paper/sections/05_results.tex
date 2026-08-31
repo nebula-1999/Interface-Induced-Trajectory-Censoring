@@ -457,10 +457,10 @@ It renders a policy branch \textbf{unreachable by gradient}.
 \begin{verbatim}
 Qwen2.5-Coder-1.5B emits nothing hermes can parse
   (probe replication under the training prompt: 0 parsed, 0 tight, 66 JSON fragments)
-    $\to$ parser-accepted calls in training rollouts = 0 (num_turns pinned at 2)
-      $\to$ Observation never returns; trajectories degenerate to single-turn
-        $\to$ RL optimises only a single-turn signal
-          $\to$ multi-turn rescues flat at 6--9/540; 91--94% of new passes are turn-1
+    -> parser-accepted calls in training rollouts = 0 (num_turns pinned at 2)
+      -> Observation never returns; trajectories degenerate to single-turn
+        -> RL optimises only a single-turn signal
+          -> multi-turn rescues flat at 6--9/540; 91--94% of new passes are turn-1
 \end{verbatim}
 
 The last two links are the training result of \S1; the middle two are measured here.
