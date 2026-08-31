@@ -3,13 +3,27 @@
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{calc}
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{natbib}
 \usepackage{caption}
+
+%% 本文用 XeLaTeX 编译（正文含 → × ∅ 等符号，个别数据片段与附录含中文）
+\usepackage{fontspec}
+\usepackage{xeCJK}
+%% Overleaf 自带 Noto CJK；本地 macOS 可换 Songti SC
+\setCJKmainfont{Noto Serif CJK SC}
+\setCJKmonofont{Noto Sans Mono CJK SC}
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip = 0pt plus 1pt
 \hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black,
             urlcolor=blue!50!black}
-\graphicspath{{../figures/}}
+\graphicspath{{./}}
 
 \title{\textbf{Interface-Induced Trajectory Censoring}\\[0.3em]
 \large Tool-call interfaces silently decouple observed agent behaviour from

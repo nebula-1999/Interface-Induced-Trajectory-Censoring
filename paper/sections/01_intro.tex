@@ -1,0 +1,101 @@
+\section{Introduction}
+
+We set out to train a multi-turn code agent with RL and ended up unable to explain our own
+training curve. Over 150 GRPO steps on Qwen2.5-Coder-1.5B, pass@1 on a held-out EvalPlus
+split rose 2.6--2.8 points, consistently across three independent runs
+(\emph{p} = 0.064 / 0.078 / 0.077 --- \textbf{none significant at $\alpha$ = .05}; the evidence is the
+consistent direction and magnitude across two algorithms and two seeds, not any single test). But the gain
+decomposed strangely: \textbf{91--94\% of newly-passing items passed on the first turn}, and the
+number of items rescued by turn 2 or later stayed flat at \textbf{6--9 out of 540} from step 0
+to step 150. RL had improved first-draft quality and left multi-turn debugging untouched.
+
+The natural reading is that a 1.5B model cannot learn multi-turn repair. The actual reason
+is that \textbf{the tool was never successfully called}. Not rarely --- never. And nothing in the
+stack said so: the server returned HTTP 200, \texttt{tool\_calls} was an empty array, and the
+training loop recorded a well-formed single-turn trajectory.
+
+\subsection{What is measured when we measure an agent}
+
+An agent evaluation does not measure a model. It measures a composition:
+
+\begin{verbatim}
+model  $\times$  protocol  $\times$  serialization  $\times$  parser  $\times$  execution stack
+\end{verbatim}
+
+Every stage can fail, and the failure of most stages is \textbf{indistinguishable at the output
+from model incapability}. When a parser does not recognise the format a model emits, the
+serving layer reports zero tool calls --- exactly what a model that refuses to use tools
+would produce. We call this \textbf{interface-induced trajectory censoring}: the agent's
+trajectory is truncated at an interface boundary, and the truncation is systematically
+misattributed to the policy.
+
+The interface acts in \textbf{two opposite directions}, and our results contain one clean
+instance of each:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Masking.} The model emits a valid call, the parser does not recognise it, the action
+  never reaches the environment (Qwen2.5-Coder, \S5.2).
+\item
+  \textbf{Suppression.} The model emits an \emph{invalid} call, and a schema constraint removes it
+  from the sampleable support before it becomes an action (Llama-3.1-8B, \S5.3).
+\end{itemize}
+
+The correct general statement is therefore neither ``the failure is in the model'' nor ``the
+failure is in the interface'':
+
+\begin{quote}
+\textbf{The serving interface is simultaneously part of the measurement function and part of
+the agent's effective action space.}
+\end{quote}
+
+Under RL this is not a metaphor. The interface sits literally between policy and
+environment, \texttt{$\theta$\ $\to$\ Y\ $\to$\ I(Y)\ $\to$\ a\ $\to$\ o\ $\to$\ r}; when \texttt{I(Y)\ =\ $\varnothing$} holds for every tool-intended
+\texttt{Y}, the experience distribution contains no tool-mediated trajectory at all.
+
+\emph{Censoring} is borrowed \textbf{by analogy}, and we state the analogy's limit. In survival
+analysis censoring is a threshold on a continuous variable; a parser is instead a
+deterministic filter on output \emph{format}. What carries over --- and what motivates the term ---
+is the structure of the inference error: the observation is not noisy or missing at random,
+it is \textbf{systematically unobservable on one side of a boundary}, and the boundary
+correlates with the very quantity being measured. We show below that it
+correlates \emph{positively} with model scale: the more capable the model, the more of its
+behaviour is censored.
+
+\subsection{What is and is not new here}
+
+The specific observation that Qwen2.5-Coder does not emit \texttt{hermes}-format tool calls was
+reported in vLLM issue \#32926 (2026-01-23) together with a \texttt{\textless{}tools\textgreater{}} parser proposal; that
+issue was closed as \emph{not planned} and labelled \emph{stale}, so the trap is still live today.
+\S2 gives full attribution. What this paper adds is measurement, decomposition and
+consequence:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Quantification.} How much capability the censoring removes, across a 21$\times$ scale range,
+  under a criterion strict enough to exclude schema echo and pseudo-code.
+\item
+  \textbf{Layer disentanglement.} Separating \emph{model intent} / \emph{emitted format} / \emph{server
+  parse} / \emph{actual execution} / \emph{multi-turn rescue} into five independently measured
+  quantities. Reporting only the third is the standard practice we argue against.
+\item
+  \textbf{A cross-family taxonomy.} Four families failing at four different layers ---
+  template, parser, schema, token --- with different remedies and different detectability.
+\item
+  \textbf{RL contamination, measured.} Direct instrumentation showing the censored interface
+  yields zero tool executions in training rollouts, and an argument that this renders the
+  tool-using branch unreachable by policy gradient.
+\item
+  \textbf{A repair loop.} How much is recovered by installing a correct adapter, and what
+  protocol gap survives the repair.
+\end{enumerate}
+
+We deliberately foreground (2) and (4). A reader who takes this as a catalogue of
+misconfigurations has read it as a systems note; the claim we defend is that \textbf{the
+composition above is what benchmarks actually measure, and that attributing its output to
+the model is a systematic error with a measurable magnitude.}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}

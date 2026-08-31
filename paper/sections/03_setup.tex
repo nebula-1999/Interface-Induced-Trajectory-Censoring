@@ -1,0 +1,109 @@
+\section{Setup}
+
+\textbf{Task.} 100 problems drawn from a decontaminated KodCode subset (n-gram containment
+against EvalPlus). \textbf{All 49 full-length arms in this paper use the identical 100 items}
+(verified: unique item-set count = 1), so every cross-arm comparison is paired.
+
+\textbf{Protocols.}
+\emph{ReAct} --- a text protocol with \texttt{Thought:} / \texttt{Action:\ run\_tests} / \texttt{Action\ Input:\ \textasciigrave{}\textasciigrave{}\textasciigrave{}python\ \ldots{}\textasciigrave{}\textasciigrave{}\textasciigrave{}}
+/ \texttt{Observation:}; the tool name is fixed in the template.
+\emph{Function calling (FC)} --- OpenAI-style, \texttt{tool\_choice:\ auto}, one tool \texttt{run\_tests} taking a
+single \texttt{code} string. Schema variants: \textbf{terse} (bare \texttt{\{"type":"string"\}}), \textbf{rich}
+(parameter description, counter-example, code sample), \textbf{strict} (\texttt{strict:\ true},
+\texttt{additionalProperties:\ false}).
+
+\textbf{Serving.} vLLM 0.27.1~\citep{kwon2023vllm,vllm_toolcalling_docs}, per-family parser and chat template as documented.
+\texttt{temperature=0} is greedy but \textbf{not bit-wise deterministic} under continuous batching:
+identical prompts can differ across batch compositions. The main table is a single sample
+per item; \S5.8 quantifies sampling variability separately at \texttt{temperature=0.6} rather than
+assuming greedy decoding removes it.
+\texttt{max\_tokens\ =\ 2048} for \textbf{both} protocols (see \texttt{ERRATA.md} \S1 --- an earlier asymmetry
+favoured FC; re-running under the true shared limit changed final pass by $\leq$1 item).
+
+\textbf{Measured quantities.} For each item's first turn we record: whether the server parsed a
+tool call; the raw output; the tool name called; the raw \texttt{arguments}; \texttt{finish\_reason}; and
+a protocol-agnostic intent classification (\S3.1). Execution, per-turn results, and final
+pass are recorded per turn.
+
+\subsection{Intent criterion}
+
+Reporting only server-parsed calls is the practice under examination, so we need an
+independent measure of what the model emitted. A single classifier (\texttt{analysis/intent.py})
+is shared by all text, tables and figures:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{tight} --- a JSON object naming \texttt{run\_tests} with an \texttt{arguments} object whose \texttt{code} is a
+  \textbf{string literal containing real Python}. Excludes two contaminants we observed:
+
+  \begin{enumerate}
+  \def\labelenumi{(\roman{enumi})}
+  \tightlist
+  \item
+    echoing the injected schema (\texttt{parameters}/\texttt{description} present, no \texttt{arguments});
+  \item
+    illustrative pseudo-code (\texttt{\{"code":\ test\_code\}} --- an identifier, not a string).
+  \end{enumerate}
+\item
+  \textbf{strong} --- trajectory tag \texttt{json\_named\_call} or \texttt{xml\_tool\_call}.
+\item
+  \textbf{weak} --- JSON-shaped fragments only; at 1.5B these are almost entirely false positives
+  and we report them separately rather than merging them.
+\end{itemize}
+
+\subsection{Human validation of the intent criterion}
+
+The scale trend in \S5.2 rests entirely on an automated classifier, so we validated it
+against human judgement. 98 outputs were sampled \textbf{stratified by classifier verdict}
+(40 \texttt{tight}, 28 \texttt{strong}-but-not-\texttt{tight}, 30 neither) --- deliberately over-sampling the
+decision boundary so both false positives and false negatives are estimable. Sampling is
+seeded and the annotator saw only the raw output, never the classifier's label.
+
+We report \textbf{two rounds}, because the first one is itself a finding.
+
+\begin{longtable}[]{@{}lllllll@{}}
+\toprule
+& agreement & Cohen's $\kappa$ & precision & recall & FP & FN \\
+\midrule
+\endhead
+Round 1 (raw output only) & 86.7\% & 0.713 & 70.0\% & 96.6\% & 12 & 1 \\
+After adjudication & \textbf{96.9\%} & \textbf{0.936} & \textbf{95.0\%} & 97.4\% & 2 & 1 \\
+\bottomrule
+\end{longtable}
+
+All 12 round-1 false positives shared one cause: \textbf{the tool call sits mid-document, after a
+fenced ```python block} (match positions 1209--2585 in outputs of median length \textasciitilde2000). The
+annotator read the code block, concluded ``this is a direct answer, not a call'', and stopped.
+Re-shown the matched span alone, 10 of 13 disputed items were reversed.
+
+We report this rather than only the adjudicated figure because \textbf{it reproduces the paper's
+mechanism on a human reader}: the evidence was present in every case, and what determined
+whether it was seen was the order in which the text was scanned. The serving parser is
+blocked by format; the annotator was blocked by reading order. Both produce the same
+conclusion --- ``the model did not call the tool'' --- from the same bytes.
+
+Three items survived adjudication as genuine disagreements. They mark the criterion's grey
+zone rather than annotation noise, and we do not resolve them.
+
+\textbf{Correction applied.} Weighting the per-stratum agreement rates by pool sizes gives a
+correction factor of \textbf{0.957} on \texttt{tight} counts. \S5.2's headline (80/100 at 32B) becomes
+\textbf{$\approx$77} after correction; the monotone trend and the contrast against a flat server-side
+zero are unaffected. We report uncorrected counts in tables with this factor stated, rather
+than silently rescaling.
+
+\textbf{Single annotator.} One person labelled both rounds, so $\kappa$ measures human--classifier
+agreement, not inter-annotator reliability. A second independent annotator would be needed
+for the latter and was not available.
+
+\subsection{Validity gating}
+
+An arm is admissible for pass-rate comparison only if it has exactly 100 items, exit code 0,
+\textbf{zero request errors}, and provenance (model / protocol / temperature / \texttt{max\_tokens} /
+adapter) matching the intended configuration. Arms with request errors retain a valid
+\textbf{error-rate census} but are marked N/A for pass rates and \emph{no p-value is computed for
+them}. This rule is enforced in code (\texttt{validate\_arms.py}, \texttt{final\_table.py}), not by
+convention: an earlier draft computed \emph{p}=0.648 on such an arm, and that number is
+retracted.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}

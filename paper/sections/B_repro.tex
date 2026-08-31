@@ -1,0 +1,28 @@
+\section{Reproducibility}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# analysis and figures (no GPU)}
+\ExtensionTok{pip}\NormalTok{ install }\AttributeTok{{-}r}\NormalTok{ requirements.txt}
+\ExtensionTok{python}\NormalTok{ analysis/intent.py          }\CommentTok{\# the single intent criterion, all four counts}
+\ExtensionTok{python}\NormalTok{ runs/final/final\_table.py   }\CommentTok{\# main / variance / error{-}rate tables (N/A enforced)}
+\ExtensionTok{python}\NormalTok{ figures/make\_figs.py}
+
+\CommentTok{\# probe (needs a vLLM server)}
+\ExtensionTok{python}\NormalTok{ probe\_react\_full.py }\AttributeTok{{-}{-}model} \OperatorTok{\textless{}}\NormalTok{path}\OperatorTok{\textgreater{}}\NormalTok{ {-}{-}port 8000 }\AttributeTok{{-}{-}n}\NormalTok{ 100 }\DataTypeTok{\textbackslash{}}
+  \AttributeTok{{-}{-}protocol} \DataTypeTok{\{react}\OperatorTok{,}\DataTypeTok{fc\}} \AttributeTok{{-}{-}strength} \DataTypeTok{\{optional}\OperatorTok{,}\DataTypeTok{mandatory\}} \DataTypeTok{\textbackslash{}}
+  \AttributeTok{{-}{-}fc{-}schema} \DataTypeTok{\{terse}\OperatorTok{,}\DataTypeTok{rich}\OperatorTok{,}\DataTypeTok{strict\}} \AttributeTok{{-}{-}parser{-}adapter}\NormalTok{ cross\_family }\DataTypeTok{\textbackslash{}}
+  \AttributeTok{{-}{-}temperature}\NormalTok{ 0.0 }\AttributeTok{{-}{-}seed}\NormalTok{ 0 }\AttributeTok{{-}{-}out}\NormalTok{ traj.jsonl}
+\ExtensionTok{python}\NormalTok{ validate\_arms.py            }\CommentTok{\# per{-}arm admissibility: lines / rc / n\_err / provenance / script hash}
+\end{Highlighting}
+\end{Shaded}
+
+Model snapshots must be pinned: \texttt{tokenizer\_config.json} inheritance is the mechanism
+behind \S5.1's false-positive capability check, so a family's behaviour can change with a
+repository revision. Every model path, its HF revision, and the serving flags used are
+recorded per arm in the trajectory provenance and in \texttt{runs/final/by\_config/README.md}.
+
+Trajectories for all 49 full-length arms, the training logs, the errata, and the
+per-configuration index are in \texttt{runs/final/}. Third-party parser: hanXen
+(\texttt{1b92150}, Apache 2.0), few-shot examples rewritten from \texttt{get\_weather} to \texttt{run\_tests};
+original retained with both hashes recorded.

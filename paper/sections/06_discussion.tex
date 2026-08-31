@@ -1,0 +1,36 @@
+\section{Discussion}
+
+\textbf{Report the composition, not the model.} Any claim of the form ``model \emph{M} does not use
+tools'' is, as measured, a claim about \texttt{M\ $\times$\ protocol\ $\times$\ serialization\ $\times$\ parser\ $\times$\ stack}.
+We recommend that agent evaluations report at minimum: (i) server-parsed calls,
+(ii) emitted-but-unparsed calls under a stated criterion, (iii) request errors, and
+(iv) the exact serving configuration. Reporting only (i) is the practice this paper argues
+against, and (ii) is where the 21$\times$ scale trend lives.
+
+\textbf{Pre-flight, don't post-hoc.} A missing \texttt{-\/-enable-auto-tool-choice} is the only failure
+that announces itself. We therefore treat a \texttt{tools}-bearing request returning HTTP 200 ---
+\emph{and} a server-parsed call under \texttt{tool\_choice:\ required} --- as a required pre-flight for any
+FC experiment. Template inspection alone is insufficient (\S5.1). We ship this check as a
+30-line script (\texttt{preflight\_toolcall.py}): it issues one canonical request, asserts
+\texttt{tool\_calls} is non-empty with the expected \texttt{name} and parseable \texttt{arguments}, then repeats
+under \texttt{tool\_choice:\ required} as a positive control. It runs in seconds and would have
+caught every silent failure in this paper.
+
+\textbf{Interface repair precedes protocol comparison.} On Llama the ReAct-vs-FC gap was 31
+points before the \texttt{strict} fix and 19 after --- \textbf{two fifths of an apparent protocol effect
+was an interface effect}, and both components are separately significant (\emph{p}=0.0075 and
+\emph{p}=0.0019). On Qwen the decomposition goes further: conditioning on items the server
+parsed, the remaining gap is \textbf{not} significant (\emph{p}=0.119), i.e.~essentially all of the
+observed difference is attributable to the interface. Comparisons of agent protocols that
+do not first exhaust the serving configuration matrix are not measuring protocols --- and
+even after repair, the residual must be re-tested conditionally before it is called a
+protocol effect.
+
+\textbf{A cold-start hazard for agentic RL.} \S5.6's mechanism generalises beyond this stack:
+whenever (a) tool trajectories are censored at rate \textasciitilde1 and (b) the reward admits a
+tool-free path, the tool-using branch has no sampled return and cannot be reinforced.
+Prompt-level coercion does not help, and we observed it actively hurting (final pass 31$\to$15).
+Practitioners should verify a \textbf{non-zero tool-execution count in the first training step}
+before interpreting any multi-turn result.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
