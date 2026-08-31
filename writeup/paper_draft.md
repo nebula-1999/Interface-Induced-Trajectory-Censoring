@@ -39,8 +39,11 @@ unreachable by gradient**.
 This explains our own training result, where RL improved first-draft quality
 (+2.6–2.8 pp; *p*=0.06–0.08, **not significant at α=.05**, direction consistent across three runs) while multi-turn rescues stayed flat at 6–9/540.
 
-Installing a dedicated adapter restores the mechanism (parse 0→84, multi-turn 0→37,
-rescues 0→9), yet a protocol gap remains: with interfaces fully repaired, ReAct still
+Installing a dedicated adapter restores the mechanism at evaluation time (parse 0→84,
+multi-turn 0→37, rescues 0→9). **In training, opening the channel is not sufficient**: a
+75-step run executing 23,676 tool calls leaves multi-turn rescues flat at 6–8/540,
+indistinguishable from runs in which none executed — the bottleneck is not singular. A
+protocol gap nonetheless remains: with interfaces fully repaired, ReAct still
 beats function calling on both families that admit a comparison (80 vs 61, *p*=0.0019;
 74 vs 62, *p*=0.0169); the third produces no error-free FC run at all. Conditioning on
 items the server actually parsed, that gap survives on one family and not the other. **Interface problems mask protocol problems; only after fixing the former
@@ -650,6 +653,49 @@ via a rollout backend that exposes guided decoding remains untested. Accordingly
 serves as a positive-control interaction channel, not as a parser-repair control**, and the
 comparison changes protocol and interface together. We flag this rather than let the
 comparison be read as a clean single-variable intervention.
+
+### 5.6.1 Opening the channel does not, by itself, unlock multi-turn learning
+
+The censoring result above says a broken interface removes the tool-using branch from the
+experience distribution. It does not say that restoring the channel is *sufficient* for the
+policy to learn multi-turn repair. We tested that directly.
+
+Since no executable repaired-FC condition exists in this stack (previous subsection), we ran
+the one configuration that does deliver tool feedback at this scale: **ReAct, 75 GRPO steps,
+same model, data, hyper-parameters, seed and evaluation hook as the three historical runs**.
+The run executed **23,676 tool calls**.
+
+| step | turn-1 | final | **rescued by turn ≥2** | repair channel |
+|---|---|---|---|---|
+| 0 | 359 | 367 | 8 | 263 |
+| 15 | 340 | 346 | **6** | 266 |
+| 30 | 340 | 346 | **6** | 262 |
+| 45 | 341 | 349 | **8** | 261 |
+| 60 | 341 | 347 | **6** | 274 |
+
+Rescues over 60 steps: **6, 6, 8, 6** — net change zero. The three historical runs, in which
+**zero** tool calls were executed, give `[7,9,6,6,7,6,10,8,9,8,6]`, `[8,7,6,7,7,7,7,5,6,6,8]`
+and `[7,5,7,5,7,8,9,9,8,9]`. **The two conditions are indistinguishable on this metric**, and
+whether tool feedback actually arrived made no measurable difference to it.
+
+Composition barely moved either: adjacent checkpoints have solved-set Jaccard 0.974–0.983
+(3–6 items gained, 3–5 lost). This contrasts with the generation-level churn measured
+between steps 15 and 30, where 85 of 542 first-turn completions changed verbatim — **the
+policy moves, the solved set does not** (§5.9).
+
+**What this does and does not license us to say.** It does not license "interface repair
+unlocks multi-turn capability"; we tested the closest available version of that claim and it
+failed. It does license the narrower statement we actually defend: **the interface
+determines whether tool-mediated trajectories exist at all, and their absence is sufficient
+to explain why no multi-turn signal was available — but their presence is not sufficient to
+produce multi-turn learning at this scale and budget.** The bottleneck is not singular.
+
+**Caveats.** 75 steps, one seed, 1.5B; the historical comparisons run to 150 steps, so the
+comparison is over the first 60 evaluated steps of each. The step-75 evaluation was lost: the
+checkpoint write at step 75 exhausted the disk (4.86 GB required, 4.6 GB free) and the
+process aborted after training had completed. The trend over 0–60 is flat enough that the
+missing point would not change the reading, but we note the loss rather than presenting an
+unexplained gap.
 
 **Scope.** This holds for Qwen2.5-Coder + `hermes`. It does not generalise to "FC training
 never receives tool feedback". Whether the §5.5 adapter also restores the training signal

@@ -26,7 +26,10 @@ step count) executes 2.05 calls per rollout. The training dashboard shows nothin
 stays exactly zero}. Because the reward admits direct answers, no trajectory ever rewards
 tool use---\textbf{the tool-using branch is unreachable by gradient}.
 
-Installing a dedicated adapter restores the mechanism (parse $0\to84$, multi-turn
-$0\to37$, rescues $0\to9$), yet a protocol gap remains on one of two admissible families
-after conditioning on successful parses. \textbf{Interface problems mask protocol problems;
+Installing a dedicated adapter restores the mechanism \emph{at evaluation time}
+(parse $0\to84$, multi-turn $0\to37$, rescues $0\to9$). \textbf{In training, opening the
+channel is not sufficient}: a 75-step run executing 23{,}676 tool calls leaves multi-turn
+rescues flat at 6--8/540, indistinguishable from runs in which none executed---the
+bottleneck is not singular. A protocol gap nonetheless remains on one of two admissible
+families after conditioning on successful parses. \textbf{Interface problems mask protocol problems;
 only after fixing the former does the latter become visible.}
