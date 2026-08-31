@@ -560,6 +560,58 @@ Qwen2.5-Coder-1.5B emits nothing hermes can parse
 
 The last two links are the training result of §1; the middle two are measured here.
 
+#### Why no repaired-FC training arm exists
+
+The natural control is *repaired* FC rather than ReAct. We attempted to construct it and
+failed at three successive layers; each attempt is a measurement, so we report them.
+
+**(i) A vLLM parser plugin does not reach the training loop.** verl's AgentLoop performs its
+own tool-call parsing (`verl/experimental/agent_loop/tool_parser.py`, registered as
+`hermes`, adapted from vLLM v0.9.1). `multi_turn.format=hermes` selects *that* parser, not
+the server's. Attaching a plugin to the vLLM rollout server therefore changes nothing in
+training — a distinction worth stating because the two look identical from the outside.
+
+**(ii) A verl-side parser recovers calls, but none of them are the tool.** We implemented a
+`qwen2_5_coder` parser inside verl's registry accepting `<tools>`, ```json fences and bare
+JSON. On the exact training condition (1.5B, mandatory prompt, n=100) it lifts recoverable
+calls from **0/100 (hermes) to 52/100**. Of those 52, **zero name `run_tests`**:
+
+| Category | n | % |
+|---|---|---|
+| wrong name, `arguments` carry complete code | **0** | 0% |
+| wrong name, `arguments` are the task function's parameters | **36** | 69% |
+| wrong name, executable code present elsewhere in the body | 16 | 31% |
+
+Every call targets the function the task asks the model to *write* —
+`can_form_word({"tiles","word"})`, `check_password_strength({"password"})` — the same
+signature as Llama's failure in §5.3, now at a 5× smaller model. **Name normalisation
+cannot repair this: no call carries code to normalise.**
+
+**(iii) A role-disambiguation few-shot makes it worse, not better.** Since the failure is
+semantic rather than syntactic, we targeted it directly: a system prompt containing the
+wrong call and the right call side by side, with an explicit warning that the task function
+is not a tool. Same model, same 100 items, same server; only the system prompt changes.
+
+| | recoverable calls | **naming `run_tests`** | final pass |
+|---|---|---|---|
+| mandatory prompt (baseline) | 52 | **0** | 15 |
+| + role-disambiguation few-shot | **64** | **0** | **13** |
+
+The intervention made the model *more fluent at emitting the wrong call* and slightly worse
+at the task. This is the third independent instance of §5.7's pattern.
+
+**(iv) Constrained decoding is unavailable in this stack.** The remedy that works at
+evaluation time — forcing the tool choice, or schema-constrained decoding — is not exposed
+by verl 0.9.0's vLLM rollout path (its only `strict` key belongs to the profiler).
+
+We therefore state the limitation precisely: **no executable repaired-FC condition was
+available through the existing verl 0.9.0 vLLM rollout configuration.** This is a property
+of the training stack, not a proof that FC is irreparable in principle; forced tool choice
+via a rollout backend that exposes guided decoding remains untested. Accordingly, **ReAct
+serves as a positive-control interaction channel, not as a parser-repair control**, and the
+comparison changes protocol and interface together. We flag this rather than let the
+comparison be read as a clean single-variable intervention.
+
 **Scope.** This holds for Qwen2.5-Coder + `hermes`. It does not generalise to "FC training
 never receives tool feedback". Whether the §5.5 adapter also restores the training signal
 was not tested. The demonstration is 10 and 3 steps — a **mechanism** result, not an
