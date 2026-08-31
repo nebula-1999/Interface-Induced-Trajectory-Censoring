@@ -1,69 +1,75 @@
-# 工具接口错配会伪装成模型缺乏智能体能力
+# Tool-interface mismatch masquerades as a model lacking agentic ability
 
-**并污染智能体评测与强化学习训练**
+**and it contaminates both agent evaluation and RL training**
 
-> 本文档为顶层结论。完整证据、对照设计与措辞边界见
-> [`writeup/section_config.md`](writeup/section_config.md)（11 节）；
-> 数据勘误见 [`runs/final/ERRATA.md`](runs/final/ERRATA.md)；
-> 图见 [`figures/`](figures/)。
+> 中文版见 [`RESULTS_zh.md`](RESULTS_zh.md).
 >
-> 上一版框架（"三层否定"）已被本工作自身推翻，保留于
-> `RESULTS_v1_refuted_20260829.md` 作为记录。
+> This document is the top-level summary. Full evidence, control design and the exact
+> boundaries of every claim are in [`writeup/section_config.md`](writeup/section_config.md)
+> (11 sections, Chinese); data errata in [`runs/final/ERRATA.md`](runs/final/ERRATA.md);
+> figures in [`figures/`](figures/).
+>
+> The previous framing ("three-layer negation") was refuted by this work itself and is kept
+> in `RESULTS_v1_refuted_20260829.md` as a record.
 
 ---
 
-## 0. 一句话
+## 0. One sentence
 
-在 vLLM 上按官方文档配置四个模型家族做 function calling 评测，**每个家族都会在不同层
-静默失败**；失败表现为"模型不会用工具"，实则是接口错配。该错配同时污染了
-**评测数字**与 **RL 训练信号**——在我们自己的训练中，它使工具调用在梯度上不可达。
+Configuring four model families for function calling on vLLM **following official
+documentation**, every family fails silently, each at a different layer. The failure presents
+as "the model does not know how to use tools"; it is in fact an interface mismatch. That
+mismatch contaminates both **evaluation numbers** and **RL training signal** — in our own
+training it made tool calls unreachable by the gradient.
 
-## 1. 起点：一个训练结果里说不通的地方
+## 1. Starting point: something that did not add up in a training result
 
-Qwen2.5-Coder-1.5B，verl GRPO / RLOO，150 步 × 3 个独立 run，
-保留测试集 EvalPlus（HumanEval+ 319 / MBPP+ 677，扣除 2 条已知缺陷题，分母 540 / 454）。
+Qwen2.5-Coder-1.5B, verl GRPO / RLOO, 150 steps x 3 independent runs, held-out EvalPlus
+(HumanEval+ 319 / MBPP+ 677, minus 2 known-defective items, denominators 540 / 454).
 
-| run | multi 最终 | turn-1 | repair |
+| run | multi, final | turn-1 | repair |
 |---|---|---|---|
-| GRPO seed42 | 64.8% → 67.6% (p=0.064) | +2.6% (p=0.093) | +4.6% (**p=0.030**) |
-| GRPO seed1 | 64.3% → 67.0% (p=0.078) | +3.0% (p=0.053) | +3.7% (p=0.097) |
-| RLOO seed42 | 64.6% → 67.2% (p=0.077) | +2.6% (p=0.082) | +0.9% (p=0.786) |
+| GRPO seed42 | 64.8% -> 67.6% (p=0.064) | +2.6% (p=0.093) | +4.6% (**p=0.030**) |
+| GRPO seed1 | 64.3% -> 67.0% (p=0.078) | +3.0% (p=0.053) | +3.7% (p=0.097) |
+| RLOO seed42 | 64.6% -> 67.2% (p=0.077) | +2.6% (p=0.082) | +0.9% (p=0.786) |
 
-主效应 **p 在 0.06–0.08，按 0.05 并不显著**；可信度来自三个独立 run 方向一致、
-幅度同为 +2.6~2.8%。
+The main effect sits at **p = 0.06–0.08, not significant at 0.05**. What credibility it has
+comes from three independent runs agreeing in direction with the same magnitude (+2.6–2.8%).
 
-**真正的问题在分解里**：新通过的题中 **91–94% 是首轮就过的**；
-靠第 2 轮及以后救回的题数，从 step 0 到 step 150 一直在 **6–9 / 540** 横盘。
+**The real problem is in the decomposition.** Of the newly-passing items, **91–94% passed on
+the first turn**; the count of items rescued by turn 2 or later stayed flat at **6–9 / 540**
+from step 0 to step 150.
 
-> RL 提升的是初稿质量，多轮调试能力**完全没有变化**。
+> RL improved draft quality. Multi-turn debugging ability **did not change at all**.
 
-这构成本工作的出发点：**多轮为什么不动？**
+That is where this work begins: **why does multi-turn not move?**
 
-## 2. 答案不在模型，在接口
+## 2. The answer is not in the model; it is in the interface
 
-用 100 道去污染后的 KodCode 题（全部实验共用同一题集，已核验唯一集合数 = 1）
-逐个家族排查，得到四层互不相同的失败：
+Probing family by family on 100 decontaminated KodCode items (one item set shared by every
+experiment; verified distinct-set count = 1) yields four mutually distinct failures:
 
-![四家族失败分层](figures/fig2_family_taxonomy.png)
+![Four-family failure taxonomy](figures/fig2_family_taxonomy.png)
 
-| 家族 | 失败层 | 表现 | 可修复性 |
+| Family | Failure layer | Symptom | Repairable? |
 |---|---|---|---|
-| DeepSeek-Coder | 模板层 | chat template 根本不注入 tools | 无解（模板检查即可发现） |
-| **Qwen2.5-Coder** | **parser 层** | 输出 ```json 而非 `<tool_call>`，服务端静默返回空数组 | ✅ 专用适配器 0 → 84 |
-| **Llama-3.1-8B** | **schema 层** | 23% 幻觉调用**题目函数本身**而非 `run_tests` | ✅ `strict: true` 23 → 0 |
-| **Mistral-7B** | **词元层** | 重复吐 `[TOOL_CALLS]` 触发 400 | ❌ 四种配置全部失败 |
+| DeepSeek-Coder | template | the chat template never injects tools at all | no (a template check finds it) |
+| **Qwen2.5-Coder** | **parser** | emits ```json rather than `<tool_call>`; server silently returns an empty array | yes — dedicated adapter, 0 -> 84 |
+| **Llama-3.1-8B** | **schema** | 23% hallucinate a call to **the task's own function** instead of `run_tests` | yes — `strict: true`, 23 -> 0 |
+| **Mistral-7B** | **token** | repeats `[TOOL_CALLS]`, triggering HTTP 400 | no — all four configurations fail |
 
-**关键性质：只有 `--enable-auto-tool-choice` 缺失会硬报错，其余全部静默降级。**
-服务照常返回 200，`tool_calls` 是空数组，下游只看到"模型没有调用工具"。
+**The decisive property: only a missing `--enable-auto-tool-choice` raises a hard error.
+Everything else degrades silently.** The server returns 200 as usual, `tool_calls` is an empty
+array, and everything downstream sees only "the model did not call a tool."
 
-## 3. 静默低估随规模单调增长
+## 3. The silent underestimate grows monotonically with scale
 
-![意图-解析缺口](figures/fig1_intent_parse_gap.png)
+![Intent–parse gap](figures/fig1_intent_parse_gap.png)
 
-Qwen2.5-Coder，`tool_choice=auto`，hermes parser（vLLM 文档对 Qwen2.5 的推荐配置），
-1.5B → 32B 共 21 倍规模：
+Qwen2.5-Coder, `tool_choice=auto`, hermes parser (vLLM's documented recommendation for
+Qwen2.5), across a 21x scale range from 1.5B to 32B:
 
-| 规模 | 服务端解析出 | 模型实际产出的合格调用 |
+| Scale | Parsed by the server | Well-formed calls the model actually emitted |
 |---|---|---|
 | 1.5B | 0 | 0 |
 | 3B | 0 | 4 |
@@ -71,172 +77,200 @@ Qwen2.5-Coder，`tool_choice=auto`，hermes parser（vLLM 文档对 Qwen2.5 的�
 | 14B | 0 | 36 |
 | **32B** | **0** | **80** |
 
-"合格调用"判据严格：`{"name":"run_tests", "arguments":{"code":"<含真实 Python 的字符串字面量>"}}`，
-排除 schema 回显与示意性伪代码。
+The criterion for "well-formed" is strict: `{"name":"run_tests", "arguments":{"code":"<string
+literal containing real Python>"}}`, excluding schema echoes and illustrative pseudocode.
 
-> **模型越大，被静默丢弃的能力越多。** 32B 上 80/100 道题模型写出了完全可用的
-> 工具调用，评测系统记录为"该模型从不使用工具"。
+> **The larger the model, the more capability is silently discarded.** At 32B the model wrote
+> a fully usable tool call on 80 of 100 items, and the evaluation recorded "this model never
+> uses tools."
 
-阳性对照排除了"配置坏了"：同一活跃服务上把 `tool_choice` 改为 `required`，
-hermes 解析完全正常（函数名、`arguments`、`code` 全对）。
-但该对照只证明**管线可用**，不证明模型自发会用——`required` 走受约束解码。
+A positive control rules out "the configuration is simply broken": switching `tool_choice` to
+`required` on the same live server, hermes parsing works perfectly (function name, `arguments`
+and `code` all correct). But that control only proves **the pipeline works** — it does not
+show the model would use it spontaneously, because `required` goes through constrained
+decoding.
 
-## 4. Llama 的失败经过四重对照才定性
+## 4. Llama's failure took four controls to characterise
 
-最初观察：Llama-3.1-8B 在 FC 下 23% 的题里，把**题目要求实现的那个函数**当成工具调用，
-参数填的是该函数的形参（`{"tiles":..., "word":...}`）。四个替代解释逐一排除：
+Initial observation: under FC, Llama-3.1-8B treats **the very function the task asks it to
+implement** as a tool on 23% of items, filling `arguments` with that function's parameters
+(`{"tiles":..., "word":...}`). Four alternative explanations, each ruled out in turn:
 
-| 替代解释 | 对照 | 空参数率 | 结论 |
+| Alternative explanation | Control | Empty-argument rate | Verdict |
 |---|---|---|---|
-| schema 参数缺描述 | rich vs terse | 23 → 22（p=1.000） | 排除 |
-| ReAct 只是多了思考步骤 | FC + Thought 脚手架 | 23 → **59**（p<0.001，**反向恶化**） | 排除 |
-| 服务端未按官方推荐配置 | + 官方 chat template | 23 → 22（p=0.125） | 排除 |
-| **未启用 schema 约束** | **+ `strict: true`** | **23 → 0（p=0.0001）** | **成立** |
+| the schema's parameters lack descriptions | rich vs terse | 23 -> 22 (p=1.000) | ruled out |
+| ReAct merely adds a thinking step | FC + Thought scaffold | 23 -> **59** (p<0.001, **worse**) | ruled out |
+| the server was not configured as officially recommended | + official chat template | 23 -> 22 (p=0.125) | ruled out |
+| **schema constraint was not enabled** | **+ `strict: true`** | **23 -> 0 (p=0.0001)** | **holds** |
 
-第四重推翻了前三重的结论。正确表述是：**模型确实存在角色混淆，
-而 `strict: true` 通过受约束解码抑制了它**——缺陷真实存在，只在缺少约束时显形，
-而 vLLM `auto` 模式默认不约束。
+The fourth control overturned the conclusion the first three supported. The correct statement
+is: **the model genuinely does suffer role confusion, and `strict: true` suppresses it via
+constrained decoding.** The defect is real; it only becomes visible when the constraint is
+absent — and vLLM's `auto` mode does not constrain by default.
 
-**本节自身即为论点的例证**：本工作带着明确怀疑、连做三个单变量对照，
-仍把一个配置问题写成"模型能力缺陷"，直到第四个对照才发现。
+**This section is itself an instance of the paper's thesis.** We came in with an explicit
+suspicion, ran three single-variable controls, and still wrote up a configuration problem as a
+"model capability defect" until the fourth control caught it.
 
-## 5. 主表（统一配置）
+## 5. Main table (unified configuration)
 
-全部真实 `max_tokens=2048`、同一 100 题、`temperature=0`：
+All arms genuinely at `max_tokens=2048`, same 100 items, `temperature=0`:
 
-| 模型 | ReAct 首轮 | ReAct 最终 | FC 首轮 | FC 最终 | b/c | p |
+| Model | ReAct turn-1 | ReAct final | FC turn-1 | FC final | b/c | p |
 |---|---|---|---|---|---|---|
 | Llama-3.1-8B | 61 | **80** | 46 | 61 | 27/8 | **0.0019** |
 | Qwen2.5-Coder-7B | 57 | **74** | 53 | 62 | 17/5 | **0.0169** |
 | Mistral-7B-v0.3 | 26 | 33 | N/A | N/A | N/A | N/A |
 
-Mistral 的四种 FC 配置**全部含请求错误**（2 / 42 / 3 / 39），含缺失数据的臂
-不计算通过率与 p 值。正确表述不是"两协议无差别"，而是
-**Mistral 在 FC 下无法产出一份无错误的 100 题数据**。
+All four of Mistral's FC configurations **contain request errors** (2 / 42 / 3 / 39); arms with
+missing data get no pass rate and no *p*-value. The correct statement is not "the two protocols
+do not differ" but **Mistral cannot produce a single error-free 100-item run under FC**.
 
-**接口修好后协议差距依然存在**，且两个家族一致。
+**The protocol gap persists after the interface is repaired**, and it does so consistently
+across two families.
 
-## 6. 闭环：换对适配器能拿回多少
+## 6. Closing the loop: how much does the right adapter recover?
 
-Qwen2.5-Coder-7B，同 100 题，`tool_choice=auto` 固定，只换适配器组合：
+Qwen2.5-Coder-7B, same 100 items, `tool_choice=auto` held fixed, changing only the adapter
+combination:
 
-| 臂 | 解析出 | 平均轮数 | ≥2 轮 | 首轮通过 | 最终通过 | 多轮救回 |
+| Arm | Parsed | Mean turns | >=2 turns | turn-1 pass | Final pass | Multi-turn rescues |
 |---|---|---|---|---|---|---|
 | ReAct | 95 | 1.92 | 40 | 57 | **74** | 17 |
 | FC + hermes | **0** | 0.96 | **0** | 53 | 53 | **0** |
-| FC + 专用适配器 | **84** | 1.82 | **37** | 53 | **62** | **9** |
+| FC + dedicated adapter | **84** | 1.82 | **37** | 53 | **62** | **9** |
 
-**机制全部恢复**（解析 0→84、多轮 0→37、救回 0→9）；
-**通过率只回收一部分**（53→62，p=0.093，未达显著）。
+**Every mechanism is restored** (parsed 0->84, multi-turn 0->37, rescues 0->9); **the pass rate
+only partially recovers** (53->62, p=0.093, not significant).
 
-**内部效度检验**：两个 FC 臂**首轮通过完全相同（53 vs 53）**——
-适配器只影响第一轮之后发生什么，数据正是如此。
+**Internal-validity check**: the two FC arms have **identical turn-1 pass (53 vs 53)** — the
+adapter can only affect what happens after the first turn, and the data says exactly that.
 
-## 7. 训练侧：接口错配使工具调用在梯度上不可达
+## 7. Training side: interface mismatch makes tool calls unreachable by the gradient
 
-![训练侧因果链](figures/fig3_training_causal.png)
+![Training-side causal chain](figures/fig3_training_causal.png)
 
-同模型、同数据、同超参、同 seed，**两侧 prompt 强度对齐**
-（FC 用 mandatory 版："**你必须先调用 run_tests 工具验证你的代码**"）：
+Same model, data, hyperparameters and seed, with **prompt strength aligned on both sides** (FC
+uses the mandatory wording: "*you must first call the run_tests tool to verify your code*"):
 
-| 臂 | 步数 | num_turns/mean | 工具耗时 | 每 rollout 工具调用 |
+| Arm | Steps | num_turns/mean | Tool time | Tool calls per rollout |
 |---|---|---|---|---|
-| FC（tool_agent + hermes） | 10 | **2.000** 恒定 | **0.00 s** | **0.000** |
-| ReAct（react_agent） | 3 | 5.883 | 12.21 s | **2.052** |
+| FC (tool_agent + hermes) | 10 | **2.000** constant | **0.00 s** | **0.000** |
+| ReAct (react_agent) | 3 | 5.883 | 12.21 s | **2.052** |
 
-计数插桩在 `CodeTool.execute` 与 `ReActAgentLoop._run_tests` 两个 agent 侧调用点
-（**不能在 `sandbox.run_tests` 计数**——奖励函数评测最终代码也走该函数）。
+The counters are instrumented at the two agent-side call sites, `CodeTool.execute` and
+`ReActAgentLoop._run_tests`. **They must not be placed in `sandbox.run_tests`** — the reward
+function evaluates the final program through that same function.
 
-**措辞边界**：测得的是 **parser 接受并执行的调用为 0**，不是"模型从未尝试"。
-以相同 mandatory prompt 在同一 1.5B 上做探针复刻（n=100）：
-**0 条合格调用、54 条直接作答、46 条无法解析、66 条含 JSON 片段但无一写出 `"name":"run_tests"`**。
+**Boundary of the claim**: what is measured is that **calls accepted and executed by the parser
+number zero**, not that "the model never tried." Replicating with the same mandatory prompt on
+the same 1.5B as a probe (n=100): **0 well-formed calls, 54 direct answers, 46 unparseable, and
+66 containing a JSON fragment of which none writes `"name":"run_tests"`**.
 
-### 冷启动
+### Cold start
 
-有效调用**从第 1 步起就是 0**，而奖励允许直接输出代码得分。于是策略梯度里
-**不存在任何把策略推向工具调用的信号**——工具路径回报恒为零样本。
-**强制性 prompt 加 GRPO 不足以跨过这个冷启动**：模型无法通过探索发现工具路径，
-因为每次尝试都在协议层被丢弃，从未产生过一条带正回报的工具轨迹供强化。
+Valid calls are **zero from step 1 onward**, while the reward permits scoring by emitting code
+directly. So the policy gradient contains **no signal at all pushing the policy toward tool
+use** — the tool path has a constant zero-return sample. **A mandatory prompt plus GRPO is not
+enough to cross this cold start**: the model cannot discover the tool path by exploration,
+because every attempt is discarded at the protocol layer and no positively-rewarded tool
+trajectory has ever existed to reinforce.
 
-> **接口错配使某条策略分支在优化过程中不可达。**
+> **Interface mismatch renders a policy branch unreachable during optimisation.**
 
-### 完整因果链
+### Full causal chain
 
 ```
-Qwen2.5-Coder-1.5B（受训模型）不产出 hermes 可解析的调用
-  （§7 探针复刻，同 mandatory prompt：解析 0/100，严判据合格调用 0/100，
-   66/100 含 JSON 片段但无一写出 "name":"run_tests"）
-  → 训练 rollout 中 parser 接受的调用为 0（§7：num_turns 恒为 2）
-    → Observation 永不回流，轨迹退化为单轮
-      → RL 只能在单轮信号上优化
-        → §1：多轮救回横盘 6–9/540，新通过题 91–94% 为首轮即过
+Qwen2.5-Coder-1.5B (the model being trained) does not emit hermes-parseable calls
+  (S7 probe replication, same mandatory prompt: parsed 0/100, well-formed under the
+   strict criterion 0/100, 66/100 contain a JSON fragment and none writes "name":"run_tests")
+  -> calls accepted by the parser during training rollout = 0 (S7: num_turns constant at 2)
+    -> Observation never flows back, trajectories degenerate to a single turn
+      -> RL can only optimise on single-turn signal
+        -> S1: multi-turn rescues flat at 6-9/540, and 91-94% of newly-passing items
+           pass on turn 1
 ```
 
-**限定**：成立于 Qwen2.5-Coder + hermes 这一具体组合，不可泛化为"所有 FC 训练"。
+**Scope**: this holds for the specific combination Qwen2.5-Coder + hermes. It does not
+generalise to "all FC training."
 
-## 8. 采样方差
+**A note on which numbers belong where**: the first link above uses figures for **the 1.5B
+model actually being trained**. The curve in §3 that rises to 80/100 is a **cross-scale
+phenomenon** (32B) and must not be substituted into this causal chain — at 1.5B, well-formed
+calls under the strict criterion are zero.
 
-Llama-3.1-8B，`temperature=0.6`，n=100 × 3 seed：
+## 8. Sampling variance
 
-| | seed 1 | seed 2 | seed 3 | 有效臂 |
+Llama-3.1-8B, `temperature=0.6`, n=100 x 3 seeds:
+
+| | seed 1 | seed 2 | seed 3 | valid arms |
 |---|---|---|---|---|
-| ReAct 最终 | 72 | 72 | 72 | 3/3 |
-| FC 最终 | 62 | 66 | ~~57~~ | **2/3** |
+| ReAct final | 72 | 72 | 72 | 3/3 |
+| FC final | 62 | 66 | ~~57~~ | **2/3** |
 
-FC seed 3 含 1 条并行工具调用被 vLLM 拒收（官方文档载明 Llama 3 不支持并行调用），
-按规则记为无效；FC 仅 2 个有效臂，**不报标准差**，只给区间 [62, 66]。
-最坏情况 ReAct 72 vs FC 66 = **+6**，方向在全部有效重复中一致。
+FC seed 3 contains one parallel tool call rejected by vLLM (the official documentation states
+Llama 3 does not support parallel calls) and is marked invalid by rule. With only 2 valid FC
+arms we **report no standard deviation**, only the interval [62, 66]. The worst case,
+ReAct 72 vs FC 66, is **+6**, and the direction is consistent across every valid replicate.
 
-**噪声结构相反**：ReAct 首轮 43–56（sd 6.8）而最终收敛；FC 首轮 44–45（sd 0.58）
-而最终发散。机制在救回数的反向补偿（19 / 16 / **29**）。
+**The noise structures are opposite**: ReAct's turn-1 spans 43–56 (sd 6.8) yet its final
+converges; FC's turn-1 spans 44–45 (sd 0.58) yet its final diverges. The mechanism is inverse
+compensation in the rescue count (19 / 16 / **29**).
 
-**必须的限定**：三次最终值同为 72 是**总数的巧合**——三个 seed 的通过集合两两
-Jaccard 仅 0.71–0.80，题目级差异 15–24 道。
-**不可表述为"ReAct 结果完全稳定"**，准确说法是
-**多轮修复吸收了首轮采样噪声，使总量稳定而成分仍在变动**。
+**A necessary qualification**: the three identical final values of 72 are **a coincidence of
+totals** — pairwise Jaccard between the three seeds' passing sets is only 0.71–0.80, differing
+on 15–24 items. **This must not be stated as "ReAct's results are perfectly stable."** The
+accurate statement is that **multi-turn repair absorbs turn-1 sampling noise, holding the total
+steady while the composition still moves**.
 
-## 9. 与在先工作的关系
+## 9. Relation to prior work
 
-Qwen2.5-Coder 不产出 hermes 格式这一现象，**hanXen 于 2026-01-23 已在
-vLLM issue #32926 报告**并提出 `<tools>` 方案，该 issue 已被 close as not planned
-（标签 stale）——**该陷阱至今仍然生效**。
+The specific phenomenon that Qwen2.5-Coder does not emit hermes-format tool calls was
+**reported by hanXen on 2026-01-23 in vLLM issue #32926**, together with the `<tools>`
+proposal. That issue was closed as *not planned* (stale label) — **the trap is still live
+today**.
 
-本工作的增量不在于发现该现象，而在于：
-①在 21 倍规模上量化它偷走多少；②区分"模型意图 / 文本格式 / 服务端解析 / 实际执行 /
-多轮救回"五个层次；③给出四家族失败分层；④证明它同样污染 RL 训练信号；
-⑤给出闭环（换适配器恢复多少）。
+This work's contribution is not discovering the phenomenon. It is: (1) quantifying how much it
+steals across a 21x scale range; (2) separating five layers — model intent / text format /
+server parsing / actual execution / multi-turn rescue; (3) giving a cross-family failure
+taxonomy; (4) showing it contaminates RL training signal as well; (5) closing the loop by
+measuring how much the right adapter recovers.
 
-## 10. 局限
+## 10. Limitations
 
-1. 单一题库（KodCode 子集）、每臂 100 题、**`clean[:100]` 非随机取样**
-2. 主表为 `temperature=0` 单次采样；方差仅在 Llama-3.1-8B 上估计，且 FC 仅 2 个有效臂
-3. 十余次 McNemar **未做多重比较校正**；主效应（1e-3 量级）可过 Bonferroni，
-   边缘结果（p=0.093 / 0.125）不可
-4. 专用适配器同时更换 **parser、chat template 与 few-shot 三者**，只能称"适配器组合"，
-   不能单独归因于 parser；模板 × parser 的 2×2 消融未做
-5. 模型规模止于 32B，无前沿模型
-6. 训练侧仅 10 步 / 3 步的机制演示，**未做 150 步的效果对比**
-7. 数据勘误（7 个臂 provenance 记录错误、5 个臂通过率不可比）见 `ERRATA.md`
+1. A single item bank (a KodCode subset), 100 items per arm, and **`clean[:100]` is not a
+   random sample**
+2. The main table is single-sample at `temperature=0`; variance is estimated only on
+   Llama-3.1-8B, and there only 2 FC arms are valid
+3. A dozen-odd McNemar tests with **no multiple-comparison correction**; the main effects
+   (order 1e-3) survive Bonferroni, the marginal results (p=0.093 / 0.125) do not
+4. The dedicated adapter changes **parser, chat template and few-shot examples together**, so
+   it can only be called an "adapter combination" — attribution to the parser alone is not
+   available, and the template x parser 2x2 ablation was not run
+5. Model scale stops at 32B; no frontier models
+6. The training side is a 10-step / 3-step mechanism demonstration; **no 150-step outcome
+   comparison was run**
+7. Data errata (7 arms with wrong provenance records, 5 arms inadmissible for pass rates) are
+   in `ERRATA.md`
 
-## 11. 复现
+## 11. Reproduce
 
 ```bash
-# 探针（协议层）
+# probe (protocol layer)
 python probe_react_full.py --model <path> --port 8000 --n 100 \
   --protocol {react,fc} --strength {optional,mandatory} \
   --fc-schema {terse,rich,strict} --parser-adapter cross_family \
   --temperature 0.0 --out traj.jsonl
 
-# 逐臂严格验收（行数 / rc / n_err / provenance / 脚本 hash）
+# strict per-arm admissibility gate (line count / rc / n_err / provenance / script hash)
 python validate_arms.py
 
-# 主表与方差表（含缺失数据的臂自动标 N/A，拒绝计算）
+# main and variance tables (arms with missing data are marked N/A and refuse to compute)
 python runs/final/final_table.py
 
-# 三张主图
+# the three main figures
 python figures/make_figs.py
 ```
-**注意口径**：上式首环用的是**受训模型 1.5B** 的数值。§3 那条升到 80/100 的曲线是**跨规模现象**（32B），不可代入本训练的因果链——1.5B 在严判据下合格调用为 0。
 
-
-训练线复现见 `analyze_all.py`（报告中全部 EvalPlus 数字的唯一来源）。
+The training line is reproduced by `analyze_all.py` — the single source of every EvalPlus
+number in this report.

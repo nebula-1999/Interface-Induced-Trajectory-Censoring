@@ -1,84 +1,120 @@
-# 工具接口错配伪装成模型缺乏智能体能力
+# Interface-Induced Trajectory Censoring
 
-代码智能体的多轮 RL 项目，及其过程中发现的一类评测/训练污染。
+**Tool-call interfaces silently decouple observed agent behaviour from model capability, and contaminate reinforcement learning.**
 
-**结论文档**：[`RESULTS.md`](RESULTS.md) → 详细证据 [`writeup/section_config.md`](writeup/section_config.md)
-**数据勘误**：[`runs/final/ERRATA.md`](runs/final/ERRATA.md) —— **引用任何数字前请先读这份**
-**面试叙述**：[`writeup/interview_narrative.md`](writeup/interview_narrative.md)
+Wenbo Wang · City University of Hong Kong · `wenbwang3-c@my.cityu.edu.hk`
 
-## 一句话
+> **Language.** The paper, this README, [`RESULTS.md`](RESULTS.md) and
+> [`runs/final/ERRATA.md`](runs/final/ERRATA.md) are in English; each has a `_zh` counterpart.
+> The lab notebooks under `writeup/` and the operational checklists remain in Chinese —
+> they are working records, not claims, and translating them would risk laundering their
+> hedges. One Chinese passage is load-bearing and deliberately untranslated: the verbatim
+> model output in §4 of the paper, which is data.
 
-按 vLLM 官方文档为四个模型家族配置 function calling，**每个家族都会在不同层静默失败**，
-表现为"模型不会用工具"。该错配同时污染评测数字与 RL 训练信号——在我们自己的训练中，
-它使工具调用在梯度上不可达。
+![Intent–parse gap](figures/fig1_intent_parse_gap.png)
 
-![意图-解析缺口](figures/fig1_intent_parse_gap.png)
+Across a 21× scale range the serving stack reports **zero** parsed tool calls at every size,
+while well-formed calls the model actually emits rise to **80/100** at 32B.
+The more capable the model, the more of its behaviour the evaluation hides.
 
-## 目录
+---
 
-```
-RESULTS.md                顶层结论（12 节）
-writeup/
-  section_config.md       完整证据与对照设计（11 节）
-  interview_narrative.md  5 分钟叙述与追问弹药
-analysis/intent.py        调用意图的**唯一**判据（正文/表/图共用）
-figures/make_figs.py      三张主图
-runs/final/
-  traj_*.jsonl            58 个实验臂的逐题轨迹
-  ERRATA.md               7 个 provenance 错误臂、5 个通过率不可比臂
-  final_table.py          主表与方差表（含错误的臂自动标 N/A）
-  validate_arms.py        逐臂严格验收
-probe_react_full.py       协议探针（ReAct / FC，四种 schema 变体）
-sandbox.py                受限沙箱（10s / 512MB / cgroup 感知并行度）
-code_tool.py              verl 工具（FC 路径）
-react_agent_loop.py       自定义 verl AgentLoop（ReAct 路径）
-analyze_all.py            EvalPlus 训练结果的唯一来源
-```
+## What this is
 
-## 上手先跑这个
+We set out to train a multi-turn code agent with RL and could not explain our own curve:
+pass@1 rose 2.6–2.8 points across three runs, but **91–94% of newly-passing items passed on
+the first turn**, and items rescued by turn 2 or later stayed flat at **6–9 out of 540** from
+step 0 to step 150. RL improved first drafts and left multi-turn debugging untouched.
 
-```bash
-python preflight_toolcall.py --port 8000     # 5 秒，任何 FC 评测之前
-```
+The reason was not the model. **The tool was never successfully called** — and nothing in the
+stack said so: HTTP 200, `tool_calls: []`, a well-formed single-turn trajectory.
 
-一条 canonical 请求验 `tool_calls` 非空、`name` 正确、`arguments` 可解析，
-再用 `tool_choice: required` 做阳性对照区分「模型不调用」与「管线坏了」。
-本文全部静默失败都会被它抓住。
+Configuring four families for function calling on vLLM *following official documentation*,
+each fails at a different layer, and the most consequential failures are silent:
 
-## 复现
+| Family | Layer | Symptom | Remedy |
+|---|---|---|---|
+| DeepSeek-Coder | template | chat template never injects tools | none |
+| Qwen2.5-Coder | parser | emits ```json, not `<tool_call>` | dedicated adapter (0→84) |
+| Llama-3.1-8B | schema | calls *the task function* as a tool (23%) | `strict: true` (23→0) |
+| Mistral-7B | token | repeats `[TOOL_CALLS]` → HTTP 400 | none found |
 
-分析与制图（**无需 GPU**，本地可跑）：
+The same mismatch reaches RL training: under function calling a 10-step GRPO run executes
+**zero** tool calls while `critic/rewards/mean` climbs from 0.233 to 0.281 — the dashboard
+looks healthy while the branch being trained does not exist.
+
+**But opening the channel is not sufficient.** A 75-step ReAct run executing **23,676** tool
+calls leaves multi-turn rescues flat at 6–8/540, indistinguishable from runs where none
+executed. The bottleneck is not singular, and we report that rather than the closure we
+wanted.
+
+## Paper
+
+[`paper/`](paper/) is an Overleaf-ready LaTeX package (compile with **XeLaTeX**).
+Full draft in Markdown: [`writeup/paper_draft.md`](writeup/paper_draft.md).
+
+**Read [`runs/final/ERRATA.md`](runs/final/ERRATA.md) before citing any number.** It lists
+seven arms whose recorded provenance is wrong, five arms inadmissible for pass-rate
+comparison, and one retracted *p*-value.
+
+## Reproduce
+
+No GPU needed for analysis and figures:
 
 ```bash
 pip install -r requirements.txt
-python analysis/intent.py          # 规模曲线的四档计数
-python runs/final/final_table.py   # 主表 / 方差表 / 错误率表
-python figures/make_figs.py        # 三张主图
+python analysis/intent.py            # the single intent criterion (tight/strong/weak)
+python analysis/reparse_matrix.py    # same bytes, four parser rules
+python analysis/funnel.py            # five-layer funnel (Figure 1)
+python runs/final/final_table.py     # main / variance / error-rate tables
+python figures/make_figs.py
 ```
 
-探针（需要一台起着 vLLM 的机器）：
+Probe (needs a vLLM server):
 
 ```bash
 python probe_react_full.py --model <path> --port 8000 --n 100 \
   --protocol {react,fc} --strength {optional,mandatory} \
   --fc-schema {terse,rich,strict} --parser-adapter cross_family \
   --temperature 0.0 --seed 0 --out traj.jsonl
-python validate_arms.py            # 逐臂验收：行数/rc/n_err/provenance/脚本 hash
+python validate_arms.py              # per-arm admissibility gate
 ```
 
-## 已知限制
+## Take this with you
 
-见 [`RESULTS.md` §10](RESULTS.md)。最重要的三条：单一题库、每臂 100 题且**非随机取样**；
-主表为 `temperature=0` 单次采样；专用适配器同时更换 parser/模板/few-shot 三者，
-只能称"适配器组合"。
+[`preflight_toolcall.py`](preflight_toolcall.py) — 98 lines, runs in seconds. It issues one
+canonical request, asserts `tool_calls` is non-empty with the right `name` and parseable
+`arguments`, then repeats under `tool_choice: required` as a positive control.
+**It would have caught every silent failure in this paper.**
 
-**`sandbox.py` 依赖 Linux 的 `preexec_fn` 与 `RLIMIT_AS`，在 macOS 上单元测试会失败**；
-沙箱相关功能需在 Linux 下运行。
+```bash
+python preflight_toolcall.py --port 8000
+```
 
-## 第三方组件
+## Layout
 
-`plugin/` 下的 Qwen2.5-Coder `<tools>` parser 来自
+```
+paper/                  LaTeX package (Overleaf-ready)
+writeup/                full draft, evidence appendix, interview narrative
+analysis/               single intent criterion, re-parse matrix, funnel, training curves
+figures/                5 figures + generator
+runs/final/             49 full-length arms, ERRATA, per-configuration index
+validation/             human-validation pack, adjudication pack, scorer
+fixes/                  AUDIT.md and the run scripts for each experiment generation
+preflight_toolcall.py   the deliverable check
+```
+
+## Prior work
+
+The specific observation that Qwen2.5-Coder does not emit `hermes`-format tool calls was
+reported in [vLLM issue #32926](https://github.com/vllm-project/vllm/issues/32926)
+(2026-01-23), closed as *not planned*. **We did not discover that phenomenon.** This work
+quantifies it across scale, separates five layers of the failure, gives a cross-family
+taxonomy, measures its effect inside RL training, and tests what a repair recovers.
+
+## License
+
+MIT (this work). The bundled Qwen2.5-Coder `<tools>` parser is Apache-2.0 from
 [hanXen/vllm-qwen2.5-coder-tool-parser](https://github.com/hanXen/vllm-qwen2.5-coder-tool-parser)
-（Apache 2.0）。其 chat template 的 few-shot 示例原为 `get_weather`，与本实验唯一合法工具
-`run_tests` 不符，会诱导模型调用不存在的工具，**已改写**；原件保留为 `.orig`，
-两版 SHA256 见 `writeup/section_config.md` §8。
+at commit `1b92150`; its few-shot examples were rewritten from `get_weather` to `run_tests`
+and the original is retained with both hashes recorded in `ERRATA.md`.

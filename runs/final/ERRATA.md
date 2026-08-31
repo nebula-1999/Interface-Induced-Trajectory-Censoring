@@ -1,90 +1,109 @@
-# 数据勘误（必须与轨迹文件一同阅读）
+# Errata (read alongside the trajectory files)
 
-## 1. 七个 ReAct 臂的 `max_tokens` provenance 记录错误
+> 中文版见 [`ERRATA_zh.md`](ERRATA_zh.md).
 
-以下文件的记录值为 `2048`，**实际生成上限是 1024**。原因：`probe_react_full.py`
-的 `gen()` 默认参数长期为 `max_tokens=1024`，而 `gen_fc()` 用全局 `MAX_TOKENS=2048`；
-落盘的 provenance 统一写 `MAX_TOKENS`，因此 ReAct 侧记录与实际不符。
-2026-08-31 11:20 修复（`gen` 默认改为 `MAX_TOKENS`）。
+## 1. Seven ReAct arms record the wrong `max_tokens` provenance
 
-```
-traj_v3_Llama8B_react.jsonl        记 2048 / 实 1024
-traj_v3_Qwen7B_react.jsonl         记 2048 / 实 1024
-traj_v3_Mistral7B_react.jsonl      记 2048 / 实 1024
-traj_v11_DS1.3b_react.jsonl        记 2048 / 实 1024
-traj_v11_DS6.7b_react.jsonl        记 2048 / 实 1024
-traj_v11_Llama32_1B_react.jsonl    记 2048 / 实 1024
-traj_v11_Llama32_3B_react.jsonl    记 2048 / 实 1024
-```
-
-**影响方向**：同期 FC 臂均为真实 2048，故此前所有 ReAct vs FC 对比中，
-**FC 一方获得更长的生成预算**。ReAct 仍在这些对比中胜出，因此已报告的协议差距
-是**保守估计**；修正后只会扩大，不会缩小。
-
-**替代数据**：
-- v11 四臂 → 由 `traj_v13_*_react.jsonl` 取代（真实 2048）
-- v3 三臂 → 由 `traj_v14_*_react.jsonl` 取代（真实 2048）
-
-引用时一律使用 v13 / v14 版本；v3 / v11 的 ReAct 臂仅作历史记录保留。
-
-## 2. Llama-3.1-8B FC 的 L1 需人工更正
-
-`traj_v3_Llama8B_fc.jsonl` 记录的 L1（发起率）为 97/100，但其中 **23 条实为调用了
-题目函数本身**而非 `run_tests`。该批数据产生于加入函数名校验之前，`has_action`
-未区分工具名。**更正后真实 L1 = 74/100**。
-（`traj_v8_Llama8B_recheck.jsonl` 以相同配置重跑这 23 题，23/23 复现为 `wrong_tool`，
-工具名为 `can_form_word`、`check_password_strength` 等题目函数。）
-
-同批次的 `traj_v3_Qwen7B_fc_nosuffix.jsonl` L1=0，无需更正；
-`traj_v3_Mistral7B_fc.jsonl` L1=2，该 2 条未逐条复核工具名。
-
-## 3. 不可用于通过率比较的臂
+The files below record `2048`; the **actual generation limit was 1024**. Cause: the `gen()`
+helper in `probe_react_full.py` carried a default of `max_tokens=1024` for a long time, while
+`gen_fc()` used the global `MAX_TOKENS=2048`. The provenance block written to disk recorded
+`MAX_TOKENS` for both paths, so the ReAct side disagreed with what was actually sent.
+Fixed 2026-08-31 11:20 (`gen`'s default changed to `MAX_TOKENS`).
 
 ```
-traj_v5_Mistral7B_fc_official.jsonl        n_err=42  （rc=2）
-traj_v9_Mistral7B_fc_official_strict.jsonl n_err=39  （rc=2）
-traj_v9_Mistral7B_fc_strict.jsonl          n_err=3   （rc=2）
-traj_v3_Mistral7B_fc.jsonl                 n_err=2   （rc=2）
+traj_v3_Llama8B_react.jsonl        recorded 2048 / actual 1024
+traj_v3_Qwen7B_react.jsonl         recorded 2048 / actual 1024
+traj_v3_Mistral7B_react.jsonl      recorded 2048 / actual 1024
+traj_v11_DS1.3b_react.jsonl        recorded 2048 / actual 1024
+traj_v11_DS6.7b_react.jsonl        recorded 2048 / actual 1024
+traj_v11_Llama32_1B_react.jsonl    recorded 2048 / actual 1024
+traj_v11_Llama32_3B_react.jsonl    recorded 2048 / actual 1024
+```
+
+**Direction of the bias.** The contemporaneous FC arms were genuinely at 2048, so in every
+affected ReAct-vs-FC comparison **the FC side had the longer generation budget**. ReAct still
+won those comparisons, which makes the reported protocol gaps a **conservative estimate**:
+correcting the defect can only widen them, not shrink them.
+
+**Replacement data.**
+
+- the four v11 arms are superseded by `traj_v13_*_react.jsonl` (genuinely 2048)
+- the three v3 arms are superseded by `traj_v14_*_react.jsonl` (genuinely 2048)
+
+Cite the v13 / v14 versions throughout. The v3 / v11 ReAct arms are retained only as a
+historical record.
+
+## 2. The Llama-3.1-8B FC initiation rate needed a manual correction
+
+`traj_v3_Llama8B_fc.jsonl` records L1 (initiation) as 97/100, but **23 of those calls invoked
+the task's own function** rather than `run_tests`. That batch predates tool-name validation,
+and `has_action` did not distinguish which tool was called. **The corrected figure is
+L1 = 74/100.**
+
+`traj_v8_Llama8B_recheck.jsonl` re-runs exactly those 23 items under the same configuration:
+23/23 reproduce as `wrong_tool`, with tool names such as `can_form_word` and
+`check_password_strength` — the task functions themselves.
+
+From the same batch, `traj_v3_Qwen7B_fc_nosuffix.jsonl` has L1 = 0 and needs no correction;
+`traj_v3_Mistral7B_fc.jsonl` has L1 = 2, and those two calls were not individually re-checked
+for tool name.
+
+## 3. Arms inadmissible for pass-rate comparison
+
+```
+traj_v5_Mistral7B_fc_official.jsonl        n_err=42  (rc=2)
+traj_v9_Mistral7B_fc_official_strict.jsonl n_err=39  (rc=2)
+traj_v9_Mistral7B_fc_strict.jsonl          n_err=3   (rc=2)
+traj_v3_Mistral7B_fc.jsonl                 n_err=2   (rc=2)
 traj_v11_Llama32_3B_fc_strict.jsonl        rc=2
 ```
-上述臂的**错误率普查有效**（那正是被研究的现象），
-但**通过率不可比**（存在缺失数据）。
 
-## 4. provenance schema 跨代漂移
+For these arms the **error-rate census is valid** — that is precisely the phenomenon under
+study — but **pass rates are not comparable**, because data is missing rather than failing.
+Any *p*-value computed across them is withdrawn; specifically, the previously reported
+p = 0.648 is retracted.
 
-字段随开发逐步增加，共四代 schema：早期臂缺 `seed` / `temperature` / `fc_schema`。
-关键字段（`model` / `protocol` / `adapter` / `max_tokens` / `clean_index`）全代齐备。
-`script_sha256` 字段始终未成功加入（补丁两次被中断），脚本一致性改由外部
-`v13_pinned_hashes.txt` 与验证器比对保证。
+## 4. Provenance schema drifted across generations
 
-## 5. 已核验为正确的事项
+Fields were added incrementally over four schema generations: the earliest arms lack `seed`,
+`temperature` and `fc_schema`. The fields that matter for the claims — `model`, `protocol`,
+`adapter`, `max_tokens`, `clean_index` — are present in every generation.
 
-- **49 个满 100 题的正式臂共用同一个 100 题集合**（`clean[:100]`，唯一集合数 = 1），配对有效
-  - 另有 `traj_v8_Llama8B_recheck.jsonl` 为 23 题定性重跑（按设计只跑那 23 条），
-    以及 8 个 `*smoke*` 的 n=3 冒烟文件，二者均不计入正式臂
-  - 此前本文件写"37 个"，系统计时实验尚未跑完的快照数，已更正
-- 所有 FC 臂的 `max_tokens` 确为 2048
-- A9 的采样确实生效：temp 0.6 下两个 seed 间首轮代码 95/100 不同、最终结果 16/100 翻转
+The `script_sha256` field was never successfully added (the patch was interrupted twice).
+Script consistency is instead guaranteed externally, by comparing against
+`v13_pinned_hashes.txt` with the validator.
 
+## 5. Verified correct
 
-## 6. 第三方组件版本
+- **All 49 full-length (n=100) formal arms share one and the same 100-item set** (`clean[:100]`;
+  number of distinct sets = 1), so the pairing is valid.
+  - Separately, `traj_v8_Llama8B_recheck.jsonl` is a 23-item qualitative re-run (by design it
+    covers only those 23), and there are 8 `*smoke*` files at n=3. Neither counts as a formal arm.
+  - An earlier version of this file said "37" — that was a snapshot taken while the counting
+    experiment was still running. Corrected.
+- Every FC arm was genuinely at `max_tokens=2048`.
+- A9's sampling genuinely took effect: at temperature 0.6, two seeds differ on 95/100
+  first-turn programs and flip the final outcome on 16/100.
 
-Qwen2.5-Coder `<tools>` parser 取自
+## 6. Third-party components
+
+The Qwen2.5-Coder `<tools>` parser comes from
 [hanXen/vllm-qwen2.5-coder-tool-parser](https://github.com/hanXen/vllm-qwen2.5-coder-tool-parser)
-（Apache 2.0），下载时间 2026-08-31 00:45，对应分支 `main` 当时的最新提交：
+(Apache 2.0), downloaded 2026-08-31 00:45, at what was then the head of `main`:
 
 ```
 commit 1b921501f30cbfe347dccb1db7de3c82a1d55131  (1b92150, 2026-04-29)
         "fix: buffer partial <tools> prefix in streaming to prevent tag leak"
 ```
 
-本地文件 SHA256（前 20 位）：
+Local file SHA256 (first 20 hex digits):
 
 ```
-c16bb1f88936a2d96c7c  qwen2_5_coder_tool_parser.py              （未修改）
-736bd175adbf90942c1d  tool_chat_template_qwen2_5_coder.jinja    （**已修改**：few-shot 由 get_weather 改为 run_tests）
-a95b2a9b91e65b3d452f  tool_chat_template_qwen2_5_coder.jinja.orig（原件）
+c16bb1f88936a2d96c7c  qwen2_5_coder_tool_parser.py               (unmodified)
+736bd175adbf90942c1d  tool_chat_template_qwen2_5_coder.jinja     (MODIFIED: few-shot get_weather -> run_tests)
+a95b2a9b91e65b3d452f  tool_chat_template_qwen2_5_coder.jinja.orig (original)
 ```
 
-修改原因：原模板的 few-shot 示例调用 `get_weather`，与本实验唯一合法工具 `run_tests`
-不符，会诱导模型调用不存在的工具，从而同时虚高 L1 与污染"空参数"统计。
+Reason for the modification: the template's few-shot example calls `get_weather`, which is not
+the single legal tool in this experiment (`run_tests`). Left unchanged it induces calls to a
+non-existent tool, simultaneously inflating L1 and contaminating the empty-argument statistics.
