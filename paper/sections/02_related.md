@@ -21,7 +21,7 @@ made matters worse. Whether constraints hurt elsewhere in the same stack is unte
 Guided-decoding machinery (Willard & Louf, *Outlines*) underlies both `strict` and vLLM's
 `required` mode.
 
-**Tool-use benchmarks.** BFCL, τ-bench (Yao et al.), ToolLLM/ToolBench (Qin et al.),
+**Tool-use benchmarks.** BFCL, τ-bench [@yao2025taubench], ToolLLM/ToolBench (Qin et al.),
 API-Bank (Li et al.) and Toolformer (Schick et al.) evaluate or train tool use. To our
 knowledge these report tool-call rates as parsed by the serving layer. §5.2 shows that
 number can be zero while 80/100 well-formed calls are emitted, which — if the pattern
