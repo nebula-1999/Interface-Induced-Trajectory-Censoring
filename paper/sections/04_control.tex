@@ -12,6 +12,9 @@ tool_choice = required  $\to$ finish_reason = tool_calls  tool_calls = 1
                           arguments = {"code": "def count_distinct(nums):\n    return len(set(nums))"}
 \end{verbatim}
 
+\noindent\emph{The assistant content is reproduced verbatim; our task prompts are in
+Chinese, and we do not translate model output in transcripts.}
+
 Under \texttt{required}, \texttt{hermes} parses correctly --- server flag, parser and chat template are all
 functional. The zero under \texttt{auto} is therefore model behaviour, not misconfiguration.
 
