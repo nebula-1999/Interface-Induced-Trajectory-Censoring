@@ -1,0 +1,37 @@
+  #173 status=ok passed=0 failed=0 errors=1 | mmary info ============================
+ERROR test_solution.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.10s
+
+已写出 verified_ids.json（7414 条可用）
+    return list(combinations_with_replacement(l, n))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MemoryError
+  MBPP+ Mbpp/599 status=timeout
+    
+已写出 evalplus_bad.json
+  HumanEval+ HumanEval/23  候选变体数=0
+  HumanEval+ HumanEval/28  候选变体数=0
+  HumanEval+ HumanEval/34  候选变体数=0
+  HumanEval+ HumanEval/35  候选变体数=0
+  HumanEval+ HumanEval/58  候选变体数=0
+  HumanEval+ HumanEval/66  候选变体数=0
+
+已写出 probes_repair.jsonl
+stack done 16:07:19
+smoke ended 16:11:43
+smoke ok 11:24:12
+baseline Qwen2.5-Coder-1.5B-Instruct done 11:29:27
+baseline Qwen2.5-1.5B-Instruct done 11:36:18
+step2 done 11:53:00
+step3 ended 16:34:46
+  评测点数: 11
+  最后一步: step:69
+  报错数:   1
+prompt_probe done 17:45:19
+seed 1 done 21:53:04
+seed 2 done 21:53:04
+rloo done 22:43:14 评测点=0
+rloo done 02:44:29 评测点=11
+baseline Qwen2.5-Coder-7B-Instruct done 02:52:20
+7b eval done 02:52:20

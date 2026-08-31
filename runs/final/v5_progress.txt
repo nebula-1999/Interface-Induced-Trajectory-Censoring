@@ -1,0 +1,7 @@
+Llama8B_fc_official rc=0 lines=100 22:06:00
+Mistral7B_fc_official rc=2 lines=100 22:14:41
+Qwen1.5B_fc_intent rc=0 lines=100 22:17:57
+Qwen3B_fc_intent rc=0 lines=100 22:23:16
+Qwen7B_fc_intent rc=0 lines=100 22:32:37
+Qwen14B_fc_intent rc=0 lines=100 22:50:20
+Qwen32B_fc_intent rc=0 lines=100 23:46:22

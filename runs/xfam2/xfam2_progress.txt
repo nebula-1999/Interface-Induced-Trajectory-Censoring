@@ -1,0 +1,5 @@
+Llama8B react done 100 00:39:55
+Llama8B fc done 100 00:46:33
+Mistral7B react done 100 00:57:50
+Mistral7B fc done 100 01:07:58
+DS6.7B react done 100 01:19:07

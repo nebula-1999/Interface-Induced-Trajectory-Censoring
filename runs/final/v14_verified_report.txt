@@ -1,0 +1,6 @@
+探针 hash 当前 f8b1559cfda179c9 / 起跑时 f8b1559cfda179c9 → 一致
+臂                         n  n_err  rc  判定  说明
+Llama8B_react2048       100      0   0  OK    
+Qwen7B_react2048        100      0   0  OK    
+Mistral7B_react2048     100      0   0  OK    
+整体: 全部通过

@@ -1,0 +1,100 @@
+  #173 status=ok passed=0 failed=0 errors=1 | mmary info ============================
+ERROR test_solution.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.10s
+
+已写出 verified_ids.json（7414 条可用）
+    return list(combinations_with_replacement(l, n))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MemoryError
+  MBPP+ Mbpp/599 status=timeout
+    
+已写出 evalplus_bad.json
+  HumanEval+ HumanEval/23  候选变体数=0
+  HumanEval+ HumanEval/28  候选变体数=0
+  HumanEval+ HumanEval/34  候选变体数=0
+  HumanEval+ HumanEval/35  候选变体数=0
+  HumanEval+ HumanEval/58  候选变体数=0
+  HumanEval+ HumanEval/66  候选变体数=0
+
+已写出 probes_repair.jsonl
+stack done 16:07:19
+smoke ended 16:11:43
+smoke ok 11:24:12
+baseline Qwen2.5-Coder-1.5B-Instruct done 11:29:27
+baseline Qwen2.5-1.5B-Instruct done 11:36:18
+step2 done 11:53:00
+step3 ended 16:34:46
+  评测点数: 11
+  最后一步: step:69
+  报错数:   1
+prompt_probe done 17:45:19
+seed 1 done 21:53:04
+seed 2 done 21:53:04
+rloo done 22:43:14 评测点=0
+rloo done 02:44:29 评测点=11
+baseline Qwen2.5-Coder-7B-Instruct done 02:52:20
+7b eval done 02:52:20
+toolcall diag done 03:39:13
+toolcall diag done 03:58:40
+diag2 done 04:02:27
+prompt diag done 04:04:47
+multiturn diag done 04:07:38
+7b toolcall diag done 04:29:41
+3b toolcall diag done 04:33:09
+1.5B n200 done 04:43:39
+3B n200 done 05:15:16
+7B n200 done 05:40:19
+14B n200 done 06:41:27
+32B n200 done 09:30:20
+ALL DONE 09:30:20
+poscontrol 1.5B done 09:47:27
+poscontrol 32B done 10:34:23
+POSCONTROL DONE 10:34:23
+ablation 1.5B done 10:44:52
+ablation 32B done 12:14:28
+ABLATION DONE 12:14:28
+ABLATION FLIPPED -> 结论有变，关机等人决策 12:14:52
+react3 done 12:25:48
+react3 done 12:31:11
+WD_REACT DONE 12:50:08
+OK  1.5B_fc_optional  (rc=0 lines=200 errs=0) 13:08:06
+OK  1.5B_fc_mandatory  (rc=0 lines=200 errs=0) 13:11:33
+OK  1.5B_react_optional  (rc=0 lines=200 errs=0) 13:26:46
+OK  1.5B_react_mandatory  (rc=0 lines=200 errs=0) 13:40:53
+OK  7B_fc_optional  (rc=0 lines=100 errs=0) 13:50:09
+OK  7B_fc_mandatory  (rc=0 lines=100 errs=0) 13:55:17
+OK  7B_react_optional  (rc=0 lines=100 errs=0) 14:09:20
+OK  7B_react_mandatory  (rc=0 lines=100 errs=0) 14:24:00
+OK  32B_fc_optional  (rc=0 lines=50 errs=0) 14:49:00
+OK  32B_fc_mandatory  (rc=0 lines=50 errs=0) 15:06:35
+BAD 32B_react_optional  (rc=0 lines=50/50 errs=2) 结果不可用 15:42:13
+BAD 32B_react_mandatory  (rc=0 lines=50/50 errs=2) 结果不可用 16:12:37
+MATRIX DONE 16:13:03
+MANIFEST + 原子打包完成 16:39:25
+patch32b done 17:11:24
+OK  DS1.3B_fc_optional (rc=0 lines=100 errs=0)
+OK  DS1.3B_react_optional (rc=0 lines=100 errs=0)
+DS_DIAG_DONE
+DS6.7B_fc_optional done
+DS6.7B_react_optional done
+DS67_READY
+DS3_READY
+DS3B_READY
+DS3B_READY
+RAW_READY
+DS3B_READY
+CSMOKE_READY 23:49:40
+CSMOKE2_READY 23:52:47
+CSMOKE3_READY 00:08:41
+V3_READY 21:47:24
+V4_READY 21:58:48
+V5_READY 23:46:24
+V6B_READY 00:15:52
+V8_READY 00:16:58
+V9_RELIABILITY_ONLY 可靠性(错误率)结果有效；通过率因请求错误不可比 00:37:32
+V7_READY 01:11:18
+V7FC_INVALID rc=1 steps=0
+0/10 01:15:22
+V7RC_INVALID rc=1 steps=0
+0/3 01:17:28

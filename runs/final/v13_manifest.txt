@@ -1,0 +1,11 @@
+probe_sha=f8b1559cfda179c9
+DS1.3b_react2048 rc=0 lines=100 OK n=100 n_err=0 sha=None  11:25:33
+DS6.7b_react2048 rc=0 lines=100 OK n=100 n_err=0 sha=None  11:45:16
+Llama32_1B_react2048 rc=0 lines=100 OK n=100 n_err=0 sha=None  11:49:49
+Llama32_3B_react2048 rc=0 lines=100 OK n=100 n_err=0 sha=None  11:55:50
+a9_react_s1 rc=0 lines=100 OK n=100 n_err=0 sha=None  12:09:45
+a9_react_s2 rc=0 lines=100 OK n=100 n_err=0 sha=None  12:24:58
+a9_react_s3 rc=0 lines=100 OK n=100 n_err=0 sha=None  12:41:59
+a9_fc_s1 rc=0 lines=100 OK n=100 n_err=0 sha=None  12:51:39
+a9_fc_s2 rc=0 lines=100 OK n=100 n_err=0 sha=None  12:59:45
+a9_fc_s3 rc=2 lines=100 BAD n=100 n_err=1 sha=None  13:08:20

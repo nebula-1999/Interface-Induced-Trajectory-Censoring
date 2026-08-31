@@ -1,0 +1,1 @@
+Llama8B_fc_strict rc=0 lines=100 23:55:08

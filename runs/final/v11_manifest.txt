@@ -1,0 +1,6 @@
+DS1.3b_react rc=0 lines=100 10:44:01
+DS6.7b_react rc=0 lines=100 10:55:13
+Llama32_1B_react rc=0 lines=100 10:59:46
+Llama32_1B_fc_strict rc=0 lines=100 11:01:27
+Llama32_3B_react rc=0 lines=100 11:07:14
+Llama32_3B_fc_strict rc=2 lines=100 11:11:51

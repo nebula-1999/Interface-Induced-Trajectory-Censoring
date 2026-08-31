@@ -1,0 +1,2 @@
+Llama8B_fc_rich rc=0 lines=100 21:55:00
+Llama8B_fc_cot rc=0 lines=100 21:58:46

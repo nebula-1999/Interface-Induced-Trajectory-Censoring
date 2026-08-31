@@ -1,0 +1,25 @@
+# verl 的工具注册。rollout.multi_turn.tool_config_path 指向本文件。
+tools:
+  - class_name: code_tool.CodeTool
+    config:
+      # ToolType 枚举目前只有 native 一个取值，但这个键是必填的
+      # （tool_registry.py:62 直接取 tool_config.config.type）
+      type: native
+      timeout: 10.0
+      mem_mb: 512
+      # 截断工具返回。与 multi_turn.max_tool_response_length 呼应，
+      # 多轮 debug 的轨迹比单轮长得多，这个上限必须守住
+      max_chars: 1200
+    tool_schema:
+      type: function
+      function:
+        name: run_tests
+        description: 把你写的 Python 代码交给测试运行，返回通过情况与报错。
+        parameters:
+          type: object
+          properties:
+            code:
+              type: string
+              description: 完整的 Python 代码（函数定义及其依赖的 import）
+          required:
+            - code

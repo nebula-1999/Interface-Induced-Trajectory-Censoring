@@ -1,0 +1,4 @@
+# 自定义 agent loop 注册表。verl 从 rollout.agent.agent_loop_config_path 读取。
+# name 必须与 react_agent_loop.py 里 @register("react_agent") 一致。
+- name: react_agent
+  _target_: react_agent_loop.ReActAgentLoop

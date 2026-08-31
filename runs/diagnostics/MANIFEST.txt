@@ -1,0 +1,44 @@
+# 实验清单  2026-08-29T08:39:19Z
+## 代码指纹
+  probe_react_full.py  sha256=9a5d12cc8a95868b1e3c8f83a0fc8ed348694a4503a4c7f3f5fc52b71f4a7d77
+  matrix.sh  sha256=baaacce767f3117eacbc5b205f8299569420b8f1105a492cc847a42f6ae6d1d5
+  sandbox.py  sha256=82a901337b502d7efcfd3aeb6078292100af0765f76b2449dab7141fb2e0b2f6
+## 环境
+  torch=2.13.0+cu130
+  vllm=0.27.1
+  transformers=5.10.4
+  datasets=5.0.1
+  python=3.12.3
+  gpu=NVIDIA A800 80GB PCIe
+## 模型 revision
+  Qwen2.5-Coder-1.5B-Instruct  config_sha=88f9a17863c05fb3
+  Qwen2.5-Coder-14B-Instruct  config_sha=9051fe83840dcd3a
+  Qwen2.5-Coder-32B-Instruct  config_sha=9fb1473a47db69c0
+  Qwen2.5-Coder-3B-Instruct  config_sha=8f85440a3222d187
+  Qwen2.5-Coder-7B-Instruct  config_sha=c0242402ad6a13b3
+## 题目 ID（各组前若干，完整清单见 JSONL 的 clean_index 字段）
+  traj_1.5B_fc_mandatory.jsonl  n=200  ids=0,1,2...
+  traj_1.5B_fc_optional.jsonl  n=200  ids=0,1,2...
+  traj_1.5B_react_mandatory.jsonl  n=200  ids=0,1,2...
+  traj_1.5B_react_optional.jsonl  n=200  ids=0,1,2...
+  traj_32B_fc_mandatory.jsonl  n=50  ids=0,1,2...
+  traj_32B_fc_optional.jsonl  n=50  ids=0,1,2...
+  traj_32B_react_mandatory.jsonl  n=50  ids=0,1,2...
+  traj_32B_react_optional.jsonl  n=50  ids=0,1,2...
+  traj_7B_fc_mandatory.jsonl  n=100  ids=0,1,2...
+  traj_7B_fc_optional.jsonl  n=100  ids=0,1,2...
+  traj_7B_react_mandatory.jsonl  n=100  ids=0,1,2...
+  traj_7B_react_optional.jsonl  n=100  ids=0,1,2...
+## 各格校验状态
+OK  1.5B_fc_optional  (rc=0 lines=200 errs=0) 13:08:06
+OK  1.5B_fc_mandatory  (rc=0 lines=200 errs=0) 13:11:33
+OK  1.5B_react_optional  (rc=0 lines=200 errs=0) 13:26:46
+OK  1.5B_react_mandatory  (rc=0 lines=200 errs=0) 13:40:53
+OK  7B_fc_optional  (rc=0 lines=100 errs=0) 13:50:09
+OK  7B_fc_mandatory  (rc=0 lines=100 errs=0) 13:55:17
+OK  7B_react_optional  (rc=0 lines=100 errs=0) 14:09:20
+OK  7B_react_mandatory  (rc=0 lines=100 errs=0) 14:24:00
+OK  32B_fc_optional  (rc=0 lines=50 errs=0) 14:49:00
+OK  32B_fc_mandatory  (rc=0 lines=50 errs=0) 15:06:35
+BAD 32B_react_optional  (rc=0 lines=50/50 errs=2) 结果不可用 15:42:13
+BAD 32B_react_mandatory  (rc=0 lines=50/50 errs=2) 结果不可用 16:12:37

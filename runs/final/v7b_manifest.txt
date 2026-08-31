@@ -1,0 +1,3 @@
+fc3 rc=0 steps=10/10 tool_calls=0 10:05:06
+react3 SKIPPED_FC3_INVALID
+react3 rc=0 steps=3/3 tool_calls=788 10:22:49

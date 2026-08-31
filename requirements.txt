@@ -1,0 +1,12 @@
+# 探针与分析（本地即可运行）
+datasets>=2.14
+matplotlib>=3.7
+pandas>=2.0
+pyarrow>=14.0
+pytest>=7.4
+
+# 训练与服务（需 Linux + CUDA，本项目实测环境见 README）
+# vllm==0.27.1
+# torch==2.13.0+cu130
+# transformers==5.10.4
+# verl==0.9.0

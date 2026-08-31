@@ -1,0 +1,3 @@
+Qwen7B_fc_plugin rc=0 lines=100 00:04:22
+Qwen1.5B_fc_plugin rc=0 lines=100 00:08:43
+Qwen3B_fc_plugin rc=0 lines=100 00:15:50

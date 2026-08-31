@@ -1,0 +1,16 @@
+{
+  "bad": [
+    [
+      "HumanEval+",
+      "HumanEval/32"
+    ],
+    [
+      "MBPP+",
+      "Mbpp/599"
+    ]
+  ],
+  "known_defects": {
+    "HumanEval/32": "test 断言本身写错",
+    "Mbpp/599": "测试输入对参考解不可行"
+  }
+}

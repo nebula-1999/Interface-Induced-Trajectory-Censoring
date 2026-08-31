@@ -1,0 +1,2 @@
+Mistral7B_fc_strict rc=2 lines=100 n_err=3 00:29:18
+Mistral7B_fc_official_strict rc=2 lines=100 n_err=39 00:37:30
