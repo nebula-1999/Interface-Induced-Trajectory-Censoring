@@ -14,12 +14,14 @@ We show this number can be zero while the model emits well-formed calls, and tha
 resulting misattribution contaminates both benchmarks and reinforcement learning.
 
 Configuring four model families for function calling on vLLM **following official
-documentation**, we find each fails at a different layer and all fail silently:
+documentation**, we find each fails at a different layer, and — critically — the most consequential ones
+fail **silently**:
 DeepSeek-Coder's chat template never injects tools; Qwen2.5-Coder emits JSON the
 recommended `hermes` parser cannot see; Llama-3.1-8B hallucinates *the task function
 itself* as a callable tool in 23% of items; Mistral-7B repeats its `[TOOL_CALLS]` marker
-and triggers HTTP 400. Only one missing flag produces an error — the rest return HTTP 200
-with an empty `tool_calls` array.
+and triggers HTTP 400. Mistral's failure does surface as HTTP 400; the other three do not. Apart from a missing
+`--enable-auto-tool-choice`, every failure we found either returns HTTP 200 with an empty
+`tool_calls` array or is indistinguishable from a model that declines to call tools.
 
 For Qwen2.5-Coder the undercount **grows monotonically with scale**: across a 21× range
 the server parses 0/100 calls at every size, while well-formed calls the model actually
@@ -70,6 +72,24 @@ serving layer reports zero tool calls — exactly what a model that refuses to u
 would produce. We call this **interface-induced trajectory censoring**: the agent's
 trajectory is truncated at an interface boundary, and the truncation is systematically
 misattributed to the policy.
+
+The interface acts in **two opposite directions**, and our results contain one clean
+instance of each:
+
+- **Masking.** The model emits a valid call, the parser does not recognise it, the action
+  never reaches the environment (Qwen2.5-Coder, §5.2).
+- **Suppression.** The model emits an *invalid* call, and a schema constraint removes it
+  from the sampleable support before it becomes an action (Llama-3.1-8B, §5.3).
+
+The correct general statement is therefore neither "the failure is in the model" nor "the
+failure is in the interface":
+
+> **The serving interface is simultaneously part of the measurement function and part of
+> the agent's effective action space.**
+
+Under RL this is not a metaphor. The interface sits literally between policy and
+environment, `θ → Y → I(Y) → a → o → r`; when `I(Y) = ∅` holds for every tool-intended
+`Y`, the experience distribution contains no tool-mediated trajectory at all.
 
 *Censoring* is used in its statistical sense. The observation is not noisy or missing at
 random; it is **structurally unobservable beyond a threshold set by the interface**, and
@@ -219,8 +239,11 @@ that *the pipeline is capable*; it does not establish that the model spontaneous
 | Llama-3.1-8B | schema | calls the *task function* as a tool (23%) | ❌ requires argument inspection | `strict: true` |
 | Mistral-7B-v0.3 | token | repeats `[TOOL_CALLS]` → HTTP 400 | ⚠️ errors, but only sometimes | **none found** |
 
-Only a missing `--enable-auto-tool-choice` raises an error (HTTP 400 on `tool_choice: auto`).
-Every other failure returns HTTP 200 with `tool_calls: []`.
+Mistral is the one family whose failure announces itself (HTTP 400 on a repeated
+`[TOOL_CALLS]` marker). The other three — and a missing `--enable-auto-tool-choice` aside —
+return HTTP 200 with `tool_calls: []`, which is byte-identical to a model that declined to
+call the tool. **The claim is not that all failures are silent; it is that the silent ones
+dominate and are the hardest to attribute.**
 
 **A false-positive capability check.** The natural pre-flight test — does
 `apply_chat_template(tools=…)` render the schema into the prompt? — correctly rejects
@@ -250,6 +273,25 @@ Raw-tag counts confirm the mechanism and reproduce hanXen's baseline exactly: ac
 sizes, `<tool_call>` and `<tools>` appear **zero** times; ```json and `"name":` appear
 throughout.
 
+**Offline re-parse matrix.** To exclude "your extractor is simply better than hermes", we
+re-parsed the *same stored bytes* under four rules (`analysis/reparse_matrix.py`, no GPU):
+
+| Arm (server-parsed = 0) | server | hermes replay | `<tools>` replay | bare JSON | tight |
+|---|---|---|---|---|---|
+| Qwen-1.5B | 0 | 0 | 0 | 0 | 0 |
+| Qwen-3B | 0 | 0 | 0 | 5 | 4 |
+| Qwen-7B | 0 | 0 | 0 | 22 | 21 |
+| Qwen-14B | 0 | 0 | 0 | 42 | 36 |
+| Qwen-32B | 0 | **0** | 0 | **100** | **80** |
+
+The `hermes` column is zero at every scale: the model never produces that format. The
+bare-JSON and tight columns are not: the calls exist. Their difference from the server
+column is precisely what the format mismatch removes.
+
+† For arms where the server *did* parse, offline content-only re-parsing is **undefined,
+not zero**: a successful parse moves the call into the structured `tool_calls` field and
+leaves `content` empty. Those rows are reported as N/A rather than 0.
+
 ### 5.3 A 23% failure that survived three controls and fell to the fourth
 
 Llama-3.1-8B under FC issues a tool call on 97/100 items, but on 23 of them the call names
@@ -269,6 +311,30 @@ rate is 74/100, not 97/100** (`ERRATA.md` §2).
 | server not configured per documentation | + official chat template | 23 → 22 (*p*=0.125) | rejected |
 | **schema constraint not enabled** | **+ `strict: true`** | **23 → 0 (*p*=0.0001)** | **accepted** |
 
+#### The constraint penetrates to task performance
+
+Adding the official template alone changes nothing; adding `strict` on top of it changes
+everything. Isolating the single variable:
+
+| Arm | Calls issued | Wrong-tool | Executed | Turn-1 | Final |
+|---|---|---|---|---|---|
+| terse (parser only) | 97 | 23 | 74 | 34 | 49 |
+| + official template | 95 | 22 | 73 | 33 | 44 |
+| + official template **+ `strict`** | 98 | **0** | **97** | **46** | **61** |
+| ReAct (reference) | 98 | 0 | 97 | **61** | 80 |
+
+The official template moves nothing (22 wrong-tool, 73 executed, 33/44 — marginally worse
+than terse). `strict` alone drives the chain
+**constraint → valid execution (73→97) → task performance (33→46 turn-1, 44→61 final)**.
+This is not a formatting fix: 23 items that previously produced no executable code now
+execute and become repairable. All 98 calls under `strict` carry code containing
+`def`/`class`/`import`; none was converted into a well-named call with a malformed payload.
+
+**Where the residual protocol gap lives.** With `strict` enabled, FC and ReAct have
+*identical* execution mechanics — 98 calls, 0 wrong-tool, 97 executed on both sides — yet
+turn-1 pass differs 46 vs 61. Once the interface is equalised, **what remains is
+first-draft code quality under the protocol, not tool-use mechanics.**
+
 The rich schema explicitly warned *"this tool is not the function you are asked to
 implement; do not pass the task function's parameters"* and supplied an example — the
 confusion persisted at 22/100. The CoT control is the more interesting negative: asking the
@@ -277,9 +343,12 @@ raised confusion from 23 to 59, because the parameters it had just reasoned abou
 ones it then supplied. **On an interface with an ambiguous role boundary, more reasoning
 amplifies misuse rather than correcting it.**
 
-The correct statement combines the model and the configuration: **the model does exhibit
-role confusion, and constrained decoding suppresses it.** The defect is real and surfaces
-whenever the constraint is absent — which is vLLM's `auto` default.
+The defensible statement is narrower than either "model defect" or "configuration bug":
+**the model exhibits role confusion under unconstrained function calling, and the interface
+constraint determines whether that confusion can be expressed as an environment action.**
+We cannot show from these experiments that the underlying tendency persists once
+constrained — only that it stops reaching the action space. vLLM's `auto` mode is
+unconstrained by default.
 
 **This section is itself an instance of the paper's claim.** We approached with explicit
 suspicion, ran three single-variable paired controls, and still wrote a configuration
