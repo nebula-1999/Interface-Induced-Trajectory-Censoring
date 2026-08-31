@@ -3,9 +3,11 @@ title: "Interface-Induced Trajectory Censoring"
 message: "If you use this code or data, please cite it as below."
 type: software
 authors:
-  - alias: nebula1992
-    email: guanguan1109yoga@gmail.com
-repository-code: "https://github.com/nebula1992/interface-induced-trajectory-censoring"
+  - family-names: Wang
+    given-names: Wenbo
+    email: wenbwang3-c@my.cityu.edu.hk
+    affiliation: City University of Hong Kong
+repository-code: "https://github.com/nebula-1999/interface-induced-trajectory-censoring"
 abstract: >-
   Tool-call interfaces silently decouple observed agent behaviour from model
   capability, and contaminate reinforcement learning. Four model families

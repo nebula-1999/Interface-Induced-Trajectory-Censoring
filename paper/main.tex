@@ -1,0 +1,47 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{caption}
+\hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black,
+            urlcolor=blue!50!black}
+\graphicspath{{../figures/}}
+
+\title{\textbf{Interface-Induced Trajectory Censoring}\\[0.3em]
+\large Tool-call interfaces silently decouple observed agent behaviour from
+model capability, and contaminate reinforcement learning}
+
+\author{Wenbo Wang\\
+City University of Hong Kong\\
+\texttt{wenbwang3-c@my.cityu.edu.hk}}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\input{sections/01_intro}
+\input{sections/02_related}
+\input{sections/03_setup}
+\input{sections/04_control}
+\input{sections/05_results}
+\input{sections/06_discussion}
+\input{sections/07_limitations}
+\input{sections/08_conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+\input{sections/A_errata}
+\input{sections/B_repro}
+
+\end{document}
