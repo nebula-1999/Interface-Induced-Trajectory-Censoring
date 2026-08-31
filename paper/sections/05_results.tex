@@ -64,7 +64,7 @@ scaffolding from Qwen2.5-Instruct while the checkpoint was never trained on it.
 \textbf{Protocol support is a per-checkpoint property and is not inferable from the chat
 template}: templates are inherited, training is not.
 
-\subsection{Censoring grows monotonically with scale}
+\subsection{Within one family, censoring grows monotonically with checkpoint size}
 \label{sec:scale}
 
 \begin{figure}[t]
@@ -104,7 +104,10 @@ Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjo
 \end{longtable}
 
 Across a 21$\times$ range the server reports a flat zero while well-formed emitted calls rise to
-80/100. \textbf{The more capable the model, the more of its behaviour is censored.} Under the
+80/100. \textbf{Within this family, the larger the checkpoint, the larger the absolute undercount
+under the same mismatched interface.} We state this as a within-family observation across
+five checkpoints, not as a law relating capability to censoring: parameter count is not
+capability, and we have one family's scale ladder, not several. Under the
 loose criterion every one of 32B's 100 items contains a \texttt{\{"name":"run\_tests",\ldots{}\}} structure.
 
 * The 1.5B row uses the \textbf{optional} tool instruction. Under the \textbf{mandatory} prompt
@@ -348,10 +351,12 @@ Llama-3.1-8B & 96 & 78 & 60 & 25/7 & \textbf{0.0021} \\
 \end{longtable}
 
 \textbf{The answer differs by family, and we report it as such.} On Llama --- where \texttt{strict}
-equalises execution at 97/97 --- the protocol gap is unambiguous. On Qwen the gap does \emph{not}
-survive conditioning: most of 74 vs 62 is attributable to the residual 11-item parse
-deficit, not to the protocol. \textbf{The residual protocol effect is established on one family,
-not two}; \S5.4's headline comparison should be read with this decomposition attached.
+equalises execution at 97/97 --- the protocol gap is unambiguous. On Qwen the residual difference is \textbf{not detected} at this sample size: the paired
+difference is $+8.4$\,pp with 95\% CI $[-0.5, +17.4]$ (\emph{p}=0.118, discordant odds
+$11/4$). \textbf{We do not read $p>0.05$ as evidence of no effect} --- the interval admits a
+residual as large as 17 points, i.e.~larger than the effect we detect on Llama.
+\textbf{The residual protocol effect is established on one family and undetermined on the
+other}; \S5.4's headline comparison should be read with this decomposition attached.
 
 \subsubsection{Access to feedback vs.~use of feedback}
 
@@ -449,7 +454,9 @@ layer and no positively-rewarded tool trajectory ever exists to be reinforced.
 
 \begin{quote}
 Interface-induced censoring does not merely weaken a learning signal.
-It renders a policy branch \textbf{unreachable by gradient}.
+The tool-using branch receives \textbf{no direct on-policy gradient signal under the
+observed rollout distribution}, and is \textbf{effectively inaccessible to policy-gradient
+learning in this cold-start regime}.
 \end{quote}
 
 \textbf{Causal chain.}
@@ -477,7 +484,6 @@ the server's. Attaching a plugin to the vLLM rollout server therefore changes no
 training --- a distinction worth stating because the two look identical from the outside.
 
 \textbf{(ii) A verl-side parser recovers calls, but none of them are the tool.} We implemented a
-\textbf{(ii) A verl-side parser recovers calls, but none of them are the tool.} We
 implemented a \texttt{qwen2\_5\_coder} parser inside verl's registry accepting
 \texttt{<tools>} tags, \texttt{json} fenced blocks and bare JSON. On the exact training
 condition (1.5B, mandatory prompt, $n{=}100$) it lifts recoverable calls from
@@ -544,6 +550,68 @@ never receives tool feedback''. Whether the \S5.5 adapter also restores the trai
 was not tested. The demonstration is 10 and 3 steps --- a \textbf{mechanism} result, not an
 outcome comparison.
 
+\subsubsection{Opening the channel does not, by itself, unlock multi-turn learning}
+\label{sec:sufficiency}
+
+The censoring result above says a broken interface removes the tool-using branch from the
+experience distribution. It does \emph{not} say that restoring the channel is \emph{sufficient}
+for the policy to learn multi-turn repair. We tested that directly.
+
+\textbf{What this arm is, and what it is not.} Since no executable repaired-FC condition exists
+in this stack (previous subsection), we ran the one configuration that does deliver tool
+feedback at this scale: \textbf{ReAct}, 75 GRPO steps, same model, data, hyper-parameters,
+seed and evaluation hook as the three historical runs. The run executed \textbf{23{,}676 tool
+calls}. \textbf{This is a ReAct arm, not a repaired-FC arm}: it changes protocol and
+interface together, so it is a test of whether \emph{any} working tool channel suffices, not
+an isolation of the parser. We state this explicitly because the weaker reading --- that a
+parser repair was applied to the FC arm --- is not what was run and is not what we claim.
+
+\begin{table}[htbp]
+\centering
+\caption{ReAct training with a working tool channel, 23{,}676 executed calls. Rescues by
+turn $\geq$2 do not move. The three historical FC runs, in which \textbf{zero} tool calls
+executed, give rescue sequences $[7,9,6,6,7,6,10,8,9,8,6]$, $[8,7,6,7,7,7,7,5,6,6,8]$ and
+$[7,5,7,5,7,8,9,9,8,9]$ --- the two conditions are indistinguishable on this metric.}
+\label{tab:sufficiency}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+step & turn-1 & final & \textbf{rescued by turn $\geq$2} & repair channel \\
+\midrule
+0  & 359 & 367 & 8 & 263 \\
+15 & 340 & 346 & \textbf{6} & 266 \\
+30 & 340 & 346 & \textbf{6} & 262 \\
+45 & 341 & 349 & \textbf{8} & 261 \\
+60 & 341 & 347 & \textbf{6} & 274 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Rescues over 60 steps: \textbf{6, 6, 8, 6} --- net change zero, and inside the range of the
+zero-execution runs. Whether tool feedback actually arrived made no measurable difference to
+this metric.
+
+Composition barely moved either: adjacent checkpoints have solved-set Jaccard 0.974--0.983
+(3--6 items gained, 3--5 lost). This contrasts with the generation-level churn between steps
+15 and 30, where 85 of 542 first-turn completions changed verbatim --- \textbf{the policy
+moves, the solved set does not} (\S\ref{sec:composition}).
+
+\textbf{What this does and does not license.} It does not license ``interface repair unlocks
+multi-turn capability''; we tested the closest available version of that claim and it failed.
+It licenses the narrower statement we defend: \textbf{the interface determines whether
+tool-mediated trajectories exist at all, and their absence is sufficient to explain why no
+multi-turn signal was available --- but their presence is not sufficient to produce
+multi-turn learning at this scale and budget.} The bottleneck is not singular.
+
+\textbf{Caveats.} 75 steps, one seed, 1.5B; the historical comparisons run to 150 steps, so
+the comparison covers the first 60 evaluated steps of each. The step-75 evaluation was lost:
+the checkpoint write at step 75 exhausted the disk (4.86\,GB required, 4.6\,GB free) and the
+process aborted after training had completed. The trend over 0--60 is flat enough that the
+missing point would not change the reading, but we note the loss rather than presenting an
+unexplained gap. Because this arm is not a parser-repair control, it cannot separate
+``a working channel is insufficient'' from ``ReAct in particular is insufficient''; the
+experiment that would separate them is named in \S7.
+
 \subsection{Pressure on a broken interface makes things worse}
 
 Two independent controls point the same way. Adding a reasoning scaffold to FC raised
@@ -606,6 +674,7 @@ more for deployment than for leaderboard position.
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 \subsection{Multi-turn repair stabilises the total while its composition keeps moving}
+\label{sec:composition}
 
 Two independent observations, from different axes, show the same structure.
 
@@ -614,7 +683,7 @@ yet the sets of solved items have pairwise Jaccard 0.71--0.80 --- 15--24 items d
 seeds. Turn-1 pass varies widely (43--56, sd 6.8) and the rescue count compensates inversely
 (19 / 16 / 29).
 
-\textbf{Across training steps} (\S5.10): between step 15 and step 30 of the ReAct run, 85 of 542
+\textbf{Across training steps} (\S\ref{sec:sufficiency}): between step 15 and step 30 of the ReAct run, 85 of 542
 first-turn completions changed verbatim and 6 items flipped outcome --- 3 gained, 3 lost ---
 leaving turn-1 and final pass numerically identical (340 / 346 at both checkpoints). The
 policy is demonstrably moving; the aggregate is not.

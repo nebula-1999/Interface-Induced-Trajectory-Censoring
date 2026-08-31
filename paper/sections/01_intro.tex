@@ -73,7 +73,8 @@ deterministic filter on output \emph{format}. What carries over --- and what mot
 is the structure of the inference error: the observation is not noisy or missing at random,
 it is \textbf{systematically unobservable on one side of a boundary}, and the boundary
 correlates with the very quantity being measured. We show below that it
-correlates \emph{positively} with model scale: the more capable the model, the more of its
+correlates \emph{positively} with checkpoint size within this family: the larger the
+checkpoint, the more of its
 behaviour is censored.
 
 \subsection{What is and is not new here}
@@ -95,12 +96,23 @@ consequence:
   parse} / \emph{actual execution} / \emph{multi-turn rescue} into five independently measured
   quantities. Reporting only the third is the standard practice we argue against.
 \item
-  \textbf{A cross-family taxonomy.} Four families failing at four different layers ---
-  template, parser, schema, token --- with different remedies and different detectability.
+  \textbf{Four concrete failure modes motivating a layered taxonomy.} Four families failing
+  at four different layers --- template, parser, schema, token --- with different remedies
+  and different detectability. The evidence is deliberately asymmetric and we mark it as
+  such: Qwen carries a scale ladder, a replay matrix and a repair; Llama carries a
+  single-variable intervention; Mistral has no admissible comparison at all; DeepSeek is a
+  template check. This is four instances, not an enumeration of the failure space.
 \item
   \textbf{RL contamination, measured.} Direct instrumentation showing the censored interface
-  yields zero tool executions in training rollouts, and an argument that this renders the
-  tool-using branch unreachable by policy gradient.
+  yields zero tool executions in training rollouts, so the sampled experience contains no
+  tool-mediated trajectory to reinforce and the branch is effectively inaccessible to
+  policy-gradient learning in this cold-start regime. We argue this from the sampled
+  rollouts, not from the support of the policy: \emph{zero observed samples is not zero
+  probability}. We report it as mechanism evidence observed inside rollout collection, not
+  as a clean causal RL result --- the comparison arm changes protocol and interface
+  together, and the parser-repair control that would separate them is not constructible in
+  this stack (\S5.6). We further show that opening the channel is not by itself sufficient
+  (\S\ref{sec:sufficiency}): the bottleneck is not singular.
 \item
   \textbf{A repair loop.} How much is recovered by installing a correct adapter, and what
   protocol gap survives the repair.

@@ -16,7 +16,10 @@ tool_choice = required  -> finish_reason = tool_calls  tool_calls = 1
 Chinese, and we do not translate model output in transcripts.}
 
 Under \texttt{required}, \texttt{hermes} parses correctly --- server flag, parser and chat template are all
-functional. The zero under \texttt{auto} is therefore model behaviour, not misconfiguration.
+functional. \textbf{This establishes that the execution pipeline and parser are capable of
+accepting a conforming call; it does not by itself locate the zero under \texttt{auto}
+entirely in the model.} Separating the two requires the emitted-intent measurement of
+\S\ref{sec:scale}, which is what the rest of the paper supplies.
 
 \textbf{Bound on this control.} \texttt{required} uses constrained decoding, so it establishes only
 that \emph{the pipeline is capable}; it does not establish that the model spontaneously knows the

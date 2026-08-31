@@ -12,8 +12,8 @@ missing \texttt{--enable-auto-tool-choice}, every failure we found either return
 with an empty \texttt{tool\_calls} array or is indistinguishable from a model that declines
 to call tools.
 
-For Qwen2.5-Coder the undercount \textbf{grows monotonically with scale}: across a
-21$\times$ range the server parses 0/100 calls at every size, while well-formed calls the
+\textbf{Within Qwen2.5-Coder, larger checkpoints show a monotonically larger absolute
+undercount under the same mismatched interface}: across a 21$\times$ range the server parses 0/100 calls at every size, while well-formed calls the
 model actually emits rise from 0 to 80/100 at 32B (human-validated, $\kappa=0.936$).
 Llama's failure is eliminated by a single \texttt{strict: true} flag ($23\to0$,
 $p=0.0001$)---a remedy that three prior single-variable controls failed to identify.
@@ -24,12 +24,16 @@ ReAct run matched in model, data, hyper-parameters, seed and prompt strength (th
 step count) executes 2.05 calls per rollout. The training dashboard shows nothing wrong:
 \texttt{critic/rewards/mean} climbs from 0.233 to 0.281 \emph{while the tool-execution count
 stays exactly zero}. Because the reward admits direct answers, no trajectory ever rewards
-tool use---\textbf{the tool-using branch is unreachable by gradient}.
+tool use---\textbf{the tool-using branch receives no direct on-policy gradient signal
+under the observed rollout distribution}.
 
 Installing a dedicated adapter restores the mechanism \emph{at evaluation time}
-(parse $0\to84$, multi-turn $0\to37$, rescues $0\to9$). \textbf{In training, opening the
-channel is not sufficient}: a 75-step run executing 23{,}676 tool calls leaves multi-turn
-rescues flat at 6--8/540, indistinguishable from runs in which none executed---the
-bottleneck is not singular. A protocol gap nonetheless remains on one of two admissible
-families after conditioning on successful parses. \textbf{Interface problems mask protocol problems;
+(parse $0\to84$, multi-turn $0\to37$, rescues $0\to9$). \textbf{In training, a working tool
+channel is not sufficient}: a 75-step \emph{ReAct} run executing 23{,}676 tool calls leaves
+multi-turn rescues flat at 6--8/540, indistinguishable from runs in which none executed.
+This arm changes protocol and interface together---the parser-repair control it would take
+to isolate the interface is not constructible in this training stack, and we say so rather
+than imply it---but it is enough to show the bottleneck is not singular. After conditioning on successful
+parses a residual protocol gap is established on one family (Llama, $p=0.0021$) and
+undetermined on the other (Qwen, $+8.4$\,pp, 95\% CI $[-0.5,+17.4]$). \textbf{Interface problems mask protocol problems;
 only after fixing the former does the latter become visible.}

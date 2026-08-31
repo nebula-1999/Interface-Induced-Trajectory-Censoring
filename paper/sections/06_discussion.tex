@@ -20,8 +20,12 @@ caught every silent failure in this paper.
 points before the \texttt{strict} fix and 19 after --- \textbf{two fifths of an apparent protocol effect
 was an interface effect}, and both components are separately significant (\emph{p}=0.0075 and
 \emph{p}=0.0019). On Qwen the decomposition goes further: conditioning on items the server
-parsed, the remaining gap is \textbf{not} significant (\emph{p}=0.119), i.e.~essentially all of the
-observed difference is attributable to the interface. Comparisons of agent protocols that
+parsed, we \textbf{do not detect} a statistically significant residual difference
+(\emph{p}=0.118; paired difference $+8.4$\,pp, 95\% CI $[-0.5, +17.4]$). That interval is wide
+enough to contain effects as large as the unconditioned gap, so it is evidence of
+\emph{insufficient resolution}, not of equivalence; and conditioning on a successful parse is
+post-treatment conditioning on a variable the interface itself determines.
+We therefore read it as a diagnostic decomposition, not a causal estimate. Comparisons of agent protocols that
 do not first exhaust the serving configuration matrix are not measuring protocols --- and
 even after repair, the residual must be re-tested conditionally before it is called a
 protocol effect.
