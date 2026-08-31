@@ -294,10 +294,19 @@ Human validation of the intent criterion. Two annotation rounds on a stratified 
 
 </div>
 
-All 12 round-1 false positives shared one cause: **the tool call sits mid-document, after a
-fenced “‘python block** (match positions 1209–2585 in outputs of median length \~2000). The
-annotator read the code block, concluded “this is a direct answer, not a call”, and stopped.
+The 12 round-1 false positives split into two causes, and the second one is ours, not the
+annotator’s. **Eleven are reading-order failures**: the tool call sits mid-document,
+after a fenced ```` ```python ```` block (match positions 1209–2585 in outputs of median length
+\~2000); the annotator read the code block, concluded “this is a direct answer,
+not a call”, and stopped. **One is an instrument failure**: for a 32B item the matched
+span begins at character 2585 and the annotation pack truncated every output at 2400, so the
+evidence was *not in the pack at all*. That item could not have been labelled correctly.
 Re-shown the matched span alone, 10 of 13 disputed items were reversed.
+
+We flag the second cause rather than folding it into the first because **the annotation
+instrument reproduced the very failure this paper is about**: a truncating tool silently
+removed the evidence, and what came out the other side was “the model did not call the
+tool”. The corrected pack (below) carries every output in full.
 
 We report this rather than only the adjudicated figure because **it reproduces the paper’s
 mechanism on a human reader**: the evidence was present in every case, and what determined
@@ -334,6 +343,13 @@ labels, identical rubric, with the adjudication rule fixed in advance to review 
 inter-annotator disagreements rather than only those that disagree with the classifier).
 It was not completed in time for this version. Until it is, the magnitude of §5.2’s
 headline should be read as the bracket above.
+
+**A bound on the measurement itself.** The probe stores at most 4000 characters of
+raw output per item; 10 of the 98 sampled outputs reach that ceiling. The classifier and
+both annotators therefore read identical bytes, which is what agreement requires, but a
+call emitted beyond character 4000 is invisible to all three. Emitted-call counts are
+accordingly a **lower bound**, which is conservative for our claim: it can only
+understate the censoring we report.
 
 ## Validity gating
 
