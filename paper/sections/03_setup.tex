@@ -62,6 +62,7 @@ seeded and the annotator saw only the raw output, never the classifier's label.
 
 We report \textbf{two rounds}, because the first one is itself a finding.
 
+{\small
 \begin{longtable}[]{@{}lllllll@{}}
 \caption{Human validation of the intent criterion. Two annotation rounds on a stratified sample; round 2 supplied the model's own preceding turn as context. The classifier is used only to count what the server discarded, so its recall matters more than its precision --- and after correction it misses almost nothing.}\label{tab:validation}\\
 \toprule
@@ -76,6 +77,7 @@ Round 1 (raw output only) & 86.7\% & 0.713 & 70.0\% & 96.6\% & 12 & 1 \\
 After adjudication & \textbf{96.9\%} & \textbf{0.936} & \textbf{95.0\%} & 97.4\% & 2 & 1 \\
 \bottomrule
 \end{longtable}
+}
 
 All 12 round-1 false positives shared one cause: \textbf{the tool call sits mid-document, after a
 fenced ```python block} (match positions 1209--2585 in outputs of median length \textasciitilde2000). The

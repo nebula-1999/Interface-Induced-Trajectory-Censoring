@@ -13,6 +13,7 @@ was \textbf{1024}. Cause: \texttt{gen()} in the probe carried a default of
 and the provenance written to disk recorded \texttt{MAX\_TOKENS} for both. Fixed
 2026-08-31.
 
+{\footnotesize
 \begin{verbatim}
 traj_v3_Llama8B_react.jsonl        recorded 2048 / actual 1024
 traj_v3_Qwen7B_react.jsonl         recorded 2048 / actual 1024
@@ -22,6 +23,7 @@ traj_v11_DS6.7b_react.jsonl        recorded 2048 / actual 1024
 traj_v11_Llama32_1B_react.jsonl    recorded 2048 / actual 1024
 traj_v11_Llama32_3B_react.jsonl    recorded 2048 / actual 1024
 \end{verbatim}
+}
 
 \textbf{Direction of the bias.} The contemporaneous FC arms were genuinely at 2048, so in
 every affected ReAct-vs-FC comparison \textbf{the function-calling side had the larger
@@ -53,6 +55,7 @@ not individually re-checked for tool name.
 
 \subsection{Arms inadmissible for pass-rate comparison}
 
+{\footnotesize
 \begin{verbatim}
 traj_v3_Mistral7B_fc.jsonl                  n_err = 2   (rc=2)
 traj_v5_Mistral7B_fc_official.jsonl         n_err = 42  (rc=2)
@@ -60,6 +63,7 @@ traj_v9_Mistral7B_fc_strict.jsonl           n_err = 3   (rc=2)
 traj_v9_Mistral7B_fc_official_strict.jsonl  n_err = 39  (rc=2)
 traj_v13_Llama8B_fcstrict_t06_s3.jsonl      n_err = 1   (rc=2)
 \end{verbatim}
+}
 
 For these arms the \textbf{error-rate census remains valid} --- that census is itself a
 result --- but pass rates are not comparable because data are missing, and no $p$-value is
@@ -94,6 +98,7 @@ The Qwen2.5-Coder \texttt{<tools>} parser is taken from
 \texttt{hanXen/vllm-qwen2.5-coder-tool-parser} (Apache~2.0), downloaded 2026-08-31, at the
 then-current \texttt{main}:
 
+{\footnotesize
 \begin{verbatim}
 commit 1b921501f30cbfe347dccb1db7de3c82a1d55131  (1b92150, 2026-04-29)
         "fix: buffer partial <tools> prefix in streaming to prevent tag leak"
@@ -103,6 +108,7 @@ SHA256 (first 20):
   736bd175adbf90942c1d  tool_chat_template_qwen2_5_coder.jinja     (MODIFIED)
   a95b2a9b91e65b3d452f  tool_chat_template_qwen2_5_coder.jinja.orig (original)
 \end{verbatim}
+}
 
 The template was modified because its few-shot examples invoke \texttt{get\_weather}, a
 tool absent from our schema. Left unchanged it would induce calls to a non-existent tool,

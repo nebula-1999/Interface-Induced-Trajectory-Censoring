@@ -31,9 +31,11 @@ training loop recorded a well-formed single-turn trajectory.
 
 An agent evaluation does not measure a model. It measures a composition:
 
+{\footnotesize
 \begin{verbatim}
 model  x  protocol  x  serialization  x  parser  x  execution stack
 \end{verbatim}
+}
 
 Every stage can fail, and the failure of most stages is \textbf{indistinguishable at the output
 from model incapability}. When a parser does not recognise the format a model emits, the
