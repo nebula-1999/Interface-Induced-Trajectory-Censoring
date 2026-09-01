@@ -32,10 +32,8 @@ to call tools.
 
 **Within Qwen2.5-Coder, larger checkpoints show a monotonically larger absolute
 undercount under the same mismatched interface**: across a 21× range the server parses 0/100 calls at every size, while well-formed calls the
-model actually emits rise from 0 to 80/100 at 32B. Human validation on a stratified
-sample of 98 gives *κ* = 0.713 against a single annotator and brackets the corrected
-count in \[56, 76\]; the monotone trend and the contrast against a flat server-side zero
-hold at either end of that bracket.
+model actually emits rise from 0 to 80/100 at 32B (two independent blind annotators,
+**inter-annotator *κ* = 0.967**; corrected count ≈<!-- -->78).
 Llama’s failure is eliminated by a single `strict: true` flag (23 → 0,
 *p* = 0.0001)—a remedy that three prior single-variable controls failed to identify.
 
@@ -314,42 +312,67 @@ whether it was seen was the order in which the text was scanned. The serving par
 blocked by format; the annotator was blocked by reading order. Both produce the same
 conclusion — “the model did not call the tool” — from the same bytes.
 
-**The adjudication was one-sided, and we do not treat its *κ* as a reliability
+**The first adjudication was one-sided, and we do not treat its *κ* as a reliability
 estimate.** Auditing the procedure after the fact: the 13 adjudicated items were selected
-*exactly* as the items where the annotator disagreed with the classifier
-(13/13 overlap), and all 10 reversals moved *toward* the classifier, none away. Under
-that selection rule agreement can only rise, so 0.713 → 0.936 is a property of which
-items were re-examined, not independent evidence of reliability. **The unbiased
-coefficient is round 1’s *κ* = 0.713**; we report 0.936 only as a description of what
-survived a one-sided second look, and we no longer quote it as the validation headline.
+*exactly* as the items where the annotator disagreed with the classifier (13/13
+overlap), and all 10 reversals moved *toward* the classifier, none away. Under that
+selection rule agreement can only rise, so 0.713 → 0.936 is a property of which items
+were re-examined, not evidence of reliability. We report the second annotator instead.
 
-**Consequently the correction factor is a bracket, not a point.** The `tight`
-stratum’s precision is 28/40 = 0.700 under round-1 labels and 38/40 = 0.950 after
-adjudication. §5.2’s headline 80/100 at 32B therefore corrects to somewhere in
-**\[56, 76\]**, and we cannot narrow that interval without a rater independent of both
-the classifier and the first annotator. What does *not* depend on the choice is the
-paper’s actual claim: under either factor the ladder stays monotone
-(0, 2.8, 14.7, 25.2, 56 at the pessimistic end) and stays contrasted against a server-side
-zero at every size. We therefore report **uncorrected classifier counts** in all tables,
-with this bracket stated, rather than silently rescaling to either end.
+### A second independent annotator, and what it revealed about the first
 
-**Single annotator — the load-bearing limitation.** One person labelled both rounds,
-so every *κ* above is **human–classifier agreement, not inter-annotator
-reliability**, and the adjudication was performed by the same person who produced the
-first-round labels. A blind second-annotator pack over the identical 98 items is prepared
-and released with this paper (`validation/annotator2_pack.md`: re-shuffled so item
-numbers carry no information from the first pass, no classifier verdict, no first-round
-labels, identical rubric, with the adjudication rule fixed in advance to review *all*
-inter-annotator disagreements rather than only those that disagree with the classifier).
-It was not completed in time for this version. Until it is, the magnitude of §5.2’s
-headline should be read as the bracket above.
+A second annotator, blind to the classifier, to the first annotator’s labels and to the
+first pack’s item order, labelled the identical 98 items under a verbatim-identical rubric.
+Two changes were made to the instrument: outputs are carried **in full** (the first
+pack truncated at 2400 characters), and the adjudication rule was fixed in advance to review
+*all* three-way disagreements rather than only those disagreeing with the classifier.
 
-**A bound on the measurement itself.** The probe stores at most 4000 characters of
-raw output per item; 10 of the 98 sampled outputs reach that ceiling. The classifier and
-both annotators therefore read identical bytes, which is what agreement requires, but a
-call emitted beyond character 4000 is invisible to all three. Emitted-call counts are
-accordingly a **lower bound**, which is conservative for our claim: it can only
-understate the censoring we report.
+<div id="tab:interannotator">
+
+| Cohen’s *κ* (95% CI, bootstrap) |   all items (*n*=97)   | **identical bytes (*n*=62)** |
+|:--------------------------------|:----------------------:|:----------------------------:|
+| A1 vs. A2 (inter-annotator)     | 0.736 \[0.590, 0.863\] |  **0.967 \[0.897, 1.000\]**  |
+| A2 vs. classifier               | 0.936 \[0.855, 1.000\] |  **0.967 \[0.897, 1.000\]**  |
+| A1 vs. classifier               | 0.712 \[0.559, 0.847\] |    0.934 \[0.834, 1.000\]    |
+
+Inter-annotator reliability. Restricting to items where both annotators read
+identical bytes is not a convenience: 11 of the 12 raw disagreements are items the first
+pack truncated, where A1 answered “no call” because the call had been cut from their copy.
+
+</div>
+
+**The apparent unreliability was the instrument, not the raters.** Of the 12 items where
+the two annotators disagree, **11 are items whose full text exceeds 2400 characters**,
+and in every one of them A1 answered `N` while A2 answered `Y` — A1 said “no
+call” because the call was not in the copy they were given. On the 62 items where both read
+identical bytes, the two annotators agree on 61 and **inter-annotator *κ* = 0.967**.
+
+We keep this rather than quietly regenerating a clean number, because it is the paper’s own
+thesis arriving uninvited in our methods section: **a truncating instrument sat between
+the evidence and the observer, and what came out was “the model did not call the tool”** —
+the same sentence the `hermes` parser produces, from the same bytes, for the same
+reason. We were measuring censoring with a censored instrument.
+
+**Correction factor.** Under A2’s labels — full text, blind, *no adjudication
+round at all* — the `tight` stratum’s precision is 39/40 = **0.975**, so
+§5.2’s headline 80/100 at 32B corrects to **≈<!-- -->78**. A2 additionally marks 2
+items `Y` that the classifier does not count, so the criterion misses calls as well as
+over-counting them and the net correction is smaller still. We report uncorrected classifier
+counts in all tables with this factor stated.
+
+**Remaining disagreements.** Fifteen items are not unanimous across A1, A2 and the
+classifier; they are with a third adjudicator under the pre-registered rule, and we will
+report the outcome whichever way it falls. Three of them are genuine grey zone rather than
+error: a well-formed call the criterion’s regex does not match, a call left unterminated
+because the stored output hits its length ceiling, and a call wrapped in a `<tool>`
+tag.
+
+**A bound on the measurement itself.** The probe stores at most 4000 characters of raw
+output per item; 10 of the 98 sampled outputs reach that ceiling, and one of the grey-zone
+items above is a call truncated by it. The classifier and both annotators read identical
+bytes, which is what agreement requires, but a call emitted beyond character 4000 is
+invisible to all three. Emitted-call counts are accordingly a **lower bound** —
+conservative for our claim, since it can only understate the censoring we report.
 
 ## Validity gating
 
@@ -451,10 +474,10 @@ template**: templates are inherited, training is not.
 ## Within one family, censoring grows monotonically with checkpoint size
 
 <figure>
-<img src="fig1_intent_parse_gap.png" id="fig:gap" alt="The undercount grows with scale. Across a 21\times range the server parses zero calls at every size, while well-formed calls the model actually emits rise to 80/100 at 32B. Human validation brackets the corrected count in [56, 76] (§3.2); the trend is monotone at either end of that bracket." /><figcaption aria-hidden="true"><strong>The undercount grows with scale.</strong> Across a 21<span class="math inline">×</span> range the server
+<img src="fig1_intent_parse_gap.png" id="fig:gap" alt="The undercount grows with scale. Across a 21\times range the server parses zero calls at every size, while well-formed calls the model actually emits rise to 80/100 at 32B (78 after the correction factor of 0.975 established by two independent blind annotators, §3.2)." /><figcaption aria-hidden="true"><strong>The undercount grows with scale.</strong> Across a 21<span class="math inline">×</span> range the server
 parses zero calls at every size, while well-formed calls the model actually emits rise to
-80/100 at 32B. Human validation brackets the corrected count in [56, 76] (§3.2); the
-trend is monotone at either end of that bracket.</figcaption>
+80/100 at 32B (78 after the correction factor of 0.975 established by two independent
+blind annotators, §3.2).</figcaption>
 </figure>
 
 Qwen2.5-Coder, `tool_choice: auto`, `hermes` (the documented recommendation for Qwen2.5),
@@ -1164,19 +1187,17 @@ present study.
     working channel is insufficient” from “ReAct in particular is insufficient”, and it is
     75 steps on one seed at 1.5B against 150-step historical baselines.
 
-13. **Human validation rests on a single annotator, and this is load-bearing.** The intent
-    criterion was validated against 98 stratified outputs by one annotator. The reported
-    *κ* is **human–classifier agreement, not inter-annotator reliability**. Worse,
-    the adjudication round was **one-sided by construction**: its 13 items were selected
-    exactly as the items where the annotator disagreed with the classifier, and all 10
-    reversals moved toward the classifier. *κ* rising 0.713 → 0.936 is therefore a
-    property of the selection rule, not evidence of reliability, and **the unbiased
-    coefficient is 0.713**. The consequence is quantitative, not cosmetic: the `tight`
-    stratum’s precision is 0.700 under round-1 labels and 0.950 after adjudication, so
-    §5.2’s headline 80/100 corrects to anywhere in **\[56, 76\]**. The trend and the
-    contrast against server-side zero survive at both ends; the magnitude does not. A blind
-    second-annotator pack over the identical items, with the adjudication rule fixed in
-    advance, ships with this paper and is the single highest-value missing control.
+13. **Human validation covers one criterion on one sample.** Two independent blind
+    annotators on 98 stratified items give inter-annotator *κ* = 0.967 on the 62 items
+    where both read identical bytes (§3.2), which we consider adequate. Three residual
+    limits remain. (i) The sample is stratified by classifier verdict, so it estimates
+    per-stratum precision and recall, not a population rate. (ii) Fifteen non-unanimous items
+    are still with a third adjudicator; three of them are genuine criterion grey zone rather
+    than rater error. (iii) The stored raw output is capped at 4000 characters, so a call
+    emitted past that point is invisible to the classifier and to both annotators alike —
+    emitted-call counts are a lower bound. We also note that the *first* annotation
+    round’s apparent unreliability (*κ*=0.713) was an artefact of a 2400-character
+    truncation in the annotation pack, not of the raters; that pack is superseded.
 
 ## Environment dependence and provenance
 

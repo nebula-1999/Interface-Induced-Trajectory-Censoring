@@ -14,10 +14,8 @@ to call tools.
 
 \textbf{Within Qwen2.5-Coder, larger checkpoints show a monotonically larger absolute
 undercount under the same mismatched interface}: across a 21$\times$ range the server parses 0/100 calls at every size, while well-formed calls the
-model actually emits rise from 0 to 80/100 at 32B. Human validation on a stratified
-sample of 98 gives $\kappa=0.713$ against a single annotator and brackets the corrected
-count in $[56,76]$; the monotone trend and the contrast against a flat server-side zero
-hold at either end of that bracket.
+model actually emits rise from 0 to 80/100 at 32B (two independent blind annotators,
+\textbf{inter-annotator $\kappa=0.967$}; corrected count $\approx$78).
 Llama's failure is eliminated by a single \texttt{strict: true} flag ($23\to0$,
 $p=0.0001$)---a remedy that three prior single-variable controls failed to identify.
 

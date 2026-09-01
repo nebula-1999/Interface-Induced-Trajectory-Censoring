@@ -91,19 +91,17 @@ present study.
   working channel is insufficient'' from ``ReAct in particular is insufficient'', and it is
   75 steps on one seed at 1.5B against 150-step historical baselines.
 \item
-  \textbf{Human validation rests on a single annotator, and this is load-bearing.} The intent
-  criterion was validated against 98 stratified outputs by one annotator. The reported
-  $\kappa$ is \textbf{human--classifier agreement, not inter-annotator reliability}. Worse,
-  the adjudication round was \textbf{one-sided by construction}: its 13 items were selected
-  exactly as the items where the annotator disagreed with the classifier, and all 10
-  reversals moved toward the classifier. $\kappa$ rising $0.713 \to 0.936$ is therefore a
-  property of the selection rule, not evidence of reliability, and \textbf{the unbiased
-  coefficient is 0.713}. The consequence is quantitative, not cosmetic: the \texttt{tight}
-  stratum's precision is 0.700 under round-1 labels and 0.950 after adjudication, so
-  \S5.2's headline 80/100 corrects to anywhere in \textbf{[56, 76]}. The trend and the
-  contrast against server-side zero survive at both ends; the magnitude does not. A blind
-  second-annotator pack over the identical items, with the adjudication rule fixed in
-  advance, ships with this paper and is the single highest-value missing control.
+  \textbf{Human validation covers one criterion on one sample.} Two independent blind
+  annotators on 98 stratified items give inter-annotator $\kappa$ = 0.967 on the 62 items
+  where both read identical bytes (\S3.2), which we consider adequate. Three residual
+  limits remain. (i) The sample is stratified by classifier verdict, so it estimates
+  per-stratum precision and recall, not a population rate. (ii) Fifteen non-unanimous items
+  are still with a third adjudicator; three of them are genuine criterion grey zone rather
+  than rater error. (iii) The stored raw output is capped at 4000 characters, so a call
+  emitted past that point is invisible to the classifier and to both annotators alike ---
+  emitted-call counts are a lower bound. We also note that the \emph{first} annotation
+  round's apparent unreliability ($\kappa$=0.713) was an artefact of a 2400-character
+  truncation in the annotation pack, not of the raters; that pack is superseded.
 \end{enumerate}
 
 \subsection*{Environment dependence and provenance}

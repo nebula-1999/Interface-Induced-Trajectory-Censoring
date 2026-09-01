@@ -1,99 +1,99 @@
 item	answer	note
-1		
-2		
-3		
-4		
-5		
-6		
-7		
-8		
-9		
-10		
-11		
-12		
-13		
-14		
-15		
-16		
-17		
-18		
-19		
-20		
-21		
-22		
-23		
-24		
-25		
-26		
-27		
-28		
-29		
-30		
-31		
-32		
-33		
-34		
-35		
-36		
-37		
-38		
-39		
-40		
-41		
-42		
-43		
-44		
-45		
-46		
-47		
-48		
-49		
-50		
-51		
-52		
-53		
-54		
-55		
-56		
-57		
-58		
-59		
-60		
-61		
-62		
-63		
-64		
-65		
-66		
-67		
-68		
-69		
-70		
-71		
-72		
-73		
-74		
-75		
-76		
-77		
-78		
-79		
-80		
-81		
-82		
-83		
-84		
-85		
-86		
-87		
-88		
-89		
-90		
-91		
-92		
-93		
-94		
-95		
-96		
-97		
-98		
+1	Y	JSON调用(name=run_tests, code为字符串字面量)
+2	Y	JSON调用(name=run_tests, code为字符串字面量)
+3	Y	JSON调用(name=run_tests, code为字符串字面量)
+4	N	name=replace_missing_values, 非run_tests
+5	N	code为变量名, 非字符串字面量
+6	N	code为变量名(test_code), 非字符串字面量
+7	N	code为表达式(sample_code+test_code), 非字符串字面量
+8	Y	JSON调用(name=run_tests, code为字符串字面量)
+9	Y	含完好JSON调用(code为字符串字面量)
+10	Y	JSON调用(name=run_tests, code为字符串字面量)
+11	Y	JSON调用(name=run_tests, code为字符串字面量)
+12	N	仅有Python代码块, 无run_tests调用
+13	N	name=check_password_strength, 非run_tests
+14	N	run_tests调用未闭合(模型输出截断)
+15	N	仅有Python代码块, 无run_tests调用
+16	N	code为变量名, 非字符串字面量
+17	Y	JSON调用结构完整, code为含docstring的字符串字面量(内嵌"""使严格JSON解析失败, 按细则判Y)
+18	Y	JSON调用(name=run_tests, code为字符串字面量)
+19	Y	JSON调用(name=run_tests, code为字符串字面量)
+20	N	print包裹且code为变量名, 非字符串字面量
+21	Y	JSON调用(name=run_tests, code为字符串字面量)
+22	N	仅有Python代码块, 无run_tests调用
+23	N	仅有Python代码块, 无run_tests调用
+24	Y	JSON调用(name=run_tests, code为字符串字面量)
+25	N	仅有Python代码块, 无run_tests调用
+26	N	name=perform_operation, 非run_tests
+27	N	仅有Python代码块, 无run_tests调用
+28	N	code为变量名(test_code), 非字符串字面量
+29	Y	JSON调用(name=run_tests, code为字符串字面量)
+30	N	仅有Python代码块, 无run_tests调用
+31	N	run_tests({...})函数调用形式且code为变量, 无name字段
+32	Y	JSON调用(name=run_tests, code为字符串字面量)
+33	Y	JSON调用(name=run_tests, code为字符串字面量)
+34	Y	JSON调用(name=run_tests, code为字符串字面量)
+35	Y	JSON调用(name=run_tests, code为字符串字面量)
+36	N	run_tests({...})函数调用形式, 非JSON对象(无name字段)
+37	Y	JSON调用(name=run_tests, code为字符串字面量)
+38	N	仅有Python代码块, 无run_tests调用
+39	N	code为变量名, 非字符串字面量
+40	N	run_tests调用未闭合(模型输出截断)
+41	N	仅有Python代码块, 无run_tests调用
+42	Y	JSON调用(name=run_tests, code为字符串字面量)
+43	N	仅有Python代码块, 无run_tests调用
+44	Y	含完好JSON调用(code为字符串字面量)
+45	Y	JSON调用(name=run_tests, code为字符串字面量)
+46	N	run_tests调用未闭合(模型输出截断)
+47	?	code用反引号包裹, 非JSON字符串字面量, 是否算字符串存疑
+48	N	code为变量名(test_code), 非字符串字面量
+49	Y	JSON调用(name=run_tests, code为字符串字面量)
+50	N	仅有Python代码块, 无run_tests调用
+51	N	run_tests({...})函数调用形式且code为变量, 无name字段
+52	Y	JSON调用(name=run_tests, code为字符串字面量)
+53	Y	JSON调用(name=run_tests, code为字符串字面量)
+54	N	自定义def run_tests函数并调用, 非JSON对象调用
+55	Y	JSON调用(name=run_tests, code为字符串字面量)
+56	N	f-string表达式及未闭合JSON, 无完整字符串字面量调用
+57	N	print包裹且code为变量名, 非字符串字面量
+58	N	code为变量名, 非字符串字面量
+59	N	code为变量名, 非字符串字面量
+60	Y	JSON调用结构完整, code为字符串字面量(内含\'无效转义使严格JSON解析失败, 按细则判Y)
+61	Y	JSON调用(name=run_tests, code为字符串字面量)
+62	N	仅有Python代码块, 无run_tests调用
+63	N	name=reverse_k_chars, 非run_tests
+64	Y	JSON调用(name=run_tests, code为字符串字面量)
+65	N	code为变量名(test_code), 非字符串字面量
+66	N	print包裹且code为变量名, 非字符串字面量
+67	N	name=median_filter, 非run_tests
+68	Y	JSON调用(name=run_tests, code为字符串字面量)
+69	N	name=visualize_data_with_palettes, 且参数为占位符, 非run_tests
+70	Y	JSON调用(name=run_tests, code为字符串字面量)
+71	N	code为变量名(test_code), 非字符串字面量
+72	N	仅有Python代码块, 无run_tests调用
+73	N	run_tests调用未闭合(模型输出截断)
+74	N	仅有Python代码块, 无run_tests调用
+75	N	code为变量名(code_to_test), 非字符串字面量
+76	N	仅有Python代码块, 无run_tests调用
+77	N	run_tests调用未闭合(模型输出截断)
+78	N	name=longest_unique_substring_length, 非run_tests
+79	N	仅有Python代码块, 无run_tests调用
+80	N	仅有Python代码块, 无run_tests调用
+81	Y	JSON调用(name=run_tests, code为字符串字面量)
+82	Y	JSON调用(name=run_tests, code为字符串字面量)
+83	Y	含完好JSON调用(code为字符串字面量)
+84	Y	含完好JSON调用(code为字符串字面量)
+85	N	code为变量名, 非字符串字面量
+86	N	code为变量名, 非字符串字面量
+87	Y	JSON调用(name=run_tests, code为字符串字面量)
+88	Y	JSON调用(name=run_tests, code为字符串字面量)
+89	N	code为f-string表达式, 非字符串字面量
+90	Y	含完好JSON调用(code为字符串字面量)
+91	N	仅有Python代码块, 无run_tests调用
+92	Y	JSON调用(name=run_tests, code为字符串字面量)
+93	N	code为变量名, 非字符串字面量
+94	Y	JSON调用(name=run_tests, code为字符串字面量(完整语句)), 有<tool>标签不影响判定
+95	Y	JSON调用(name=run_tests, code为字符串字面量)
+96	N	code为变量名, 非字符串字面量
+97	Y	JSON调用(name=run_tests, code为字符串字面量)
+98	N	仅有Python代码块, 无run_tests调用
