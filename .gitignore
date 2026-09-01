@@ -30,3 +30,7 @@ runs/p1_clean/bfcl_run/*/score.pre_reaggregate_*/
 # .env 尤其不该进公开仓库——名字看起来像密钥，实际是个 0 字节占位文件。
 runs/**/.file_locks/
 runs/**/.env
+
+# Overleaf 上传用的打包快照：内容与 paper/ 完全重复，而且一旦 paper/ 更新它就
+# 变成一份不会报错的旧论文——谁拿它去编译，编出来的是过期版本。用完即弃，不入库。
+paper*.zip
