@@ -1,6 +1,6 @@
 # Interface-Induced Trajectory Censoring
 
-**Tool-call interfaces silently decouple observed agent behaviour from model capability, and contaminate reinforcement learning.**
+**The more capable the model, the more of its tool-using behaviour the evaluation hides — and the hidden part is exactly what reinforcement learning cannot reach.**
 
 Wenbo Wang · City University of Hong Kong · `wenbwang3-c@my.cityu.edu.hk`
 
@@ -15,8 +15,9 @@ Wenbo Wang · City University of Hong Kong · `wenbwang3-c@my.cityu.edu.hk`
 ![Intent–parse gap](figures/fig1_intent_parse_gap.png)
 
 Across a 21× scale range the serving stack reports **zero** parsed tool calls at every size,
-while well-formed calls the model actually emits rise to **80/100** at 32B.
-The more capable the model, the more of its behaviour the evaluation hides.
+while well-formed calls the model actually emits rise to **80/100** at 32B. Nothing errors:
+HTTP 200, `tool_calls: []`, a well-formed single-turn trajectory. **The tool-call rate is not a
+property of the model; it is a property of the stack that measures it.**
 
 ---
 

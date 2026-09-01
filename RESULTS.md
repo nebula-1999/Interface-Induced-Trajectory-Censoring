@@ -1,6 +1,6 @@
-# Tool-interface mismatch masquerades as a model lacking agentic ability
+# The silent fraction grows with model scale — and reaches the policy gradient
 
-**and it contaminates both agent evaluation and RL training**
+**Tool-call interfaces censor agent trajectories before anything downstream sees them**
 
 > 中文版见 [`RESULTS_zh.md`](RESULTS_zh.md).
 >

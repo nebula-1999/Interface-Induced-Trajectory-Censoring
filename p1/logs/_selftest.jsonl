@@ -1,0 +1,5 @@
+{"id": "a", "tag": "bfcl/Qwen-7B", "status": 200, "n_tools_offered": 1, "tool_names_offered": ["get_weather"], "parsed_tool_calls": [{"name": "get_weather", "arguments": "{\"city\":\"SF\"}"}], "content": "", "finish_reason": "tool_calls"}
+{"id": "b", "tag": "bfcl/Qwen-7B", "status": 200, "n_tools_offered": 1, "tool_names_offered": ["run_tests"], "parsed_tool_calls": [], "finish_reason": "stop", "content": "好的\n```json\n{\"name\": \"run_tests\", \"arguments\": {\"code\": \"def f(x):\\n    return x\"}}\n```"}
+{"id": "c", "tag": "bfcl/Qwen-7B", "status": 200, "n_tools_offered": 1, "tool_names_offered": ["run_tests"], "parsed_tool_calls": [], "content": "def f(x): return x", "finish_reason": "stop"}
+{"id": "d", "tag": "tau/Llama-8B", "status": 200, "n_tools_offered": 1, "tool_names_offered": ["run_tests"], "parsed_tool_calls": [{"name": "join_integers", "arguments": "{\"a\":1}"}], "content": "", "finish_reason": "tool_calls"}
+{"id": "e", "tag": "tau/Llama-8B", "status": 400, "n_tools_offered": 1, "tool_names_offered": ["run_tests"], "parsed_tool_calls": [], "content": "", "finish_reason": null}

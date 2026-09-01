@@ -1,7 +1,6 @@
 # Interface-Induced Trajectory Censoring
 
-**Tool-call interfaces silently decouple observed agent behaviour from model
-capability, and contaminate reinforcement learning**
+**The silent fraction grows with model scale, and reaches the policy gradient**
 
 Wenbo Wang · City University of Hong Kong · `wenbwang3-c@my.cityu.edu.hk`
 

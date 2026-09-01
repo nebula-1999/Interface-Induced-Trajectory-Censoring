@@ -9,8 +9,8 @@ authors:
     affiliation: City University of Hong Kong
 repository-code: "https://github.com/nebula-1999/interface-induced-trajectory-censoring"
 abstract: >-
-  Tool-call interfaces silently decouple observed agent behaviour from model
-  capability, and contaminate reinforcement learning. Four model families
+  The fraction of agent tool use that a serving stack silently discards grows
+  with model scale, and it reaches the policy gradient. Four model families
   configured for function calling on vLLM each fail at a different layer;
   for Qwen2.5-Coder the server parses 0/100 calls at every scale from 1.5B to
   32B while well-formed emitted calls rise to 80/100. In RL training the same
