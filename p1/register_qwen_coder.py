@@ -1,95 +1,109 @@
 #!/usr/bin/env python3
-"""在 BFCL 的 MODEL_CONFIG_MAPPING 里注册 Qwen2.5-Coder 尺寸梯子。
+"""Register the Qwen2.5-Coder size ladder with BFCL, in memory.
 
-**为什么必须改 BFCL：** BFCL 出厂注册表里没有 Qwen2.5-Coder，而它是四个家族里
-唯一表现出 censoring 的那一支（Llama 解析正常、Mistral 直接 400、DeepSeek 模板
-不注入）。不注册就只能报 Llama，那是有效但很弱的阴性结果。
+**Why this file exists:** BFCL's shipped registry has no Qwen2.5-Coder entry, and
+Coder is the one family of the four that shows censoring (Llama parses fine,
+Mistral 400s, DeepSeek never injects the template). Without a registry entry we
+could only report Llama, which is a valid but very weak negative result.
 
-**改动范围（论文里要如实写这一段）：**
-  · 只向 MODEL_CONFIG_MAPPING 追加模型条目
-  · 复用 BFCL 自带的 QwenFCHandler，不新写 handler
-  · 不改动任何评测、解析、判分逻辑
-  · 幂等：重复执行不会重复追加
-改动前后的文件 sha256 都会打印，随论文附录一起记录。
+**Why it does not reuse BFCL's own ``QwenFCHandler``:** that class subclasses
+``OSSHandler``. It posts to ``/v1/completions`` and regex-extracts ``<tool_call>``
+blocks *inside the benchmark process*. On that path vLLM's tool-call parser is
+never invoked, so interface censoring disappears by construction and the
+measurement answers nothing. Every ladder entry here therefore uses the same
+``P1OpenAIHandler`` as the rest of P1: BFCL's official OpenAI FC handler, posting
+to ``/v1/chat/completions`` so the serving parser under study does the parsing.
 
-用法: python register_qwen_coder.py [--revert]
+**Why it does not patch ``model_config.py`` on disk:** BFCL is pinned to a commit
+and its hashes go in the appendix. Registration happens in memory at import time
+via ``sitecustomize``; ``bfcl_eval``'s own files stay byte-identical, which
+``--check`` demonstrates.
+
+Scope of the change, to be stated as-is in the paper:
+  · append entries to ``MODEL_CONFIG_MAPPING`` at runtime
+  · reuse P1's handler, already documented for the 7B arms
+  · no change to any evaluation, parsing, or scoring logic
+  · idempotent: re-importing does not duplicate entries
+
+Usage: ``python register_qwen_coder.py --check``
 """
-import argparse, hashlib, re, shutil, sys
+from __future__ import annotations
+
+import argparse
+import hashlib
+import os
 from pathlib import Path
 
-CFG = Path("/root/bench-venv/lib/python3.12/site-packages/bfcl_eval/constants/model_config.py")
-MARK_A = "    # === P1: Qwen2.5-Coder ladder (added by register_qwen_coder.py) ==="
-MARK_B = "    # === end P1 additions ==="
+from bfcl_eval.constants import model_config as bfcl_model_config
+from bfcl_eval.constants.model_config import ModelConfig, MODEL_CONFIG_MAPPING
+
+from bfcl_registration import P1OpenAIHandler
 
 SIZES = ["1.5B", "3B", "7B", "14B", "32B"]
 
 
-def entry(sz):
-    mid = f"Qwen/Qwen2.5-Coder-{sz}-Instruct"
-    return f'''    "{mid}-FC": ModelConfig(
-        model_name="{mid}",
-        display_name="Qwen2.5-Coder-{sz}-Instruct (FC)",
-        url="https://huggingface.co/{mid}",
-        org="Qwen",
-        license="apache-2.0",
-        model_handler=QwenFCHandler,
-        input_price=None,
-        output_price=None,
-        is_fc_model=True,
-        underscore_to_dot=False,
-    ),'''
+def registry_name(size: str) -> str:
+    return f"P1-Qwen2.5-Coder-{size}-FC"
 
 
-def sha(p):
-    return hashlib.sha256(p.read_bytes()).hexdigest()[:20]
+def served_name(size: str) -> str:
+    """The name the arm's vLLM must be started with (``--served-model-name``)."""
+    return "p1-qwen25-coder-" + size.lower().replace(".", "_")
 
 
-def main():
+def register() -> list[str]:
+    added = []
+    for size in SIZES:
+        name = registry_name(size)
+        if name in MODEL_CONFIG_MAPPING:
+            continue
+        MODEL_CONFIG_MAPPING[name] = ModelConfig(
+            model_name=served_name(size),
+            display_name=f"Qwen2.5-Coder-{size}-Instruct (P1 FC)",
+            url=f"https://huggingface.co/Qwen/Qwen2.5-Coder-{size}-Instruct",
+            org="Qwen",
+            license="apache-2.0",
+            model_handler=P1OpenAIHandler,
+            input_price=None,
+            output_price=None,
+            is_fc_model=True,
+            # Dots are illegal in OpenAI function names, so BFCL must map them to
+            # underscores on the way out and back on the way in.  Same value as
+            # the 7B arms in bfcl_registration.py; differing here would make the
+            # ladder incomparable to them.
+            underscore_to_dot=True,
+        )
+        added.append(name)
+    return added
+
+
+REGISTERED_LADDER = register()
+
+
+def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--revert", action="store_true")
-    a = ap.parse_args()
+    ap.add_argument("--check", action="store_true",
+                    help="print the ladder and prove bfcl_eval was not modified")
+    ap.parse_args()
 
-    if not CFG.exists():
-        sys.exit(f"找不到 {CFG}")
-    src = CFG.read_text(encoding="utf-8")
-    before = sha(CFG)
-
-    if a.revert:
-        if MARK_A not in src:
-            print("没有本脚本的改动，无需回滚"); return
-        src = re.sub(re.escape(MARK_A) + r".*?" + re.escape(MARK_B) + r"\n", "", src, flags=re.S)
-        CFG.write_text(src, encoding="utf-8")
-        print(f"已回滚   {before} → {sha(CFG)}")
-        return
-
-    if MARK_A in src:
-        print(f"条目已存在（幂等），不重复追加。当前 sha256[:20] = {before}")
-        return
-
-    if "QwenFCHandler" not in src:
-        sys.exit("★ 该 BFCL 版本没有 QwenFCHandler，模板不适用，停止")
-
-    # 备份原件，便于核对与回滚
-    bak = CFG.with_suffix(".py.p1-orig")
-    if not bak.exists():
-        shutil.copy2(CFG, bak)
-
-    # 追加到 MODEL_CONFIG_MAPPING 字典末尾的右花括号之前
-    m = list(re.finditer(r"\nMODEL_CONFIG_MAPPING\s*[:=]", src))
-    if not m:
-        sys.exit("★ 找不到 MODEL_CONFIG_MAPPING")
-    start = m[-1].end()
-    close = src.index("\n}", start)          # 字典结束
-    block = "\n" + MARK_A + "\n" + "\n".join(entry(s) for s in SIZES) + "\n" + MARK_B
-    src = src[:close] + block + src[close:]
-    CFG.write_text(src, encoding="utf-8")
-
-    print(f"已注册 {len(SIZES)} 个条目：")
-    for s in SIZES:
-        print(f"  Qwen/Qwen2.5-Coder-{s}-Instruct-FC   →  handler=QwenFCHandler（BFCL 自带）")
-    print(f"\nmodel_config.py sha256[:20]   改前 {before}   改后 {sha(CFG)}")
-    print(f"原件备份 {bak}")
-    print("\n改动范围：仅追加模型条目。未改动任何评测 / 解析 / 判分逻辑。")
+    cfg = Path(bfcl_model_config.__file__)
+    print(f"bfcl_eval model_config.py : {cfg}")
+    print(f"  sha256 (unmodified)     : {hashlib.sha256(cfg.read_bytes()).hexdigest()[:20]}")
+    print(f"  contains on-disk patch  : "
+          f"{'yes — should be no' if 'P1:' in cfg.read_text(encoding='utf-8') else 'no'}")
+    print()
+    for size in SIZES:
+        name = registry_name(size)
+        entry = MODEL_CONFIG_MAPPING[name]
+        print(f"{name:<32} served={entry.model_name:<26} "
+              f"handler={entry.model_handler.__name__}")
+    print()
+    print("Start each arm's vLLM with the matching --served-model-name, then run")
+    print("BFCL with --model <registry name>.  P1_SERVED_MODEL is not used by the")
+    print("ladder: each entry pins its own served name so the two cannot drift.")
+    if os.environ.get("P1_SERVED_MODEL"):
+        print("note: P1_SERVED_MODEL is set; it only affects bfcl_registration.py's "
+              "single-arm entry, not the ladder above.")
 
 
 if __name__ == "__main__":
