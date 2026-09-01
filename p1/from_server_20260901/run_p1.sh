@@ -240,20 +240,12 @@ run_arm() {
   # archive, and start both HTTP capture logs from an empty file.
   local model_dir=${registry//\//_}
   local archive_root=$RUN_ROOT/archive/$(date +%Y%m%d_%H%M%S)_${slug}
-  # Both project roots must be cleared, not just the full one.  BFCL's generate
-  # step skips cases already present in the result file, so a leftover smoke
-  # project makes it emit zero HTTP requests; the proxy log then stays empty and
-  # the smoke proxy check fails with no indication that the cause is stale
-  # output rather than a broken interface.  (Observed 22:04 on 2026-09-01.)
-  local smoke_project=$RUN_ROOT/smoke_${slug}
-  local tree proj
-  for proj in "$full_project" "$smoke_project"; do
-    for tree in result score; do
-      if [[ -d "$proj/$tree/$model_dir" ]]; then
-        mkdir -p "$archive_root/$(basename "$proj")/$tree"
-        mv "$proj/$tree/$model_dir" "$archive_root/$(basename "$proj")/$tree/"
-      fi
-    done
+  local tree
+  for tree in result score; do
+    if [[ -d "$full_project/$tree/$model_dir" ]]; then
+      mkdir -p "$archive_root/$tree"
+      mv "$full_project/$tree/$model_dir" "$archive_root/$tree/"
+    fi
   done
   local capture
   for capture in "$full_log" "$smoke_log"; do

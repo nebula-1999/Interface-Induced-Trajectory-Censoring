@@ -12,9 +12,12 @@ ssh -o BatchMode=yes -o ConnectTimeout=8 "$H" \
 
 echo "== deploy isolated P1 payload =="
 ssh "$H" "mkdir -p '$R/plugin' '$R/logs'"
+# register_qwen_coder.py is required: sitecustomize.py imports it, so leaving it
+# out makes every benchmark subprocess fail at startup.
 scp "$D/p1/run_p1.sh" "$D/p1/toolcall_proxy.py" "$D/p1/analyze_p1.py" \
   "$D/p1/bfcl_registration.py" "$D/p1/sitecustomize.py" \
-  "$D/p1/make_manifest.py" "$H:$R/"
+  "$D/p1/register_qwen_coder.py" "$D/p1/make_manifest.py" \
+  "$D/p1/validate_p1.py" "$H:$R/"
 scp "$D/runs/final/plugin/qwen2_5_coder_tool_parser.py" \
   "$D/runs/final/plugin/tool_chat_template_qwen2_5_coder.jinja" "$H:$R/plugin/"
 ssh "$H" "chmod +x '$R/run_p1.sh'; test -f /root/autodl-tmp/models/Qwen2.5-Coder-7B-Instruct/config.json"
