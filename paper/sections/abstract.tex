@@ -7,7 +7,8 @@ documentation}, each fails at a different layer --- template, parser, schema, to
 every failure but one returns HTTP 200 with an empty \texttt{tool\_calls} array. Within
 Qwen2.5-Coder the censoring grows with checkpoint size: the server parses \textbf{0/100} at
 every scale while well-formed calls the model actually emits rise to \textbf{80/100} at 32B
-(two independent blind annotators, $\kappa=0.967$). Llama-3.1-8B's 23\% rate of calling
+(two independent blind annotators, inter-annotator $\kappa=0.967$; $\approx$72 after
+correction against a third-party adjudicated gold standard). Llama-3.1-8B's 23\% rate of calling
 \emph{the task function itself} as a tool falls to \textbf{0} under a single
 \texttt{strict: true} flag --- a remedy three prior single-variable controls failed to find.
 

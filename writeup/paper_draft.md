@@ -25,7 +25,8 @@ documentation*, each fails at a different layer — template, parser, schema, to
 every failure but one returns HTTP 200 with an empty `tool_calls` array. Within
 Qwen2.5-Coder the censoring grows with checkpoint size: the server parses **0/100** at
 every scale while well-formed calls the model actually emits rise to **80/100** at 32B
-(two independent blind annotators, *κ* = 0.967). Llama-3.1-8B’s 23% rate of calling
+(two independent blind annotators, inter-annotator *κ* = 0.967; ≈<!-- -->72 after
+correction against a third-party adjudicated gold standard). Llama-3.1-8B’s 23% rate of calling
 *the task function itself* as a tool falls to **0** under a single
 `strict: true` flag — a remedy three prior single-variable controls failed to find.
 
@@ -341,19 +342,47 @@ the evidence and the observer, and what came out was “the model did not call t
 the same sentence the `hermes` parser produces, from the same bytes, for the same
 reason. We were measuring censoring with a censored instrument.
 
-**Correction factor.** Under A2’s labels — full text, blind, *no adjudication
-round at all* — the `tight` stratum’s precision is 39/40 = **0.975**, so
-§5.2’s headline 80/100 at 32B corrects to **≈<!-- -->78**. A2 additionally marks 2
-items `Y` that the classifier does not count, so the criterion misses calls as well as
-over-counting them and the net correction is smaller still. We report uncorrected classifier
-counts in all tables with this factor stated.
+**Third-party adjudication, and the final labels.** Fifteen items were not unanimous
+across A1, A2 and the classifier. All fifteen went to a third adjudicator under the
+pre-registered rule — selected by *any* three-way disagreement, never by disagreement
+with the classifier — who saw full text and no one else’s labels. The adjudicator sided
+with A2 on 11, with the classifier on 9, and with A1 on 6, and **moved away from the
+classifier on 6 of 15**. That last number is the check that matters: the first round’s
+adjudication moved away from the classifier zero times out of thirteen, which is what an
+outcome looks like when the selection rule has already decided it.
 
-**Remaining disagreements.** Fifteen items are not unanimous across A1, A2 and the
-classifier; they are with a third adjudicator under the pre-registered rule, and we will
-report the outcome whichever way it falls. Three of them are genuine grey zone rather than
-error: a well-formed call the criterion’s regex does not match, a call left unterminated
-because the stored output hits its length ceiling, and a call wrapped in a `<tool>`
-tag.
+Combining the 83 unanimous items with the 15 adjudicated ones gives a gold standard that at
+no point consulted the classifier.
+
+<div id="tab:validation2">
+
+|                                 |                            |                            |
+|:--------------------------------|:--------------------------:|:--------------------------:|
+| Cohen’s *κ* (95% CI, bootstrap) |        full sample         |      identical bytes       |
+|                                 |          (*n*=97)          |          (*n*=62)          |
+| A1 vs. A2 (inter-annotator)     |   0.736 \[0.595, 0.866\]   | **0.967 \[0.893, 1.000\]** |
+| Classifier vs. gold standard    | **0.871 \[0.756, 0.958\]** |   0.934 \[0.829, 1.000\]   |
+
+Validation against the adjudicated gold standard. The inter-annotator column is
+restricted to items where both annotators read identical bytes, because A1’s pack truncated
+at 2400 characters; the classifier and the gold standard are unaffected by that truncation
+and are scored on the full sample.
+
+</div>
+
+**Correction factor.** Against the gold standard the `tight` stratum’s precision
+is 36/40 = **0.900**, so §5.2’s headline 80/100 at 32B corrects to **≈<!-- -->72**.
+The criterion errs in both directions — 4 over-counts against 2 calls it misses entirely,
+for a net over-count of 2 — so the correction is smaller than the precision figure alone
+suggests. **The trend is unaffected**: applying 0.900 uniformly gives
+0, 3.6, 18.9, 32.4, 72 against a server-side zero at every size. We report uncorrected
+classifier counts in all tables with this factor stated, rather than rescaling silently.
+
+For the record, this number moved twice as the validation improved, and we report the
+trajectory rather than only its endpoint: 0.950 under the first, one-sided adjudication;
+0.975 under A2’s labels alone; **0.900** against the adjudicated gold standard. The
+first was inflated by its selection rule, the second rested on a single rater, and only the
+third is built from a rule fixed before the labels were seen.
 
 **A bound on the measurement itself.** The probe stores at most 4000 characters of raw
 output per item; 10 of the 98 sampled outputs reach that ceiling, and one of the grey-zone
@@ -466,10 +495,10 @@ template**: templates are inherited, training is not.
 ## Within one family, censoring grows monotonically with checkpoint size
 
 <figure>
-<img src="fig1_intent_parse_gap.png" id="fig:gap" alt="The undercount grows with scale. Across a 21\times range the server parses zero calls at every size, while well-formed calls the model actually emits rise to 80/100 at 32B (78 after the correction factor of 0.975 established by two independent blind annotators, §3.2)." /><figcaption aria-hidden="true"><strong>The undercount grows with scale.</strong> Across a 21<span class="math inline">×</span> range the server
+<img src="fig1_intent_parse_gap.png" id="fig:gap" alt="The undercount grows with scale. Across a 21\times range the server parses zero calls at every size, while well-formed calls the model actually emits rise to 80/100 at 32B (72 after the correction factor of 0.900 established against a third-party adjudicated gold standard, §3.2)." /><figcaption aria-hidden="true"><strong>The undercount grows with scale.</strong> Across a 21<span class="math inline">×</span> range the server
 parses zero calls at every size, while well-formed calls the model actually emits rise to
-80/100 at 32B (78 after the correction factor of 0.975 established by two independent
-blind annotators, §3.2).</figcaption>
+80/100 at 32B (72 after the correction factor of 0.900 established against a third-party
+adjudicated gold standard, §3.2).</figcaption>
 </figure>
 
 Qwen2.5-Coder, `tool_choice: auto`, `hermes` (the documented recommendation for Qwen2.5),
@@ -1181,11 +1210,11 @@ present study.
 
 13. **Human validation covers one criterion on one sample.** Two independent blind
     annotators on 98 stratified items give inter-annotator *κ* = 0.967 on the 62 items
-    where both read identical bytes (§3.2), which we consider adequate. Three residual
-    limits remain. (i) The sample is stratified by classifier verdict, so it estimates
-    per-stratum precision and recall, not a population rate. (ii) Fifteen non-unanimous items
-    are still with a third adjudicator; three of them are genuine criterion grey zone rather
-    than rater error. (iii) The stored raw output is capped at 4000 characters, so a call
+    where both read identical bytes, and classifier-vs-gold-standard *κ* = 0.871 after
+    third-party adjudication of all fifteen non-unanimous items (§3.2). Two residual limits
+    remain. (i) The sample is stratified by classifier verdict, so it estimates per-stratum
+    precision and recall, not a population rate. (ii) The stored raw output is capped at
+    4000 characters, so a call
     emitted past that point is invisible to the classifier and to both annotators alike —
     emitted-call counts are a lower bound. We also note that the *first* annotation
     round’s apparent unreliability (*κ*=0.713) was an artefact of a 2400-character

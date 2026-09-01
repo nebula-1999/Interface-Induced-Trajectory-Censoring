@@ -147,19 +147,50 @@ the evidence and the observer, and what came out was ``the model did not call th
 the same sentence the \texttt{hermes} parser produces, from the same bytes, for the same
 reason. We were measuring censoring with a censored instrument.
 
-\textbf{Correction factor.} Under A2's labels --- full text, blind, \emph{no adjudication
-round at all} --- the \texttt{tight} stratum's precision is 39/40 = \textbf{0.975}, so
-\S5.2's headline 80/100 at 32B corrects to \textbf{$\approx$78}. A2 additionally marks 2
-items \texttt{Y} that the classifier does not count, so the criterion misses calls as well as
-over-counting them and the net correction is smaller still. We report uncorrected classifier
-counts in all tables with this factor stated.
+\textbf{Third-party adjudication, and the final labels.} Fifteen items were not unanimous
+across A1, A2 and the classifier. All fifteen went to a third adjudicator under the
+pre-registered rule --- selected by \emph{any} three-way disagreement, never by disagreement
+with the classifier --- who saw full text and no one else's labels. The adjudicator sided
+with A2 on 11, with the classifier on 9, and with A1 on 6, and \textbf{moved away from the
+classifier on 6 of 15}. That last number is the check that matters: the first round's
+adjudication moved away from the classifier zero times out of thirteen, which is what an
+outcome looks like when the selection rule has already decided it.
 
-\textbf{Remaining disagreements.} Fifteen items are not unanimous across A1, A2 and the
-classifier; they are with a third adjudicator under the pre-registered rule, and we will
-report the outcome whichever way it falls. Three of them are genuine grey zone rather than
-error: a well-formed call the criterion's regex does not match, a call left unterminated
-because the stored output hits its length ceiling, and a call wrapped in a \texttt{<tool>}
-tag.
+Combining the 83 unanimous items with the 15 adjudicated ones gives a gold standard that at
+no point consulted the classifier.
+
+\begin{table}[htbp]
+\centering
+\caption{Validation against the adjudicated gold standard. The inter-annotator column is
+restricted to items where both annotators read identical bytes, because A1's pack truncated
+at 2400 characters; the classifier and the gold standard are unaffected by that truncation
+and are scored on the full sample.}
+\label{tab:validation2}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Cohen's $\kappa$ (95\% CI, bootstrap) & full sample & identical bytes \\
+ & ($n$=97) & ($n$=62) \\
+\midrule
+A1 vs.\ A2 (inter-annotator) & 0.736 [0.595, 0.866] & \textbf{0.967 [0.893, 1.000]} \\
+Classifier vs.\ gold standard & \textbf{0.871 [0.756, 0.958]} & 0.934 [0.829, 1.000] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Correction factor.} Against the gold standard the \texttt{tight} stratum's precision
+is 36/40 = \textbf{0.900}, so \S5.2's headline 80/100 at 32B corrects to \textbf{$\approx$72}.
+The criterion errs in both directions --- 4 over-counts against 2 calls it misses entirely,
+for a net over-count of 2 --- so the correction is smaller than the precision figure alone
+suggests. \textbf{The trend is unaffected}: applying 0.900 uniformly gives
+$0, 3.6, 18.9, 32.4, 72$ against a server-side zero at every size. We report uncorrected
+classifier counts in all tables with this factor stated, rather than rescaling silently.
+
+For the record, this number moved twice as the validation improved, and we report the
+trajectory rather than only its endpoint: 0.950 under the first, one-sided adjudication;
+0.975 under A2's labels alone; \textbf{0.900} against the adjudicated gold standard. The
+first was inflated by its selection rule, the second rested on a single rater, and only the
+third is built from a rule fixed before the labels were seen.
 
 \textbf{A bound on the measurement itself.} The probe stores at most 4000 characters of raw
 output per item; 10 of the 98 sampled outputs reach that ceiling, and one of the grey-zone

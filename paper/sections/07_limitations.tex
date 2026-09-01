@@ -93,11 +93,11 @@ present study.
 \item
   \textbf{Human validation covers one criterion on one sample.} Two independent blind
   annotators on 98 stratified items give inter-annotator $\kappa$ = 0.967 on the 62 items
-  where both read identical bytes (\S3.2), which we consider adequate. Three residual
-  limits remain. (i) The sample is stratified by classifier verdict, so it estimates
-  per-stratum precision and recall, not a population rate. (ii) Fifteen non-unanimous items
-  are still with a third adjudicator; three of them are genuine criterion grey zone rather
-  than rater error. (iii) The stored raw output is capped at 4000 characters, so a call
+  where both read identical bytes, and classifier-vs-gold-standard $\kappa$ = 0.871 after
+  third-party adjudication of all fifteen non-unanimous items (\S3.2). Two residual limits
+  remain. (i) The sample is stratified by classifier verdict, so it estimates per-stratum
+  precision and recall, not a population rate. (ii) The stored raw output is capped at
+  4000 characters, so a call
   emitted past that point is invisible to the classifier and to both annotators alike ---
   emitted-call counts are a lower bound. We also note that the \emph{first} annotation
   round's apparent unreliability ($\kappa$=0.713) was an artefact of a 2400-character
