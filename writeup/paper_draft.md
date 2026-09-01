@@ -636,7 +636,6 @@ KodCode items, same `hermes` parser, same `tool_choice: auto`, same
 
 | Size    | Server-parsed | **tight** | strong (⊇ tight) | weak (disjoint) |
 |:--------|:--------------|:----------|:-----------------|:----------------|
-| Size    | Server-parsed | **tight** | strong (⊇ tight) | weak (disjoint) |
 | 1.5B    | 1             | 0         | 1                | 7               |
 | 3B      | 11            | 56        | 65               | 2               |
 | 7B      | 63            | 21        | 34               | 0               |
@@ -711,7 +710,6 @@ the void field in the trajectories is left as it stands.
 
 | Size | Coder parsed | Coder turn-1 pass | Instruct parsed | Instruct turn-1 pass |
 |:-----|:-------------|:------------------|:----------------|:---------------------|
-| Size | Coder parsed | Coder turn-1 pass | Instruct parsed | Instruct turn-1 pass |
 | 1.5B | 0            | 31                | 1               | 14                   |
 | 3B   | 0            | 37                | 11              | 14                   |
 | 7B   | 0            | 53                | 63              | 34                   |

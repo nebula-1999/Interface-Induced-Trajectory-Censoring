@@ -166,25 +166,21 @@ chat template (Coder inherits it from Instruct, which is what produced the false
 KodCode items, same \texttt{hermes} parser, same \texttt{tool\_choice:\ auto}, same
 \texttt{temperature\ =\ 0}, seed 0, and the same intent criterion of \S3.2.
 
-{\small
-\begin{longtable}[]{@{}lllll@{}}
-\caption{Qwen2.5-Instruct under the identical mismatched configuration. Unlike the Coder column, which is flat zero across the range, the server-parsed rate rises monotonically and reaches 88/100. Intent columns count \emph{unparsed} attempts, so they fall as the parsed column rises.}\label{tab:instruct}\\
+\begin{table}[t]
+\centering\small
+\caption{Qwen2.5-Instruct under the identical mismatched configuration. Unlike the Coder column, which is flat zero across the range, the server-parsed rate rises monotonically and reaches 88/100. Intent columns count \emph{unparsed} attempts, so they fall as the parsed column rises.}\label{tab:instruct}
+\begin{tabular}{@{}lllll@{}}
 \toprule
 Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) \\
 \midrule
-\endfirsthead
-\toprule
-Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) \\
-\midrule
-\endhead
 1.5B & 1 & 0 & 1 & 7 \\
 3B & 11 & 56 & 65 & 2 \\
 7B & 63 & 21 & 34 & 0 \\
 14B & 77 & 19 & 20 & 0 \\
 \textbf{32B} & \textbf{88} & 8 & 11 & 0 \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{table}
 
 Against the flat zero of Table~\ref{tab:scale}, the Instruct ladder runs 1, 11, 63, 77, 88.
 \textbf{The mismatch therefore tracks whether the checkpoint was trained on the format, not the
@@ -249,25 +245,21 @@ criterion the probe itself uses, adding only \texttt{pytest\ 8.3.5}
 (\texttt{p2/replay\_turn1.py}). This is a \textbf{derived quantity}, written to separate files;
 the void field in the trajectories is left as it stands.
 
-{\small
-\begin{longtable}[]{@{}lllll@{}}
-\caption{Task success at turn 1, both ladders. Coder's column is as recorded on a host where execution worked; Instruct's is the offline replay described above. Turn 1 is the right comparison for both --- and for Coder it is also the \emph{only} comparison, since its first-turn and final counts are equal at every size.}\label{tab:turn1}\\
+\begin{table}[t]
+\centering\small
+\caption{Task success at turn 1, both ladders. Coder's column is as recorded on a host where execution worked; Instruct's is the offline replay described above. Turn 1 is the right comparison for both --- and for Coder it is also the \emph{only} comparison, since its first-turn and final counts are equal at every size.}\label{tab:turn1}
+\begin{tabular}{@{}lllll@{}}
 \toprule
 Size & Coder parsed & Coder turn-1 pass & Instruct parsed & Instruct turn-1 pass \\
 \midrule
-\endfirsthead
-\toprule
-Size & Coder parsed & Coder turn-1 pass & Instruct parsed & Instruct turn-1 pass \\
-\midrule
-\endhead
 1.5B & 0 & 31 & 1 & 14 \\
 3B & 0 & 37 & 11 & 14 \\
 7B & 0 & 53 & 63 & 34 \\
 14B & 0 & 53 & 77 & 38 \\
 32B & 0 & 68 & 88 & 42 \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{table}
 
 The objection does not survive: Instruct solves 14--42\% of the items outright, rising with
 size. It is consistently weaker than the code-specialised Coder at the same size, which is
