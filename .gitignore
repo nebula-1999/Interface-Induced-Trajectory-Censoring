@@ -10,9 +10,13 @@ runs/**/*.jsonl.tmp
 # 运行日志是产物的一部分——"22:05→22:12 全程无人工介入"这类说法的唯一凭证
 # 就是这些日志。上面的 *.log 会把它们一起吞掉，这里放行；vLLM 那种几百 MB
 # 的服务日志在最后一行重新排除。
-!runs/**/*.log
-!p1/from_server_*/**/*.log
-!p2/from_server_*/**/*.log
+# 只放行 P1/P2 这几次跑批的日志。写成 !runs/**/*.log 会把 runs/ 下上百份
+# 历史诊断日志一起解除忽略，那些是之前有意排除的。
+!runs/p1/*.log
+!runs/p1_clean/*.log
+!runs/p2/*.log
+!p1/from_server_*/*.log
+!p2/from_server_*/*.log
 vllm_*.log
 
 # P1 的 BFCL 产物只入不可再生的部分：result 是模型真的写出来的字节，丢了要
