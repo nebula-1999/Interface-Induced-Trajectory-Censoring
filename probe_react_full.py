@@ -237,10 +237,10 @@ STRICT_FC_TOOLS = [{"type": "function", "function": {
 def _detect_tool_intent(content: str):
     """协议无关的调用意图检测。
 
-    服务端 parser 只认它自己那一种格式：Qwen2.5-Coder 输出了完全合法的
-    {"name": "run_tests", "arguments": {"code": ...}}，hermes 因为没有
-    <tool_call> 标签而返回空数组 —— 静默低估，不报错。
-    把「模型试图调用」与「服务端解析成功」拆成两个独立指标。
+    只回答「模型有没有想调工具」，**不**回答「为什么没解析出来」。命中这里
+    不等于格式合法：Qwen2.5-Coder 确实是输出了合法 JSON 但缺 <tool_call> 标签
+    （包装层缺失），而 Qwen2.5-7B-Instruct 是标签齐全、载荷非法（载荷层写坏）。
+    两者在本函数下不可区分，要分层请用 analysis/failure_layer.py。
     """
     if not content:
         return None
@@ -611,8 +611,13 @@ def main():
     print(f"   无法解析率          : {n_unparsed}/{n} = {n_unparsed/n:.0%}")
     if a.protocol == "fc":
         print(f"   ★ 服务端解析出调用   : {l1}/{n} = {l1/n:.0%}")
-        print(f"   ★ 未被解析但确在尝试 : {n_intent}/{n} = {n_intent/n:.0%}"
-              f"   （格式完好但 parser 不认 → 静默低估）")
+        # 原来这里写「格式完好但 parser 不认 → 静默低估」，是一句从未校验过的断言：
+        # _detect_tool_intent 只看有没有调用意图，不校验 JSON 合法性、也不区分
+        # 有没有 <tool_call> 包装层。实测 Qwen2.5-7B-Instruct 的 34 条里格式完好的
+        # 是 0 条，全是模型自己把 JSON 写坏了。成因分层交给
+        # analysis/failure_layer.py（它逐行重放 hermes），这里只作中性陈述。
+        print(f"   ★ 有调用意图但服务端未解析 : {n_intent}/{n} = {n_intent/n:.0%}"
+              f"   （成因分层见 analysis/failure_layer.py，勿直接读作 parser 损失）")
         print(f"     意图形式分布       : {dict(intent_forms)}")
         print(f"   ★ 调用了不存在的工具 : {n_wrongtool}/{n} = {n_wrongtool/n:.0%}"
               f"   （已排除，不计入 L1，不执行）")
