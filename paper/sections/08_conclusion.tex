@@ -1,8 +1,11 @@
 \section{Conclusion}
 
-Tool-call interfaces censor agent trajectories, and the censoring is silent,
-family-specific, scale-increasing, and---in reinforcement learning---capable of making an
-entire policy branch effectively inaccessible to policy-gradient learning. Repairing the interface restores the
+Tool-call interfaces censor agent trajectories, and the censoring is silent and
+checkpoint-specific; within Qwen2.5-Coder the absolute undercount increases monotonically with
+checkpoint size, which we report as a within-family observation rather than a general law. In
+reinforcement learning the same mismatch leaves the sampled experience distribution with no
+tool-mediated trajectories at all, so the tool-using branch receives no direct on-policy
+gradient signal under the observed rollout distribution. Repairing the interface restores the
 mechanism but recovers only part of the outcome gap, and a genuine protocol difference
 remains underneath on one of the two families that admit a comparison.
 

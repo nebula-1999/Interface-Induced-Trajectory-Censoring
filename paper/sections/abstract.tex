@@ -5,22 +5,29 @@ before anything downstream sees it}.
 Configuring four model families for function calling on vLLM \emph{following official
 documentation}, each fails at a different layer --- template, parser, schema, token --- and
 every failure but one returns HTTP 200 with an empty \texttt{tool\_calls} array. Within
-Qwen2.5-Coder the censoring grows with checkpoint size: the server parses \textbf{0/100} at
-every scale while well-formed calls the model actually emits rise to \textbf{80/100} at 32B
-(two independent blind annotators, inter-annotator $\kappa=0.967$; $\approx$72 after
-correction against a third-party adjudicated gold standard). Llama-3.1-8B's 23\% rate of calling
-\emph{the task function itself} as a tool falls to \textbf{0} under a single
-\texttt{strict: true} flag --- a remedy three prior single-variable controls failed to find.
+Qwen2.5-Coder the undercount grows with checkpoint size: the server parses \textbf{0/100} at
+every scale while well-formed emitted calls rise to \textbf{80/100} at 32B ($\kappa=0.967$
+between two blind annotators on the 62 items shown to both as identical bytes;
+\textbf{$\approx$72} after calibration against a third-party adjudicated gold standard).
+Llama-3.1-8B's 23\% rate of calling \emph{the task function itself} as a tool falls to
+\textbf{0} under one \texttt{strict: true} flag, a remedy three single-variable controls
+missed.
 
-\textbf{The censoring reaches RL training.} A 10-step GRPO run executes \textbf{zero} tool
-calls while \texttt{critic/rewards/mean} climbs from 0.233 to 0.281: the dashboard is healthy,
-and because the reward admits direct answers, the tool-using branch receives no on-policy
-gradient signal at all.
+\textbf{This is not an artefact of our harness.} On BFCL~v4's own data, executor and scorer,
+the same weights score \textbf{0.00} under the documented configuration and \textbf{0.96} /
+\textbf{0.19} (\texttt{simple\_python} / \texttt{multi\_turn\_base}) under a dedicated serving
+adapter: a benchmark number spanning nearly the whole metric range on a flag the model card
+never mentions.
 
-\textbf{Repair recovers the mechanism but not the outcome.} A dedicated adapter restores
-parsing $0\to84$ and multi-turn rescues $0\to9$, yet pass rate moves 53$\to$62 (n.s.); and a
-75-step \emph{ReAct} run executing 23{,}676 tool calls leaves multi-turn rescues flat at
-6--8/540 --- \textbf{a working channel is necessary, not sufficient}. We release a 98-line
-preflight check that would have caught every silent failure reported here.
+\textbf{The mismatch reaches RL training.} A 10-step GRPO run executes \textbf{zero} tool
+calls while \texttt{critic/rewards/mean} climbs 0.233$\to$0.281 --- a healthy dashboard over a
+sampled experience distribution containing no tool-mediated trajectory, so that branch
+receives no direct on-policy gradient.
+
+\textbf{Repair recovers the mechanism but not the outcome.} An adapter restores parsing
+$0\to84$ and multi-turn rescues $0\to9$, yet pass rate moves 53$\to$62 (n.s.); a 75-step
+\emph{ReAct} run executing 23{,}676 tool calls leaves rescues flat at 6--8/540 ---
+\textbf{at this model scale and training budget, a working channel was not sufficient}. We
+release a 98-line preflight check that catches every silent failure reported here.
 \textbf{The tool-call rate is not a property of the model; it is a property of the stack that
 measures it.}

@@ -11,7 +11,7 @@ against, and (ii) is where the 21$\times$ scale trend lives.
 that announces itself. We therefore treat a \texttt{tools}-bearing request returning HTTP 200 ---
 \emph{and} a server-parsed call under \texttt{tool\_choice:\ required} --- as a required pre-flight for any
 FC experiment. Template inspection alone is insufficient (\S\ref{sec:families}). We ship this check as a
-30-line script (\texttt{preflight\_toolcall.py}): it issues one canonical request, asserts
+98-line script (\texttt{preflight\_toolcall.py}): it issues one canonical request, asserts
 \texttt{tool\_calls} is non-empty with the expected \texttt{name} and parseable \texttt{arguments}, then repeats
 under \texttt{tool\_choice:\ required} as a positive control. It runs in seconds and would have
 caught every silent failure in this paper.

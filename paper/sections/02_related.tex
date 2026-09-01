@@ -1,4 +1,5 @@
 \section{Related Work}
+\label{sec:related}
 
 \textbf{Evaluation validity under nuisance factors.} A line of work shows that reported LLM
 capability is sensitive to factors that ought to be irrelevant. \citet{sclar2024formatspread}~(\emph{FormatSpread})
@@ -28,7 +29,8 @@ into an RL rollout and identify which branch of the policy the gradient can no l
 infrastructure rather than in models is already practitioner folklore
 \citep{livekit2026servingstack}; that account is qualitative and reports no measurements.
 \textbf{Our claim is not that the interface can fail silently, which is known; it is that the
-silent fraction is measurable, that it grows with capability, and that it propagates into
+silent fraction is measurable, that within Qwen2.5-Coder it grows with checkpoint size under
+the same mismatched interface, and that it propagates into
 training.}
 
 \textbf{Constrained decoding and its costs.} \citet{tam2024speakfreely}~(\emph{Let Me Speak Freely?}) report that
@@ -75,7 +77,7 @@ layers of \S\ref{sec:families} are a quantified instance of a single harness-sid
 \emph{ToolFailBench}'s Tool-Skip label is read as a model behaviour --- a model that never
 calls a needed tool --- but it is also precisely what an unparsed emission produces, so the
 category is confounded by the interface unless the stack is verified first, which is what the
-preflight check of \S7 does in seconds. And the most recent synthesis of the field's failure
+preflight check of \S\ref{sec:limitations} does in seconds. And the most recent synthesis of the field's failure
 modes \citep{albayaydh2026beyondleaderboard} places measurement validity among its six clusters
 without localising any part of it to the serving stack. \textbf{Every audit above varies
 something above the API boundary; the distortion we report occurs below it, and is invisible to

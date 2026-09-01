@@ -101,7 +101,7 @@ present study.
   \textbf{Human validation covers one criterion on one sample.} Two independent blind
   annotators on 98 stratified items give inter-annotator $\kappa$ = 0.967 on the 62 items
   where both read identical bytes, and classifier-vs-gold-standard $\kappa$ = 0.871 after
-  third-party adjudication of all fifteen non-unanimous items (\S3.2). Two residual limits
+  third-party adjudication of all fifteen non-unanimous items (\S\ref{sec:humanval}). Two residual limits
   remain. (i) The sample is stratified by classifier verdict, so it estimates per-stratum
   precision and recall, not a population rate. (ii) The stored raw output is capped at
   4000 characters, so a call
@@ -146,14 +146,33 @@ We name these so the claims are falsifiable rather than merely hedged.
 \begin{itemize}
 \tightlist
 \item
+  A $\mathbf{2\times2}$ \textbf{template}$\times$\textbf{parser ablation on BFCL}. \S\ref{sec:bfcl}
+  substitutes the community parser \emph{and} its paired chat template together, so the
+  $0\to196$ jump cannot be apportioned between them. Four cells --- documented template with
+  \texttt{hermes}; dedicated template with \texttt{hermes}; documented template with the
+  dedicated parser; dedicated template with the dedicated parser --- on the same 200 cases,
+  seeds and scorer, would separate emission-side from parse-side contribution and reveal any
+  interaction. Cell~1 and cell~4 are already run. Cost is two additional vLLM launches; no new
+  model, data or annotation. Until this exists, every causal statement about
+  \S\ref{sec:bfcl} must remain at adapter granularity, as it now does.
+\item
+  A \textbf{rollout-path probe inside verl on Qwen2.5-Coder-7B}, no training required.
+  \S\ref{sec:rl}'s run is 1.5B, where the probe of \S\ref{sec:sufficiency} shows the missing
+  calls are largely \emph{not} well-formed-but-censored: the policy emits call-shaped output
+  that names the wrong tool. That leaves the causal chain complete for evaluation but not for
+  training. At 7B the serving-side numbers are different --- 21/100 tight emitted calls
+  against 0 parsed --- so a single rollout batch through verl's own AgentLoop under the
+  documented \texttt{hermes} configuration, logging raw emissions, parser verdict, tool
+  executions and observations per turn, would show whether well-formed \texttt{run\_tests}
+  calls are emitted \emph{and} dropped inside the training stack. A positive result
+  (emitted~$>0$, accepted~$=0$, executed~$=0$) closes emitted~$\to$~parsed~$\to$~executed~$\to$~
+  observed~$\to$~gradient; a negative one would confine our RL claim to distributional absence,
+  which is what we claim now. This is the highest-value remaining experiment.
+\item
   A \textbf{broken-FC versus repaired-FC RL comparison} on a rollout backend exposing guided
   decoding, everything else fixed. If repaired-FC recovers multi-turn learning, our
   sufficiency claim in \S\ref{sec:sufficiency} is wrong. If it does not, the ``bottleneck is
   not singular'' reading strengthens from one arm to two.
-\item
-  A \textbf{second independent annotator} on 100--200 stratified outputs. If inter-annotator
-  $\kappa$ falls well below 0.9, the magnitude of the scale curve --- though not its
-  direction, which the raw-tag counts establish independently --- needs restating.
 \item
   The same five-layer measurement on a \textbf{standard tool-use benchmark}. Done for BFCL~v4
   (\S\ref{sec:bfcl}): the funnel reproduces on official data, executor and scorer, and the
@@ -162,8 +181,9 @@ We name these so the claims are falsifiable rather than merely hedged.
   differ enough that the result should not be assumed to carry over.
 \item
   A \textbf{second family's scale ladder}, with a working test executor. The within-lineage
-  Instruct control (Table~\ref{tab:instruct}) shows the mismatch tracks format training
-  rather than family, but it does not supply a second ladder of undercount: if the undercount
+  Instruct control (Table~\ref{tab:instruct}) localises the mismatch to checkpoint-specific
+  training rather than the shared family and template, but it does not supply a second ladder
+  of undercount: if the undercount
   does not grow with checkpoint size in another family, \S\ref{sec:scale}'s scale claim is a
   Qwen-plus-hermes fact rather than a scaling phenomenon.
 \item

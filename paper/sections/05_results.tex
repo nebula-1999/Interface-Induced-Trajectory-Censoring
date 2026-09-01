@@ -76,7 +76,7 @@ template}: templates are inherited, training is not.
 \caption{\textbf{The undercount grows with scale.} Across a 21$\times$ range the server
 parses zero calls at every size, while well-formed calls the model actually emits rise to
 80/100 at 32B (72 after the correction factor of 0.900 established against a third-party
-adjudicated gold standard, \S3.2).}
+adjudicated gold standard, \S\ref{sec:humanval}).}
 \label{fig:gap}
 \end{figure}
 
@@ -165,7 +165,7 @@ inside the same lineage: Qwen2.5-\textbf{Instruct} at the same five sizes. The t
 chat template (Coder inherits it from Instruct, which is what produced the false positive of
 \S\ref{sec:families}); they differ in whether the checkpoint was trained on tool-call tokens. Same 100
 KodCode items, same \texttt{hermes} parser, same \texttt{tool\_choice:\ auto}, same
-\texttt{temperature\ =\ 0}, seed 0, and the same intent criterion of \S3.2.
+\texttt{temperature\ =\ 0}, seed 0, and the same intent criterion of \S\ref{sec:humanval}.
 
 \begin{table}[t]
 \centering\small
@@ -184,9 +184,13 @@ Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjo
 \end{table}
 
 Against the flat zero of Table~\ref{tab:scale}, the Instruct ladder runs 1, 11, 63, 77, 88.
-\textbf{The mismatch therefore tracks whether the checkpoint was trained on the format, not the
-family and not the scale.} This is the control we would otherwise have to concede, and it
-comes out on the side of the mechanism we claim.
+\textbf{The contrast localises the mismatch to checkpoint-specific training rather than to the
+shared family and template, or to parameter count alone.} We stop short of naming
+tool-call-format training as \emph{the} cause: Coder and Instruct differ in their whole
+post-training mixture --- coding specialisation, instruction data, preference alignment ---
+and this experiment varies that bundle, not one element of it. What it does rule out is the
+reading that \texttt{hermes} is simply inoperative for the Qwen2.5 template, which the flat
+zero of Table~\ref{tab:scale} would otherwise leave open.
 
 \paragraph{The residue is not the same failure in the two ladders.}
 It would be wrong to read Instruct's remaining unparsed items as the same quantity as
@@ -288,8 +292,13 @@ Everything above is measured with our own probe on our own task set. A reader is
 ask whether the effect is a property of that instrument. We therefore replicate it on the
 Berkeley Function-Calling Leaderboard v4, using BFCL's official data, its multi-turn
 executor and its scorer at pinned Gorilla commit
-\texttt{6ea57973c7a6097fd7c5915698c54c17c5b1b6c8}, and changing \emph{only the serving parser}
-between two arms of the same model.
+\texttt{6ea57973c7a6097fd7c5915698c54c17c5b1b6c8}, and changing \emph{only the serving adapter
+configuration} between two arms of the same model --- weights, benchmark cases, decoding,
+seeds, executor and scorer all held fixed. We say \emph{adapter configuration}, not
+\emph{parser}: arm~2 substitutes the community Qwen2.5-Coder parser \textbf{together with its
+paired chat template}, so the intervention is the pair, and this experiment cannot apportion
+the effect between them. \S\ref{sec:future} specifies the $2\times2$ template$\times$parser
+ablation that would.
 
 One deviation from stock BFCL is required and we state it plainly. BFCL's shipped handler
 for local Qwen models posts to \texttt{/v1/completions} and extracts \texttt{\textless{}tool\_call\textgreater{}}
@@ -327,7 +336,8 @@ Arm & cases & HTTP err & first parsed & unparsed & tight & strong & weak \\
 
 Under the configuration a practitioner would arrive at by following the documentation, the
 server parses \textbf{zero} of 200 cases --- while 166 of those same first responses contain a
-call that meets the strict criterion. Swapping the parser moves the same model to 196/200.
+call that meets the strict criterion. Replacing the documented \texttt{hermes} configuration
+with the dedicated Qwen2.5-Coder adapter moves the same model to 196/200.
 
 The consequence is visible at every downstream layer, because BFCL executes the calls it
 parses and scores the resulting state:
@@ -383,7 +393,7 @@ configuration reproduced 23/23 as wrong-tool calls.
 
 \emph{This also corrects a measurement of our own}: because the probe did not originally verify
 the tool name, these 23 were counted as initiations. \textbf{Llama's true \texttt{run\_tests} initiation
-rate is 74/100, not 97/100} (\texttt{ERRATA.md} \S2).
+rate is 74/100, not 97/100} (\texttt{ERRATA.md} \S\ref{sec:related}).
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.25}}
@@ -719,7 +729,7 @@ Qwen2.5-Coder-1.5B emits nothing hermes can parse
 \end{verbatim}
 }
 
-The last two links are the training result of \S1; the middle two are measured here.
+The last two links are the training result of \S\ref{sec:intro}; the middle two are measured here.
 
 \subsubsection{Why no repaired-FC training arm exists}
 
@@ -863,7 +873,7 @@ process aborted after training had completed. The trend over 0--60 is flat enoug
 missing point would not change the reading, but we note the loss rather than presenting an
 unexplained gap. Because this arm is not a parser-repair control, it cannot separate
 ``a working channel is insufficient'' from ``ReAct in particular is insufficient''; the
-experiment that would separate them is named in \S7.
+experiment that would separate them is named in \S\ref{sec:limitations}.
 
 \subsection{Pressure on a broken interface makes things worse}
 \label{sec:pressure}
@@ -910,7 +920,7 @@ FC final & 62 & 66 & \sout{57} & \textbf{2/3} \\
 
 FC seed 3 contains one request error --- the model emitted parallel tool calls and vLLM
 returned \emph{``This model only supports single tool-calls at once''} (documented: Llama 3 does
-not support parallel calls) --- so it is inadmissible by \S3.2. With two admissible FC arms we
+not support parallel calls) --- so it is inadmissible by \S\ref{sec:humanval}. With two admissible FC arms we
 report the interval {[}62, 66{]} and \textbf{no standard deviation}. Worst case: ReAct's lowest (72)
 versus FC's highest (66) = \textbf{+6}; the direction is consistent across all admissible
 repetitions.

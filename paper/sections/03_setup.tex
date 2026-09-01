@@ -1,4 +1,5 @@
 \section{Setup}
+\label{sec:setup}
 
 \textbf{Task.} 100 problems drawn from a decontaminated KodCode subset (n-gram containment
 against EvalPlus). \textbf{All 50 full-length arms in this paper use the identical 100 items}
@@ -17,15 +18,16 @@ single \texttt{code} string. Schema variants: \textbf{terse} (bare \texttt{\{"ty
 identical prompts can differ across batch compositions. The main table is a single sample
 per item; \S\ref{sec:variance} quantifies sampling variability separately at \texttt{temperature=0.6} rather than
 assuming greedy decoding removes it.
-\texttt{max\_tokens\ =\ 2048} for \textbf{both} protocols (see \texttt{ERRATA.md} \S1 --- an earlier asymmetry
+\texttt{max\_tokens\ =\ 2048} for \textbf{both} protocols (see \texttt{ERRATA.md} \S\ref{sec:intro} --- an earlier asymmetry
 favoured FC; re-running under the true shared limit changed final pass by $\leq$1 item).
 
 \textbf{Measured quantities.} For each item's first turn we record: whether the server parsed a
 tool call; the raw output; the tool name called; the raw \texttt{arguments}; \texttt{finish\_reason}; and
-a protocol-agnostic intent classification (\S3.1). Execution, per-turn results, and final
+a protocol-agnostic intent classification (\S\ref{sec:intent}). Execution, per-turn results, and final
 pass are recorded per turn.
 
 \subsection{Intent criterion}
+\label{sec:intent}
 
 \emph{The criterion's source, the three tiers, and every
 prompt and tool schema used in this paper are reproduced verbatim in Appendix~\ref{app:prompts}.}
@@ -56,6 +58,7 @@ is shared by all text, tables and figures:
 \end{itemize}
 
 \subsection{Human validation of the intent criterion}
+\label{sec:humanval}
 
 The scale trend in \S\ref{sec:scale} rests entirely on an automated classifier, so we validated it
 against human judgement. 98 outputs were sampled \textbf{stratified by classifier verdict}
@@ -200,6 +203,7 @@ invisible to all three. Emitted-call counts are accordingly a \textbf{lower boun
 conservative for our claim, since it can only understate the censoring we report.
 
 \subsection{Validity gating}
+\label{sec:gating}
 
 An arm is admissible for pass-rate comparison only if it has exactly 100 items, exit code 0,
 \textbf{zero request errors}, and provenance (model / protocol / temperature / \texttt{max\_tokens} /
