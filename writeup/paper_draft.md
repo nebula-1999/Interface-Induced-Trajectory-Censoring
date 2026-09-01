@@ -16,46 +16,31 @@ Wenbo Wang · City University of Hong Kong · `wenbwang3-c@my.cityu.edu.hk`
 
 # Abstract
 
-Evaluations of LLM agents routinely report tool-call rates taken from the serving stack.
-We show this number can be zero while the model emits well-formed calls, and that the
-resulting misattribution contaminates both benchmarks and reinforcement learning.
+Agent evaluations report tool-call rates read off the serving stack. We show this number can
+be zero while the model emits well-formed calls: **the interface censors the trajectory
+before anything downstream sees it**.
 
 Configuring four model families for function calling on vLLM *following official
-documentation*, we find each fails at a different layer, and—critically—the most
-consequential failures are silent: DeepSeek-Coder’s chat template never injects tools;
-Qwen2.5-Coder emits JSON the recommended `hermes` parser cannot see; Llama-3.1-8B
-hallucinates *the task function itself* as a callable tool in 23% of items;
-Mistral-7B repeats its `[TOOL_CALLS]` marker and triggers HTTP 400. Apart from a
-missing `–enable-auto-tool-choice`, every failure we found either returns HTTP 200
-with an empty `tool_calls` array or is indistinguishable from a model that declines
-to call tools.
+documentation*, each fails at a different layer — template, parser, schema, token — and
+every failure but one returns HTTP 200 with an empty `tool_calls` array. Within
+Qwen2.5-Coder the censoring grows with checkpoint size: the server parses **0/100** at
+every scale while well-formed calls the model actually emits rise to **80/100** at 32B
+(two independent blind annotators, *κ* = 0.967). Llama-3.1-8B’s 23% rate of calling
+*the task function itself* as a tool falls to **0** under a single
+`strict: true` flag — a remedy three prior single-variable controls failed to find.
 
-**Within Qwen2.5-Coder, larger checkpoints show a monotonically larger absolute
-undercount under the same mismatched interface**: across a 21× range the server parses 0/100 calls at every size, while well-formed calls the
-model actually emits rise from 0 to 80/100 at 32B (two independent blind annotators,
-**inter-annotator *κ* = 0.967**; corrected count ≈<!-- -->78).
-Llama’s failure is eliminated by a single `strict: true` flag (23 → 0,
-*p* = 0.0001)—a remedy that three prior single-variable controls failed to identify.
+**The censoring reaches RL training.** A 10-step GRPO run executes **zero** tool
+calls while `critic/rewards/mean` climbs from 0.233 to 0.281: the dashboard is healthy,
+and because the reward admits direct answers, the tool-using branch receives no on-policy
+gradient signal at all.
 
-The same mismatch reaches **RL training**: under function calling a 10-step GRPO run
-executes **zero** tool calls with `num_turns` pinned at its minimum, while a
-ReAct run matched in model, data, hyper-parameters, seed and prompt strength (though not in
-step count) executes 2.05 calls per rollout. The training dashboard shows nothing wrong:
-`critic/rewards/mean` climbs from 0.233 to 0.281 *while the tool-execution count
-stays exactly zero*. Because the reward admits direct answers, no trajectory ever rewards
-tool use—**the tool-using branch receives no direct on-policy gradient signal
-under the observed rollout distribution**.
-
-Installing a dedicated adapter restores the mechanism *at evaluation time*
-(parse 0 → 84, multi-turn 0 → 37, rescues 0 → 9). **In training, a working tool
-channel is not sufficient**: a 75-step *ReAct* run executing 23,676 tool calls leaves
-multi-turn rescues flat at 6–8/540, indistinguishable from runs in which none executed.
-This arm changes protocol and interface together—the parser-repair control it would take
-to isolate the interface is not constructible in this training stack, and we say so rather
-than imply it—but it is enough to show the bottleneck is not singular. After conditioning on successful
-parses a residual protocol gap is established on one family (Llama, *p* = 0.0021) and
-undetermined on the other (Qwen,  + 8.4 pp, 95% CI \[ − 0.5,  + 17.4\]). **Interface problems mask protocol problems;
-only after fixing the former does the latter become visible.**
+**Repair recovers the mechanism but not the outcome.** A dedicated adapter restores
+parsing 0 → 84 and multi-turn rescues 0 → 9, yet pass rate moves 53→<!-- -->62 (n.s.); and a
+75-step *ReAct* run executing 23,676 tool calls leaves multi-turn rescues flat at
+6–8/540 — **a working channel is necessary, not sufficient**. We release a 98-line
+preflight check that would have caught every silent failure reported here.
+**The tool-call rate is not a property of the model; it is a property of the stack that
+measures it.**
 
 # Introduction
 
