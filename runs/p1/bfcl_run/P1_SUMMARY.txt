@@ -1,0 +1,13 @@
+================================================================================================================
+P1 HTTP funnel (first request per BFCL case; emitted format measured only when parse failed)
+================================================================================================================
+arm                                    cases HTTP err first parsed  unparsed   tight   strong   weak  any parsed
+P1-Qwen2.5-Coder-7B-Hermes-FC            200        0            0       200     166      169    187           0
+P1-Qwen2.5-Coder-7B-Repaired-FC          200        0          197         3       0        1      1         198
+
+================================================================================================================
+P1 five-layer case funnel (multi_turn_base only; BFCL execution/validity joined by case id)
+================================================================================================================
+arm                                       n  unparsed tight  first parsed  any parsed  executed  success  rescued
+P1-Qwen2.5-Coder-7B-Hermes-FC           100              69             0           0         0        0        0
+P1-Qwen2.5-Coder-7B-Repaired-FC         100               0            98          99        99       19        0

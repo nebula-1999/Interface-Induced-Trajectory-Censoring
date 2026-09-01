@@ -1,0 +1,39 @@
+{
+  "provenance": {
+    "when": "2026-09-01T23:53:11",
+    "pytest": "8.3.5",
+    "python": "3.12.3",
+    "sandbox_sha256": "a56a802fb9cd9e9794b4",
+    "workers": 1,
+    "timeout_s": 10.0,
+    "mem_mb": 512,
+    "note": "derived quantity: offline execution of stored turn-1 programs"
+  },
+  "summary": {
+    "1.5B": {
+      "n": 100,
+      "with_code": 42,
+      "turn1_pass": 14
+    },
+    "3B": {
+      "n": 100,
+      "with_code": 50,
+      "turn1_pass": 14
+    },
+    "7B": {
+      "n": 100,
+      "with_code": 63,
+      "turn1_pass": 34
+    },
+    "14B": {
+      "n": 100,
+      "with_code": 82,
+      "turn1_pass": 38
+    },
+    "32B": {
+      "n": 100,
+      "with_code": 90,
+      "turn1_pass": 42
+    }
+  }
+}
