@@ -1,0 +1,11 @@
+{"when": "2026-09-01T23:53:11", "pytest": "8.3.5", "python": "3.12.3", "sandbox_sha256": "a56a802fb9cd9e9794b4", "workers": 1, "timeout_s": 10.0, "mem_mb": 512, "note": "derived quantity: offline execution of stored turn-1 programs"}
+
+尺寸        n      首轮有代码      首轮通过      通过率
+------------------------------------------
+1.5B    100         42        14     14%
+3B      100         50        14     14%
+7B      100         63        34     34%
+14B     100         82        38     38%
+32B     100         90        42     42%
+
+写出 replay_turn1_*.jsonl 与 replay_turn1_summary.json（均为派生量）
