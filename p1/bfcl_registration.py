@@ -52,6 +52,8 @@ class P1OpenAIHandler(OpenAICompletionsHandler):
             "messages": messages,
             "model": self.model_name,
             "temperature": self.temperature,
+            "max_tokens": int(os.environ.get("P1_MAX_TOKENS", "2048")),
+            "seed": int(os.environ.get("P1_SEED", "0")),
             "store": False,
             "extra_headers": {
                 "X-P1-Case-ID": inference_data["_p1_case_id"],
@@ -79,7 +81,7 @@ def register() -> str:
         input_price=None,
         output_price=None,
         is_fc_model=True,
-        underscore_to_dot=False,
+        underscore_to_dot=True,
     )
     return registry_name
 

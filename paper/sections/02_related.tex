@@ -55,7 +55,13 @@ later benchmark from the $\tau$-bench of \citet{yao2025taubench} cited above ---
 dual-control environment in which the simulated user also acts on the shared state.}
 LiveMCPBench and MCP-Atlas over 496 expert-reviewed tasks and report an 18.5\%
 evaluator--human misalignment rate, attributing it to benchmark-design artifacts: brittle state
-matching, trajectory lock-in, rubric drift, judge variance.
+matching, trajectory lock-in, rubric drift, judge variance. That audit has an industrial
+counterpart: $\tau^2$-Bench-Verified~\citep{tau2benchverified}, a release of the same benchmark
+re-checked against its own stated policies, documents four categories of defect in the original
+ground truth --- expected actions that violate the domain policy, wrong database references,
+logically impossible tasks, and instructions too vague to evaluate consistently. A benchmark in
+active use for ranking frontier agents needed a third-party correction pass before its labels
+agreed with its own rules.
 \citet{raj2026modelorharness}~(\emph{Model or Harness?}) organise 41 failure modes by the
 interaction edge on which each arises and by whether the repair belongs to the model or to the
 harness. \citet{soni2026toolfailbench}~(\emph{ToolFailBench}) labels traces across 1{,}000

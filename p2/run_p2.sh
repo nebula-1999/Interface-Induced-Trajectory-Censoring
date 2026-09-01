@@ -16,6 +16,14 @@ set -u
 
 P=/root/autodl-tmp/p2
 M=/root/autodl-tmp/models
+E=/root/autodl-tmp/envs/p2/bin
+# PATH 必须含 venv 的 bin：vLLM 会 fork 调 ninja 做 inductor 编译，
+# 那次查找走 PATH，绝对路径救不了（P1 上实测踩过）
+export PATH="$E:$PATH"
+export HF_ENDPOINT=https://hf-mirror.com   # AutoDL 直连不了 HF，旧机同此
+export HF_HUB_DISABLE_XET=1                # 不设会导致 hf-mirror 下载全部 401
+export HF_HOME=/root/autodl-tmp/hf
+export VLLM_ENFORCE_STRICT_TOOL_CALLING=true
 OUT=$P/runs
 PORT=8000
 LOG=$P/p2_run.log
@@ -50,8 +58,14 @@ serve() {  # $1=模型路径
     --max-model-len 8192 --gpu-memory-utilization 0.90 \
     >>"$P/vllm.log" 2>&1 &
   echo $! > "$P/vllm.pid"
-  for _ in $(seq 1 180); do
-    curl -sf "http://127.0.0.1:$PORT/v1/models" >/dev/null 2>&1 && { say "  就绪"; return 0; }
+  for i in $(seq 1 240); do
+    curl -sf "http://127.0.0.1:$PORT/v1/models" >/dev/null 2>&1 && { say "  就绪（${i}0s 内）"; return 0; }
+    # 用 pgrep 查真实服务进程，不用 launcher 的 $!——它 fork 完就退，会误判
+    if [ $i -gt 6 ] && ! pgrep -f "[v]llm serve" >/dev/null; then
+      say "  ★ vLLM 进程已退出，根因："
+      grep -E "FileNotFoundError|RuntimeError|ERROR" "$P/vllm.log" | tail -5
+      return 1
+    fi
     sleep 5
   done
   say "  ★ 启动超时"; return 1
@@ -103,8 +117,8 @@ for entry in "${MODELS[@]}"; do
   say "--- $tag ---"
 
   if [ ! -d "$path" ]; then
-    say "  下载 $repo"
-    huggingface-cli download "$repo" --local-dir "$path" >>"$LOG" 2>&1 || {
+    say "  下载 $repo（huggingface-cli 已废弃，用 hf）"
+    hf download "$repo" --local-dir "$path" >>"$LOG" 2>&1 || {
       say "  ★ 下载失败，跳过"; continue; }
   fi
   df -h /root/autodl-tmp | tail -1 | tee -a "$LOG"
