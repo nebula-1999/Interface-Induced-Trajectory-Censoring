@@ -29,6 +29,17 @@ PORT=8000
 LOG=$P/p2_run.log
 mkdir -p "$OUT" "$M"
 
+# 单实例锁：4 个实例并发跑过一次，互相抢 8000 端口 + 抢同一个下载目录，
+# 结果是 1.5B 那条臂 100/100 全 404、3B 被下到一半就拿去 serve。
+# 目录存在 != 下载完成，所以并发的代价不是慢，是静默的废数据。
+LOCK=$P/run_p2.pid
+if [ -f "$LOCK" ] && kill -0 "$(cat "$LOCK" 2>/dev/null)" 2>/dev/null; then
+  echo "[$(date +%H:%M:%S)] ★ 已有实例在跑（pid $(cat "$LOCK")），本次退出" | tee -a "$LOG"
+  exit 1
+fi
+echo $$ > "$LOCK"
+trap 'rm -f "$LOCK"' EXIT
+
 MODELS=(
   "Qwen2.5-1.5B-Instruct  Qwen/Qwen2.5-1.5B-Instruct"
   "Qwen2.5-3B-Instruct    Qwen/Qwen2.5-3B-Instruct"
@@ -52,8 +63,10 @@ wait_port_free() {
 serve() {  # $1=模型路径
   wait_port_free || return 1
   say "  启动 vLLM: $(basename "$1")"
+  # 不加 --served-model-name：旧机 50 个臂都是这么起的，模型 id 即路径，
+  # 与探针 --model 发出的字符串一致。加了会 404（实测踩过）
   nohup vllm serve "$1" \
-    --port "$PORT" --served-model-name probe \
+    --port "$PORT" \
     --enable-auto-tool-choice --tool-call-parser hermes \
     --max-model-len 8192 --gpu-memory-utilization 0.90 \
     >>"$P/vllm.log" 2>&1 &
@@ -93,7 +106,27 @@ run_arm() {  # $1=标签 $2=模型路径
     --out "$OUT/traj_p2_${1}_fc.jsonl" >>"$LOG" 2>&1
   rc=$?
   say "  探针 rc=$rc"
-  return "$rc"          # ← 必须显式返回，否则 && 链断裂会静默跳过后续臂
+  # 产物验收：preflight 用 /v1/models 自查名字，探针用 --model 传路径，
+  # 两者解析方式不同，preflight 拦不住模型名错配。必须看产物。
+  local out="$OUT/traj_p2_${1}_fc.jsonl"
+  if [ ! -f "$out" ]; then
+    # 没产物也是失败。旧版这里是 if [ -f ]，探针没写文件就整道防线静默跳过。
+    say "  ★ 探针没产出 $out——本臂作废"
+    return 1
+  fi
+  local nerr ntot
+  # grep -c 无命中时打印 0 并 exit 1，写成 `|| echo 0` 会得到两行 "0"，
+  # 后面的 [ "$nerr" -gt 5 ] 直接报 integer expression expected 并跳过整道防线。
+  nerr=$(grep -c "request_error" "$out" 2>/dev/null) || nerr=0
+  ntot=$(wc -l < "$out")
+  say "  请求错误 $nerr / $ntot"
+  if [ "$nerr" -gt 5 ]; then
+    say "  ★ 请求错误过多，本臂作废并停止整轮——继续跑只会生成更多废数据"
+    grep -o "__ERROR__[^\"]*" "$out" | head -2 | tee -a "$LOG"
+    mv "$out" "$out.invalid"
+    return 1
+  fi
+  return "$rc"
 }
 
 say "===== P2 开始 ====="
@@ -116,16 +149,46 @@ for entry in "${MODELS[@]}"; do
   path="$M/$tag"
   say "--- $tag ---"
 
-  if [ ! -d "$path" ]; then
+  # 幂等：已有合格产物的臂直接跳过。补跑单条臂时（比如 3B 那次因半截模型被跳过）
+  # 不加这个就会把 32B 那条跑了 1.5 小时的轨迹重新覆盖一遍。
+  # P2_ONLY 可再收窄到指定 tag，逗号分隔。
+  if [ -n "${P2_ONLY:-}" ] && ! echo ",$P2_ONLY," | grep -q ",$tag,"; then
+    say "  不在 P2_ONLY 名单里，跳过"; continue
+  fi
+  existing="$OUT/traj_p2_${tag}_fc.jsonl"
+  if [ -f "$existing" ]; then
+    nline=$(wc -l < "$existing")
+    nbad=$(grep -c "request_error" "$existing" 2>/dev/null) || nbad=0
+    if [ "$nline" -ge 100 ] && [ "$nbad" -le 5 ]; then
+      say "  已有合格产物（$nline 行，请求错误 $nbad），跳过；要重跑先删掉它"
+      continue
+    fi
+    say "  已有产物但不合格（$nline 行，请求错误 $nbad），重跑"
+  fi
+
+  # 目录存在 != 下载完成：3B 被并发实例下到一半，[ ! -d ] 判它"已下载"，
+  # vLLM 起来才报 Weight files referenced in index but missing，
+  # 而且此后每次重跑都会跳过它。改用显式完成标记。
+  if [ ! -f "$path/.p2_download_ok" ]; then
+    [ -d "$path" ] && say "  $tag 目录存在但无完成标记（可能是半截下载），重下"
     say "  下载 $repo（huggingface-cli 已废弃，用 hf）"
-    hf download "$repo" --local-dir "$path" >>"$LOG" 2>&1 || {
-      say "  ★ 下载失败，跳过"; continue; }
+    if hf download "$repo" --local-dir "$path" >>"$LOG" 2>&1; then
+      touch "$path/.p2_download_ok"
+    else
+      say "  ★ 下载失败，跳过"; continue
+    fi
   fi
   df -h /root/autodl-tmp | tail -1 | tee -a "$LOG"
 
   if serve "$path"; then
     run_arm "$tag" "$path"
+    arm_rc=$?
     teardown
+    if [ "$arm_rc" -ne 0 ]; then
+      # 旧版这里不看返回码，run_arm 里写的"停止整轮"根本停不了任何东西。
+      say "★ $tag 作废（rc=$arm_rc），停止整轮——继续跑只会生成更多废数据"
+      break
+    fi
   else
     say "  ★ 服务启动失败，跳过 $tag"
     teardown
