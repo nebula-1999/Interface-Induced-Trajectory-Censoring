@@ -43,7 +43,7 @@ present study.
   a template check with little quantification. Read it as four concrete failure modes
   motivating a layered decomposition, not as a complete partition of the failure space.
 \item
-  \textbf{Single-sample main table.} \S5.4 is one sample at \texttt{temperature}=0. Variance
+  \textbf{Single-sample main table.} \S\ref{sec:maintable} is one sample at \texttt{temperature}=0. Variance
   is estimated only on Llama-3.1-8B, and there only 2 of 3 FC arms are admissible, which is
   too few for a standard deviation.
 \item
@@ -65,7 +65,7 @@ present study.
   positive-control interaction channel, not a parser-repair control. The experiment that
   would isolate the interface --- broken-FC RL versus repaired-FC RL, everything else held
   fixed --- is not constructible in verl 0.9.0, whose vLLM rollout path exposes no guided
-  decoding (\S5.6). Consequently we claim that \textbf{interface censoring can be observed
+  decoding (\S\ref{sec:rl}). Consequently we claim that \textbf{interface censoring can be observed
   directly inside rollout collection and eliminates tool-mediated samples}; we do
   \textbf{not} claim to have causally proven that it prevents RL from learning multi-turn
   repair.
@@ -88,7 +88,7 @@ present study.
 \item
   \textbf{Zero executions is not zero attempts.} The FC training arm did not save raw rollout
   text, so we cannot separate ``never attempted'' from ``attempted and discarded''. The
-  probe replication at the same scale and prompt (\S5.6) finds no output naming
+  probe replication at the same scale and prompt (\S\ref{sec:rl}) finds no output naming
   \texttt{run\_tests}, which makes ``nothing well-formed to censor'' the most likely reading
   \emph{at 1.5B} --- but it is a replication, not the training run itself.
 \item
@@ -126,7 +126,7 @@ present study.
 \item
   \textbf{Repository-revision dependence.} Chat templates ship inside
   \texttt{tokenizer\_config.json} in the model repository and can be changed by the
-  publisher without a model change. The Qwen2.5-Coder false positive in \S5.1 is precisely
+  publisher without a model change. The Qwen2.5-Coder false positive in \S\ref{sec:families} is precisely
   an artefact of an inherited template; a later revision could remove or alter it.
 \item
   \textbf{Instrumentation errata, disclosed rather than absorbed.} Seven ReAct arms recorded

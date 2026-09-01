@@ -70,7 +70,7 @@ mandatory --- ``\textbf{You must first call the run\_tests tool to verify your c
 answer directly.''
 
 \textbf{Strength is matched across protocols in every comparison we report.} The training
-comparison in \S5.6 uses \texttt{mandatory} on both sides, so ``FC executed zero tool calls''
+comparison in \S\ref{sec:rl} uses \texttt{mandatory} on both sides, so ``FC executed zero tool calls''
 cannot be attributed to a weaker instruction.
 
 \subsection{Tool schemas: terse, rich, strict}
@@ -91,7 +91,7 @@ terse
 \end{verbatim}
 }
 
-\texttt{rich} is the \S5.3 control. Its purpose is to test whether the wrong-tool rate is
+\texttt{rich} is the \S\ref{sec:llama} control. Its purpose is to test whether the wrong-tool rate is
 simply an under-specified schema, so it is written to be maximally explicit: the description
 states that the tool is \emph{not} the function the user asked for, and the parameter
 description carries a worked example.
@@ -119,13 +119,13 @@ asked to implement. Do not pass the task function's parameters into it. Its only
 \texttt{code}, is the complete source text you wrote.''
 
 \textbf{Under this explicit warning 22/100 items still pass the task function's parameters},
-and they are the same parameter names that failed under \texttt{terse} (\S5.3, $p$=1.000).
+and they are the same parameter names that failed under \texttt{terse} (\S\ref{sec:llama}, $p$=1.000).
 
 \texttt{strict} is \texttt{terse} plus \verb|"strict": true| on the function object, with
 \texttt{VLLM\_ENFORCE\_STRICT\_TOOL\_CALLING=true} (the default). This is the single change
 that takes the wrong-tool rate to zero.
 
-\subsection{The Thought-scaffold control (\S5.3)}
+\subsection{The Thought-scaffold control (\S\ref{sec:llama})}
 
 To test whether ReAct's advantage is merely an extra reasoning step, the FC system prompt was
 given a Thought requirement and nothing else changed:
@@ -139,7 +139,7 @@ are, what algorithm you intend to use. Once you have thought it through, call th
 The wrong-tool rate rose from 23 to 59 ($p<0.001$). We report this as a single wording, not
 as a claim about reasoning scaffolds in general.
 
-\subsection{The role-disambiguation few-shot (\S5.6)}
+\subsection{The role-disambiguation few-shot (\S\ref{sec:rl})}
 
 Used at training scale (1.5B) after the wrong-tool failure was found to be semantic rather
 than syntactic. It shows the wrong call and the right call side by side.

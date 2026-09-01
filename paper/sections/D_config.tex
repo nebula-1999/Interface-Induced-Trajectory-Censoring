@@ -47,7 +47,7 @@ positive control. It would have caught every silent failure reported here.
 \subsection{Training configuration}
 
 Shared by all training arms, including the three historical runs of \S1 and the arms of
-\S5.6:
+\S\ref{sec:rl}:
 
 {\small
 \begin{longtable}[]{@{}ll@{}}
@@ -65,7 +65,7 @@ Model & Qwen2.5-Coder-1.5B-Instruct \\
 Framework & verl 0.9.0 (vLLM 0.27.1 rollout backend) \\
 Algorithm & GRPO ($\times$2 seeds) and RLOO ($\times$1 seed) \\
 Trajectories per step & \texttt{train\_batch\_size} 16 $\times$ \texttt{rollout.n} 8 = 128 \\
-Steps & 150 (historical runs); 10 / 3 / 75 for the arms of \S5.6 \\
+Steps & 150 (historical runs); 10 / 3 / 75 for the arms of \S\ref{sec:rl} \\
 Training data & KodCode, decontaminated pool of 7669 items \\
 Held-out evaluation & EvalPlus: HumanEval+ 319, MBPP+ 677 \\
 Denominators & 540 (multi channel), 454 (repair channel), after removing 2 known-defective items \\
@@ -105,7 +105,7 @@ exactly 0.00\,s, and a dedicated counter at 0.
 \subsection{Why no repaired-FC training arm exists}
 
 For completeness, the three layers that block the control experiment a reader will ask for
-(\S5.6, and Limitations item 8):
+(\S\ref{sec:rl}, and Limitations item 8):
 
 \begin{enumerate}
 \tightlist

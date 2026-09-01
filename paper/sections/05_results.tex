@@ -4,6 +4,7 @@ Appendix~\ref{app:config}; every arm's recorded configuration is in Appendix~\re
 \label{sec:results}
 
 \subsection{Four families, four failure layers --- and the consequential ones are silent}
+\label{sec:families}
 
 \begin{figure}[t]
 \centering
@@ -116,7 +117,7 @@ capability, and we have one family's scale ladder, not several. Under the
 loose criterion every one of 32B's 100 items contains a \texttt{\{"name":"run\_tests",\ldots{}\}} structure.
 
 * The 1.5B row uses the \textbf{optional} tool instruction. Under the \textbf{mandatory} prompt
-used for training (\S5.6) the same checkpoint gives weak = 66 and unparsable = 46: coercion
+used for training (\S\ref{sec:rl}) the same checkpoint gives weak = 66 and unparsable = 46: coercion
 produces more JSON-shaped debris, not more valid calls. The two numbers describe different
 prompts, not a discrepancy.
 
@@ -162,7 +163,7 @@ of the other three, Llama parses correctly, Mistral returns 400, and DeepSeek ne
 the template, so none of them can exhibit censoring at all. The informative control is
 inside the same lineage: Qwen2.5-\textbf{Instruct} at the same five sizes. The two share one
 chat template (Coder inherits it from Instruct, which is what produced the false positive of
-\S5.1); they differ in whether the checkpoint was trained on tool-call tokens. Same 100
+\S\ref{sec:families}); they differ in whether the checkpoint was trained on tool-call tokens. Same 100
 KodCode items, same \texttt{hermes} parser, same \texttt{tool\_choice:\ auto}, same
 \texttt{temperature\ =\ 0}, seed 0, and the same intent criterion of \S3.2.
 
@@ -489,6 +490,7 @@ suspicion, ran three single-variable paired controls, and still wrote a configur
 problem into a draft as a model deficiency.
 
 \subsection{Main table, unified configuration}
+\label{sec:maintable}
 
 All arms: true \texttt{max\_tokens=2048}, identical 100 items, \texttt{temperature=0}.
 
@@ -525,6 +527,7 @@ parser rejects --- and \texttt{strict:\ true}, which fixes Llama's schema-level 
 help (42 $\to$ 39).
 
 \subsection{Repair loop: how much comes back}
+\label{sec:repair}
 
 Qwen2.5-Coder-7B, identical items, \texttt{tool\_choice:\ auto} throughout, changing only the
 adapter combination:
@@ -594,7 +597,7 @@ difference is $+8.4$\,pp with 95\% CI $[-0.5, +17.4]$ (\emph{p}=0.118, discordan
 $11/4$). \textbf{We do not read $p>0.05$ as evidence of no effect} --- the interval admits a
 residual as large as 17 points, i.e.~larger than the effect we detect on Llama.
 \textbf{The residual protocol effect is established on one family and undetermined on the
-other}; \S5.4's headline comparison should be read with this decomposition attached.
+other}; \S\ref{sec:maintable}'s headline comparison should be read with this decomposition attached.
 
 \subsubsection{Access to feedback vs.~use of feedback}
 
@@ -633,7 +636,7 @@ Original and modified hashes are recorded.
 \textbf{Adapters are not a universal switch.} The same adapter recovers 84/100 at 7B and \textbf{1/100
 at 3B}: the 3B checkpoint ignores the \texttt{\textless{}tools\textgreater{}} few-shot entirely (zero \texttt{\textless{}tools\textgreater{}} tags in
 100 items, 99 direct code) while still solving the task at a comparable rate (final 53).
-Adapter effectiveness is non-monotonic in scale, reinforcing \S5.1's per-checkpoint claim.
+Adapter effectiveness is non-monotonic in scale, reinforcing \S\ref{sec:families}'s per-checkpoint claim.
 
 \subsection{Censoring reaches RL training}
 \label{sec:rl}
@@ -755,7 +758,7 @@ wrong name, executable code present elsewhere in the body & 16 & 31\% \\
 
 Every call targets the function the task asks the model to \emph{write} ---
 \texttt{can\_form\_word(\{"tiles","word"\})}, \texttt{check\_password\_strength(\{"password"\})} --- the same
-signature as Llama's failure in \S5.3, now at a 5$\times$ smaller model. \textbf{Name normalisation
+signature as Llama's failure in \S\ref{sec:llama}, now at a 5$\times$ smaller model. \textbf{Name normalisation
 cannot repair this: no call carries code to normalise.}
 
 \textbf{(iii) A role-disambiguation few-shot makes it worse, not better.} Since the failure is
@@ -781,7 +784,7 @@ mandatory prompt (baseline) & 52 & \textbf{0} & 15 \\
 }
 
 The intervention made the model \emph{more fluent at emitting the wrong call} and slightly worse
-at the task. This is the third independent instance of \S5.7's pattern.
+at the task. This is the third independent instance of \S\ref{sec:pressure}'s pattern.
 
 \textbf{(iv) Constrained decoding is unavailable in this stack.} The remedy that works at
 evaluation time --- forcing the tool choice, or schema-constrained decoding --- is not exposed
@@ -796,7 +799,7 @@ comparison changes protocol and interface together. We flag this rather than let
 comparison be read as a clean single-variable intervention.
 
 \textbf{Scope.} This holds for Qwen2.5-Coder + \texttt{hermes}. It does not generalise to ``FC training
-never receives tool feedback''. Whether the \S5.5 adapter also restores the training signal
+never receives tool feedback''. Whether the \S\ref{sec:repair} adapter also restores the training signal
 was not tested. The demonstration is 10 and 3 steps --- a \textbf{mechanism} result, not an
 outcome comparison.
 
@@ -863,9 +866,10 @@ unexplained gap. Because this arm is not a parser-repair control, it cannot sepa
 experiment that would separate them is named in \S7.
 
 \subsection{Pressure on a broken interface makes things worse}
+\label{sec:pressure}
 
 Two independent controls point the same way. Adding a reasoning scaffold to FC raised
-role confusion from 23 to \textbf{59} (\S5.3): asked to analyse the task function's signature
+role confusion from 23 to \textbf{59} (\S\ref{sec:llama}): asked to analyse the task function's signature
 before acting, the model supplied exactly those parameters to the tool. Replacing the
 optional tool instruction with a mandatory one (\emph{``you must call \texttt{run\_tests}; do not answer
 directly''}) on Qwen2.5-Coder-1.5B moved parser-accepted calls not at all --- still 0/100 ---
@@ -881,6 +885,7 @@ task performance while leaving the tool-call count at zero, which looks like a m
 is both unwilling \emph{and} incapable.
 
 \subsection{Sampling variance, and an inverted noise structure}
+\label{sec:variance}
 
 Llama-3.1-8B, \texttt{temperature=0.6}, n=100 $\times$ 3 seeds:
 
@@ -925,7 +930,7 @@ perfectly stable''; \S\ref{sec:composition} gives the item-level evidence.
 
 Two independent observations, from different axes, show the same structure.
 
-\textbf{Across sampling seeds} (\S5.8): ReAct's final pass is 72 / 72 / 72 at \texttt{temperature=0.6},
+\textbf{Across sampling seeds} (\S\ref{sec:variance}): ReAct's final pass is 72 / 72 / 72 at \texttt{temperature=0.6},
 yet the sets of solved items have pairwise Jaccard 0.71--0.80 --- 15--24 items differ between
 seeds. Turn-1 pass varies widely (43--56, sd 6.8) and the rescue count compensates inversely
 (19 / 16 / 29).

@@ -85,10 +85,10 @@ The interface acts in **two opposite directions**, and our results contain one c
 instance of each:
 
 -   **Masking.** The model emits a valid call, the parser does not recognise it, the action
-    never reaches the environment (Qwen2.5-Coder, §5.2).
+    never reaches the environment (Qwen2.5-Coder, §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>).
 
 -   **Suppression.** The model emits an *invalid* call, and a schema constraint removes it
-    from the sampleable support before it becomes an action (Llama-3.1-8B, §5.3).
+    from the sampleable support before it becomes an action (Llama-3.1-8B, §<a href="#sec:llama" data-reference-type="ref" data-reference="sec:llama">6.4</a>).
 
 The correct general statement is therefore neither “the failure is in the model” nor “the
 failure is in the interface”:
@@ -140,7 +140,7 @@ consequence:
     probability*. We report it as mechanism evidence observed inside rollout collection, not
     as a clean causal RL result — the comparison arm changes protocol and interface
     together, and the parser-repair control that would separate them is not constructible in
-    this stack (§5.6). We further show that opening the channel is not by itself sufficient
+    this stack (§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>). We further show that opening the channel is not by itself sufficient
     (§<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a>): the bottleneck is not singular.
 
 5.  **A repair loop.** How much is recovered by installing a correct adapter, and what
@@ -177,13 +177,13 @@ security-log classification a strict regular-expression parser reports 0% threat
 while a corrected fuzzy parser recovers 76% on *identical* model outputs, with an
 unaffected severity metric serving as an internal control. We regard that work as the closest
 antecedent to ours and adopt the same standard of proof: one fixed set of bytes, re-parsed
-under different rules (§5.2). Three things separate the contributions. Their gap is a single
+under different rules (§<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>). Three things separate the contributions. Their gap is a single
 mechanism in a single domain and they explicitly decline to generalise it, whereas we separate
 *four* layers at which the failure occurs — template, parser, schema, token — across
-four model families (§5.1). Their gap is a fixed quantity; ours is a function of scale, and it
-grows (§5.2). And their distortion terminates at the reported number, whereas we follow it
+four model families (§<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a>). Their gap is a fixed quantity; ours is a function of scale, and it
+grows (§<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>). And their distortion terminates at the reported number, whereas we follow it
 into an RL rollout and identify which branch of the policy the gradient can no longer reach
-(§5.5). Outside the literature, the claim that tool-call failures originate in serving
+(§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>). Outside the literature, the claim that tool-call failures originate in serving
 infrastructure rather than in models is already practitioner folklore
 ; that account is qualitative and reports no measurements.
 **Our claim is not that the interface can fail silently, which is known; it is that the
@@ -192,17 +192,17 @@ training.**
 
 **Constrained decoding and its costs.**  (*Let Me Speak Freely?*) report that
 format restrictions and structured-output constraints can degrade reasoning. This bears
-directly on §5.3, where enabling `strict: true` eliminates a 23% role-confusion failure and
+directly on §<a href="#sec:llama" data-reference-type="ref" data-reference="sec:llama">6.4</a>, where enabling `strict: true` eliminates a 23% role-confusion failure and
 *improves* pass rate (49 → 61). We do not claim constraints are free: our result is that on
 this task the constraint’s benefit — admitting 23 previously-discarded items into execution
-— outweighs any reasoning cost, and we report the CoT control (§5.3) where added reasoning
+— outweighs any reasoning cost, and we report the CoT control (§<a href="#sec:llama" data-reference-type="ref" data-reference="sec:llama">6.4</a>) where added reasoning
 made matters worse. Whether constraints hurt elsewhere in the same stack is untested here.
 Guided-decoding machinery underlies both `strict` and vLLM’s
 `required` mode.
 
 **Tool-use benchmarks.** BFCL , *τ*-bench , ToolLLM ,
 API-Bank  and Toolformer  evaluate or train tool use. To our
-knowledge these report tool-call rates as parsed by the serving layer. §5.2 shows that
+knowledge these report tool-call rates as parsed by the serving layer. §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a> shows that
 number can be zero while 80/100 well-formed calls are emitted, which — if the pattern
 replicates on their stacks — would affect any absolute tool-use rate they report.
 
@@ -228,7 +228,7 @@ into six failure clusters, one of which is measurement validity.
 
 These are complementary rather than competing, and in two cases our result is a precondition
 for theirs. *Model or Harness?* supplies the vocabulary but no measurement; the four
-layers of §5.1 are a quantified instance of a single harness-side edge in its schema.
+layers of §<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a> are a quantified instance of a single harness-side edge in its schema.
 *ToolFailBench*’s Tool-Skip label is read as a model behaviour — a model that never
 calls a needed tool — but it is also precisely what an unparsed emission produces, so the
 category is confounded by the interface unless the stack is verified first, which is what the
@@ -240,10 +240,10 @@ all of them.**
 
 **Protocols and agent loops.** ReAct  is the text protocol we compare against.
 vLLM  is the serving stack; its tool-calling documentation specifies distinct
-per-family configuration, which §5.1 shows is not optional. verl  provides the RL training stack; importantly its AgentLoop performs **its own**
+per-family configuration, which §<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a> shows is not optional. verl  provides the RL training stack; importantly its AgentLoop performs **its own**
 tool-call parsing (`verl/experimental/agent_loop/tool_parser.py`, adapted from vLLM v0.9.1),
 so a vLLM-side parser plugin does not affect training rollouts — a distinction that cost us
-one wasted experiment design (§5.6).
+one wasted experiment design (§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>).
 
 **Prior report of the Qwen case.** vLLM issue \#32926 ,
 opened 2026-01-23, documents that Qwen2.5-Coder was not trained on tool-call tokens, that it
@@ -281,7 +281,7 @@ single `code` string. Schema variants: **terse** (bare `{"type":"string"}`), **r
 **Serving.** vLLM 0.27.1 , per-family parser and chat template as documented.
 `temperature=0` is greedy but **not bit-wise deterministic** under continuous batching:
 identical prompts can differ across batch compositions. The main table is a single sample
-per item; §5.8 quantifies sampling variability separately at `temperature=0.6` rather than
+per item; §<a href="#sec:variance" data-reference-type="ref" data-reference="sec:variance">6.9</a> quantifies sampling variability separately at `temperature=0.6` rather than
 assuming greedy decoding removes it.
 `max_tokens = 2048` for **both** protocols (see `ERRATA.md` §1 — an earlier asymmetry
 favoured FC; re-running under the true shared limit changed final pass by ≤<!-- -->1 item).
@@ -314,7 +314,7 @@ is shared by all text, tables and figures:
 
 ## Human validation of the intent criterion
 
-The scale trend in §5.2 rests entirely on an automated classifier, so we validated it
+The scale trend in §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a> rests entirely on an automated classifier, so we validated it
 against human judgement. 98 outputs were sampled **stratified by classifier verdict**
 (40 `tight`, 28 `strong`-but-not-`tight`, 30 neither) — deliberately over-sampling the
 decision boundary so both false positives and false negatives are estimable. Sampling is
@@ -424,7 +424,7 @@ and are scored on the full sample.
 </div>
 
 **Correction factor.** Against the gold standard the `tight` stratum’s precision
-is 36/40 = **0.900**, so §5.2’s headline 80/100 at 32B corrects to **≈<!-- -->72**.
+is 36/40 = **0.900**, so §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>’s headline 80/100 at 32B corrects to **≈<!-- -->72**.
 The criterion errs in both directions — 4 over-counts against 2 calls it misses entirely,
 for a net over-count of 2 — so the correction is smaller than the precision figure alone
 suggests. **The trend is unaffected**: applying 0.900 uniformly gives
@@ -586,7 +586,7 @@ capability, and we have one family’s scale ladder, not several. Under the
 loose criterion every one of 32B’s 100 items contains a `{"name":"run_tests",…}` structure.
 
 \* The 1.5B row uses the **optional** tool instruction. Under the **mandatory** prompt
-used for training (§5.6) the same checkpoint gives weak = 66 and unparsable = 46: coercion
+used for training (§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>) the same checkpoint gives weak = 66 and unparsable = 46: coercion
 produces more JSON-shaped debris, not more valid calls. The two numbers describe different
 prompts, not a discrepancy.
 
@@ -628,7 +628,7 @@ of the other three, Llama parses correctly, Mistral returns 400, and DeepSeek ne
 the template, so none of them can exhibit censoring at all. The informative control is
 inside the same lineage: Qwen2.5-**Instruct** at the same five sizes. The two share one
 chat template (Coder inherits it from Instruct, which is what produced the false positive of
-§5.1); they differ in whether the checkpoint was trained on tool-call tokens. Same 100
+§<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a>); they differ in whether the checkpoint was trained on tool-call tokens. Same 100
 KodCode items, same `hermes` parser, same `tool_choice: auto`, same
 `temperature = 0`, seed 0, and the same intent criterion of §3.2.
 
@@ -1010,7 +1010,7 @@ difference is  + 8.4 pp with 95% CI \[ − 0.5,  + 17.4\] (*p*=0
 11/4). **We do not read *p* &gt; 0.05 as evidence of no effect** — the interval admits a
 residual as large as 17 points, i.e. larger than the effect we detect on Llama.
 **The residual protocol effect is established on one family and undetermined on the
-other**; §5.4’s headline comparison should be read with this decomposition attached.
+other**; §<a href="#sec:maintable" data-reference-type="ref" data-reference="sec:maintable">6.5</a>’s headline comparison should be read with this decomposition attached.
 
 ### Access to feedback vs. use of feedback
 
@@ -1044,7 +1044,7 @@ Original and modified hashes are recorded.
 **Adapters are not a universal switch.** The same adapter recovers 84/100 at 7B and **1/100
 at 3B**: the 3B checkpoint ignores the `<tools>` few-shot entirely (zero `<tools>` tags in
 100 items, 99 direct code) while still solving the task at a comparable rate (final 53).
-Adapter effectiveness is non-monotonic in scale, reinforcing §5.1’s per-checkpoint claim.
+Adapter effectiveness is non-monotonic in scale, reinforcing §<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a>’s per-checkpoint claim.
 
 ## Censoring reaches RL training
 
@@ -1146,7 +1146,7 @@ Probe replication on the 1.5B model actually being trained, same mandatory promp
 
 Every call targets the function the task asks the model to *write* —
 `can_form_word({"tiles","word"})`, `check_password_strength({"password"})` — the same
-signature as Llama’s failure in §5.3, now at a 5× smaller model. **Name normalisation
+signature as Llama’s failure in §<a href="#sec:llama" data-reference-type="ref" data-reference="sec:llama">6.4</a>, now at a 5× smaller model. **Name normalisation
 cannot repair this: no call carries code to normalise.**
 
 **(iii) A role-disambiguation few-shot makes it worse, not better.** Since the failure is
@@ -1167,7 +1167,7 @@ Increasing pressure on the 1.5B model. Stronger instruction and few-shot example
 </div>
 
 The intervention made the model *more fluent at emitting the wrong call* and slightly worse
-at the task. This is the third independent instance of §5.7’s pattern.
+at the task. This is the third independent instance of §<a href="#sec:pressure" data-reference-type="ref" data-reference="sec:pressure">6.8</a>’s pattern.
 
 **(iv) Constrained decoding is unavailable in this stack.** The remedy that works at
 evaluation time — forcing the tool choice, or schema-constrained decoding — is not exposed
@@ -1182,7 +1182,7 @@ comparison changes protocol and interface together. We flag this rather than let
 comparison be read as a clean single-variable intervention.
 
 **Scope.** This holds for Qwen2.5-Coder + `hermes`. It does not generalise to “FC training
-never receives tool feedback”. Whether the §5.5 adapter also restores the training signal
+never receives tool feedback”. Whether the §<a href="#sec:repair" data-reference-type="ref" data-reference="sec:repair">6.6</a> adapter also restores the training signal
 was not tested. The demonstration is 10 and 3 steps — a **mechanism** result, not an
 outcome comparison.
 
@@ -1246,7 +1246,7 @@ experiment that would separate them is named in §7.
 ## Pressure on a broken interface makes things worse
 
 Two independent controls point the same way. Adding a reasoning scaffold to FC raised
-role confusion from 23 to **59** (§5.3): asked to analyse the task function’s signature
+role confusion from 23 to **59** (§<a href="#sec:llama" data-reference-type="ref" data-reference="sec:llama">6.4</a>): asked to analyse the task function’s signature
 before acting, the model supplied exactly those parameters to the tool. Replacing the
 optional tool instruction with a mandatory one (*“you must call `run_tests`; do not answer
 directly”*) on Qwen2.5-Coder-1.5B moved parser-accepted calls not at all — still 0/100 —
@@ -1304,7 +1304,7 @@ perfectly stable”; §<a href="#sec:composition" data-reference-type="ref" data
 
 Two independent observations, from different axes, show the same structure.
 
-**Across sampling seeds** (§5.8): ReAct’s final pass is 72 / 72 / 72 at `temperature=0.6`,
+**Across sampling seeds** (§<a href="#sec:variance" data-reference-type="ref" data-reference="sec:variance">6.9</a>): ReAct’s final pass is 72 / 72 / 72 at `temperature=0.6`,
 yet the sets of solved items have pairwise Jaccard 0.71–0.80 — 15–24 items differ between
 seeds. Turn-1 pass varies widely (43–56, sd 6.8) and the rescue count compensates inversely
 (19 / 16 / 29).
@@ -1346,7 +1346,7 @@ against, and (ii) is where the 21× scale trend lives.
 **Pre-flight, don’t post-hoc.** A missing `--enable-auto-tool-choice` is the only failure
 that announces itself. We therefore treat a `tools`-bearing request returning HTTP 200 —
 *and* a server-parsed call under `tool_choice: required` — as a required pre-flight for any
-FC experiment. Template inspection alone is insufficient (§5.1). We ship this check as a
+FC experiment. Template inspection alone is insufficient (§<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a>). We ship this check as a
 30-line script (`preflight_toolcall.py`): it issues one canonical request, asserts
 `tool_calls` is non-empty with the expected `name` and parseable `arguments`, then repeats
 under `tool_choice: required` as a positive control. It runs in seconds and would have
@@ -1366,7 +1366,7 @@ do not first exhaust the serving configuration matrix are not measuring protocol
 even after repair, the residual must be re-tested conditionally before it is called a
 protocol effect.
 
-**A cold-start hazard for agentic RL.** §5.6’s mechanism generalises beyond this stack:
+**A cold-start hazard for agentic RL.** §<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>’s mechanism generalises beyond this stack:
 whenever (a) tool trajectories are censored at rate \~1 and (b) the reward admits a
 tool-free path, the tool-using branch has no sampled return and cannot be reinforced.
 Prompt-level coercion does not help, and we observed it actively hurting (final pass 31→<!-- -->15).
@@ -1420,7 +1420,7 @@ present study.
     a template check with little quantification. Read it as four concrete failure modes
     motivating a layered decomposition, not as a complete partition of the failure space.
 
-5.  **Single-sample main table.** §5.4 is one sample at `temperature`=0. Variance
+5.  **Single-sample main table.** §<a href="#sec:maintable" data-reference-type="ref" data-reference="sec:maintable">6.5</a> is one sample at `temperature`=0. Variance
     is estimated only on Llama-3.1-8B, and there only 2 of 3 FC arms are admissible, which is
     too few for a standard deviation.
 
@@ -1437,7 +1437,7 @@ present study.
     positive-control interaction channel, not a parser-repair control. The experiment that
     would isolate the interface — broken-FC RL versus repaired-FC RL, everything else held
     fixed — is not constructible in verl 0.9.0, whose vLLM rollout path exposes no guided
-    decoding (§5.6). Consequently we claim that **interface censoring can be observed
+    decoding (§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>). Consequently we claim that **interface censoring can be observed
     directly inside rollout collection and eliminates tool-mediated samples**; we do
     **not** claim to have causally proven that it prevents RL from learning multi-turn
     repair.
@@ -1460,7 +1460,7 @@ present study.
 
 11. **Zero executions is not zero attempts.** The FC training arm did not save raw rollout
     text, so we cannot separate “never attempted” from “attempted and discarded”. The
-    probe replication at the same scale and prompt (§5.6) finds no output naming
+    probe replication at the same scale and prompt (§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>) finds no output naming
     `run_tests`, which makes “nothing well-formed to censor” the most likely reading
     *at 1.5B* — but it is a replication, not the training run itself.
 
@@ -1493,7 +1493,7 @@ present study.
 
 15. **Repository-revision dependence.** Chat templates ship inside
     `tokenizer_config.json` in the model repository and can be changed by the
-    publisher without a model change. The Qwen2.5-Coder false positive in §5.1 is precisely
+    publisher without a model change. The Qwen2.5-Coder false positive in §<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a> is precisely
     an artefact of an inherited template; a later revision could remove or alter it.
 
 16. **Instrumentation errata, disclosed rather than absorbed.** Seven ReAct arms recorded
@@ -1670,7 +1670,7 @@ statistic. The original is retained alongside.
 </div>
 
 Model snapshots must be pinned: `tokenizer_config.json` inheritance is the mechanism
-behind §5.1’s false-positive capability check, so a family’s behaviour can change with a
+behind §<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a>’s false-positive capability check, so a family’s behaviour can change with a
 repository revision. Every model path, its HF revision, and the serving flags used are
 recorded per arm in the trajectory provenance and in `runs/final/by_config/README.md`.
 

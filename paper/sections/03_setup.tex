@@ -15,7 +15,7 @@ single \texttt{code} string. Schema variants: \textbf{terse} (bare \texttt{\{"ty
 \textbf{Serving.} vLLM 0.27.1~\citep{kwon2023vllm,vllm_toolcalling_docs}, per-family parser and chat template as documented.
 \texttt{temperature=0} is greedy but \textbf{not bit-wise deterministic} under continuous batching:
 identical prompts can differ across batch compositions. The main table is a single sample
-per item; \S5.8 quantifies sampling variability separately at \texttt{temperature=0.6} rather than
+per item; \S\ref{sec:variance} quantifies sampling variability separately at \texttt{temperature=0.6} rather than
 assuming greedy decoding removes it.
 \texttt{max\_tokens\ =\ 2048} for \textbf{both} protocols (see \texttt{ERRATA.md} \S1 --- an earlier asymmetry
 favoured FC; re-running under the true shared limit changed final pass by $\leq$1 item).
@@ -57,7 +57,7 @@ is shared by all text, tables and figures:
 
 \subsection{Human validation of the intent criterion}
 
-The scale trend in \S5.2 rests entirely on an automated classifier, so we validated it
+The scale trend in \S\ref{sec:scale} rests entirely on an automated classifier, so we validated it
 against human judgement. 98 outputs were sampled \textbf{stratified by classifier verdict}
 (40 \texttt{tight}, 28 \texttt{strong}-but-not-\texttt{tight}, 30 neither) --- deliberately over-sampling the
 decision boundary so both false positives and false negatives are estimable. Sampling is
@@ -179,7 +179,7 @@ Classifier vs.\ gold standard & \textbf{0.871 [0.756, 0.958]} & 0.934 [0.829, 1.
 \end{table}
 
 \textbf{Correction factor.} Against the gold standard the \texttt{tight} stratum's precision
-is 36/40 = \textbf{0.900}, so \S5.2's headline 80/100 at 32B corrects to \textbf{$\approx$72}.
+is 36/40 = \textbf{0.900}, so \S\ref{sec:scale}'s headline 80/100 at 32B corrects to \textbf{$\approx$72}.
 The criterion errs in both directions --- 4 over-counts against 2 calls it misses entirely,
 for a net over-count of 2 --- so the correction is smaller than the precision figure alone
 suggests. \textbf{The trend is unaffected}: applying 0.900 uniformly gives

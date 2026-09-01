@@ -51,10 +51,10 @@ instance of each:
 \tightlist
 \item
   \textbf{Masking.} The model emits a valid call, the parser does not recognise it, the action
-  never reaches the environment (Qwen2.5-Coder, \S5.2).
+  never reaches the environment (Qwen2.5-Coder, \S\ref{sec:scale}).
 \item
   \textbf{Suppression.} The model emits an \emph{invalid} call, and a schema constraint removes it
-  from the sampleable support before it becomes an action (Llama-3.1-8B, \S5.3).
+  from the sampleable support before it becomes an action (Llama-3.1-8B, \S\ref{sec:llama}).
 \end{itemize}
 
 The correct general statement is therefore neither ``the failure is in the model'' nor ``the
@@ -113,7 +113,7 @@ consequence:
   probability}. We report it as mechanism evidence observed inside rollout collection, not
   as a clean causal RL result --- the comparison arm changes protocol and interface
   together, and the parser-repair control that would separate them is not constructible in
-  this stack (\S5.6). We further show that opening the channel is not by itself sufficient
+  this stack (\S\ref{sec:rl}). We further show that opening the channel is not by itself sufficient
   (\S\ref{sec:sufficiency}): the bottleneck is not singular.
 \item
   \textbf{A repair loop.} How much is recovered by installing a correct adapter, and what
