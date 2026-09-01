@@ -1,0 +1,125 @@
+\section{Serving and training configuration}
+\label{app:config}
+
+\subsection{Per-family serving flags}
+
+These are the configurations under test, not our inventions: each is what the vLLM
+documentation prescribes for that family. The rightmost column is what happens when the flag
+is absent --- the property that motivates the paper.
+
+{\small
+\begin{longtable}[]{@{}p{2.6cm}p{7.4cm}p{4.2cm}@{}}
+\caption{Serving configuration per family (vLLM 0.27.1) and the symptom of omission.}
+\label{tab:serving}\\
+\toprule
+Family & Flags & If omitted \\
+\midrule
+\endfirsthead
+\toprule
+Family & Flags & If omitted \\
+\midrule
+\endhead
+all & \texttt{-{}-enable-auto-tool-choice} & HTTP 400 --- \textbf{the only loud failure} \\
+Qwen2.5 (Instruct) & \texttt{-{}-tool-call-parser hermes} & silent empty \texttt{tool\_calls} \\
+Qwen2.5-Coder & \emph{no working stock configuration}; we install the community
+  \texttt{<tools>} parser plus its chat template & silent, at every scale \\
+Llama 3.1 / 3.2 & \texttt{-{}-tool-call-parser llama3\_json} \newline
+  \texttt{-{}-chat-template tool\_chat\_template\_llama3.1\_json.jinja} \newline
+  plus \texttt{"strict": true} in the schema & malformed arguments; without
+  \texttt{strict} the wrong-tool rate is 23\% \\
+Mistral (HF format) & \texttt{-{}-tokenizer-mode hf -{}-config-format hf -{}-load-format hf}
+  \newline \texttt{-{}-tool-call-parser mistral} \newline
+  \texttt{-{}-chat-template tool\_chat\_template\_mistral\_parallel.jinja} \newline
+  \texttt{tool\_call\_id} must be exactly 9 characters & HTTP 400; the officially
+  recommended parallel template \emph{raises} the error rate from 2\% to 42\% \\
+DeepSeek-Coder & none available: the chat template never injects \texttt{tools} & n/a \\
+\bottomrule
+\end{longtable}
+}
+
+\textbf{Only the first row fails loudly.} Every other omission returns HTTP 200 with an empty
+\texttt{tool\_calls} array, which is byte-identical to a model that declined to call the tool.
+This is what \texttt{preflight\_toolcall.py} (98 lines, released with this paper) exists to
+catch: it issues one canonical request, asserts \texttt{tool\_calls} is non-empty with the
+right name and parseable arguments, then repeats under \texttt{tool\_choice: required} as a
+positive control. It would have caught every silent failure reported here.
+
+\subsection{Training configuration}
+
+Shared by all training arms, including the three historical runs of \S1 and the arms of
+\S5.6:
+
+{\small
+\begin{longtable}[]{@{}ll@{}}
+\caption{Training configuration. All arms share every value below; arms differ only in the
+protocol and, for the historical runs, the algorithm and seed.}\label{tab:trainconfig}\\
+\toprule
+Setting & Value \\
+\midrule
+\endfirsthead
+\toprule
+Setting & Value \\
+\midrule
+\endhead
+Model & Qwen2.5-Coder-1.5B-Instruct \\
+Framework & verl 0.9.0 (vLLM 0.27.1 rollout backend) \\
+Algorithm & GRPO ($\times$2 seeds) and RLOO ($\times$1 seed) \\
+Trajectories per step & \texttt{train\_batch\_size} 16 $\times$ \texttt{rollout.n} 8 = 128 \\
+Steps & 150 (historical runs); 10 / 3 / 75 for the arms of \S5.6 \\
+Training data & KodCode, decontaminated pool of 7669 items \\
+Held-out evaluation & EvalPlus: HumanEval+ 319, MBPP+ 677 \\
+Denominators & 540 (multi channel), 454 (repair channel), after removing 2 known-defective items \\
+Agent loop & \texttt{tool\_agent} (FC) or \texttt{react\_agent} (ReAct) \\
+Tool & \texttt{run\_tests}, single \texttt{code} argument, sandboxed \texttt{pytest} \\
+System prompt & \texttt{FC\_MANDATORY} / ReAct mandatory --- matched strength (Appendix~C) \\
+Hardware & single A800 80\,GB \\
+\bottomrule
+\end{longtable}
+}
+
+\subsection{Tool-call instrumentation}
+
+verl 0.9.0's step metrics contain \textbf{no} tool-call count. The metric named
+\texttt{timing\_s/agent\_loop/tool\_calls} is \emph{elapsed seconds}; reading it as a count is
+a hard error and we flag it because the name invites exactly that.
+
+We therefore instrumented the two agent-side call sites directly, each writing one labelled
+line per call:
+
+\begin{itemize}
+\tightlist
+\item \texttt{CodeTool.execute} --- the function-calling path
+\item \texttt{ReActAgentLoop.\_run\_tests} --- the ReAct path
+\end{itemize}
+
+\textbf{The counter must not be placed in \texttt{sandbox.run\_tests}.} The reward function
+evaluates the final program through that same function, so a counter there conflates reward
+evaluation with agent tool use. We hit this and moved the counter; the sandbox's own counter
+was renamed \texttt{sandbox\_exec\_count} so the two can never be confused again.
+
+Result: the FC arm's counter file has \textbf{0 lines}; the ReAct arm's has \textbf{788}, all
+carrying the \texttt{react} label, so the provenance is uncontaminated. Three mutually
+independent signals agree --- \texttt{num\_turns} pinned at its minimum of 2, tool time
+exactly 0.00\,s, and a dedicated counter at 0.
+
+\subsection{Why no repaired-FC training arm exists}
+
+For completeness, the three layers that block the control experiment a reader will ask for
+(\S5.6, and Limitations item 8):
+
+\begin{enumerate}
+\tightlist
+\item \texttt{multi\_turn.format=hermes} selects \textbf{verl's own} \texttt{ToolParser}
+  registry, which is independent of vLLM's --- so installing a vLLM parser plugin has no
+  effect on the training path.
+\item A verl-side parser we wrote does recover calls, but \textbf{none of them are the tool}:
+  36/52 target the task function, 16/52 carry executable code elsewhere in the body. Name
+  normalisation cannot repair this, because no call carries code to normalise.
+\item The remedy that works at evaluation time --- forced tool choice or schema-constrained
+  decoding --- is \textbf{not exposed} by verl 0.9.0's vLLM rollout path. Its only
+  \texttt{strict} key belongs to the profiler.
+\end{enumerate}
+
+This is a property of the training stack, not a proof that FC is irreparable in principle.
+Forced tool choice through a rollout backend that exposes guided decoding remains untested,
+and is the single experiment we would run next.

@@ -99,7 +99,7 @@ paper/                  LaTeX package (Overleaf-ready)
 writeup/                full draft, evidence appendix, interview narrative
 analysis/               single intent criterion, re-parse matrix, funnel, training curves
 figures/                5 figures + generator
-runs/final/             49 full-length arms, ERRATA, per-configuration index
+runs/final/             50 full-length arms, ERRATA, per-configuration index
 validation/             human-validation pack, adjudication pack, scorer
 fixes/                  AUDIT.md and the run scripts for each experiment generation
 preflight_toolcall.py   the deliverable check

@@ -1,7 +1,7 @@
 3. Setup
 
 **Task.** 100 problems drawn from a decontaminated KodCode subset (n-gram containment
-against EvalPlus). **All 49 full-length arms in this paper use the identical 100 items**
+against EvalPlus). **All 50 full-length arms in this paper use the identical 100 items**
 (verified: unique item-set count = 1), so every cross-arm comparison is paired.
 
 **Protocols.**

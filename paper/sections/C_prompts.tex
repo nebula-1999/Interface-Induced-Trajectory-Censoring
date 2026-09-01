@@ -1,0 +1,202 @@
+\section{Prompts and tool schemas, verbatim}
+\label{app:prompts}
+
+All prompts are reproduced exactly as sent, in the original Chinese. We do not translate
+them: the protocol comparison is between two prompts, and a translation is a third prompt.
+An English gloss follows each block for readers who do not read Chinese, but the gloss was
+never sent to any model.
+
+\subsection{ReAct}
+
+Two strengths. \texttt{optional} permits a direct answer; \texttt{mandatory} requires an
+\texttt{Action} first. The main table uses \texttt{optional} on both protocols so that
+neither side is coerced.
+
+{\footnotesize
+\begin{verbatim}
+REACT_OPTIONAL
+--------------
+你是一个 Python 编程助手，可以按以下格式工作：
+
+Thought: 你的思考
+Action: run_tests
+Action Input: ```python
+<完整代码>
+```
+Observation: （由系统填写测试结果）
+
+Thought: 我已确认代码正确
+Final Answer: ```python
+<最终代码>
+```
+
+你可以用 Action 提交代码验证，也可以直接给 Final Answer。
+\end{verbatim}
+}
+
+\noindent\emph{Gloss:} ``You are a Python coding assistant and may work in the following
+format: Thought / Action: run\_tests / Action Input: (fenced code) / Observation (filled in
+by the system) / \ldots{} / Final Answer: (fenced code). You may submit code with Action for
+verification, or give a Final Answer directly.''
+
+The \texttt{mandatory} variant is identical except that the closing line becomes
+\textbf{必须先用 Action 提交代码验证，再给 Final Answer。}
+(``You must first submit code for verification with Action, then give a Final Answer''), and
+the loop is marked as repeatable.
+
+\subsection{Function calling}
+
+{\footnotesize
+\begin{verbatim}
+FC_OPTIONAL
+-----------
+你是一个 Python 编程助手。请根据用户的描述实现所要求的函数。
+
+你可以调用 run_tests 工具把代码交给测试运行，工具会返回通过情况与报错，
+你可以据此修改代码再次提交。
+
+FC_MANDATORY
+------------
+你是一个 Python 编程助手。请根据用户的描述实现所要求的函数。
+
+**你必须先调用 run_tests 工具验证你的代码**，不要直接给出答案。
+工具会返回测试通过情况与报错；若有失败，请修改代码并再次调用 run_tests。
+\end{verbatim}
+}
+
+\noindent\emph{Gloss:} optional --- ``You may call the run\_tests tool to submit code to the
+test runner; it returns pass/fail and errors, and you may revise and resubmit.''
+mandatory --- ``\textbf{You must first call the run\_tests tool to verify your code}; do not
+answer directly.''
+
+\textbf{Strength is matched across protocols in every comparison we report.} The training
+comparison in \S5.6 uses \texttt{mandatory} on both sides, so ``FC executed zero tool calls''
+cannot be attributed to a weaker instruction.
+
+\subsection{Tool schemas: terse, rich, strict}
+
+\texttt{terse} is the schema a reader arrives at by following the API documentation. It is
+the schema under which Llama's 23\% wrong-tool rate appears.
+
+{\footnotesize
+\begin{verbatim}
+terse
+-----
+{"type": "function", "function": {
+  "name": "run_tests",
+  "description": "把你写的 Python 代码交给测试运行，返回通过情况与报错。",
+  "parameters": {"type": "object",
+                 "properties": {"code": {"type": "string"}},
+                 "required": ["code"]}}}
+\end{verbatim}
+}
+
+\texttt{rich} is the \S5.3 control. Its purpose is to test whether the wrong-tool rate is
+simply an under-specified schema, so it is written to be maximally explicit: the description
+states that the tool is \emph{not} the function the user asked for, and the parameter
+description carries a worked example.
+
+{\footnotesize
+\begin{verbatim}
+rich
+----
+{"type": "function", "function": {
+  "name": "run_tests",
+  "description": "把你写的 Python 代码提交给测试运行器执行，返回测试通过情况与报错。"
+                 "注意：这个工具不是你要实现的那个函数，不要把题目函数的参数传进来；"
+                 "唯一的参数 code 是你写的完整源代码文本。",
+  "parameters": {"type": "object",
+    "properties": {"code": {
+      "type": "string",
+      "description": "完整的 Python 源代码文本，包含所需的 import 和完整的"
+                     "函数定义。例如：\"def add(a, b):\\n    return a + b\""}},
+    "required": ["code"]}}}
+\end{verbatim}
+}
+
+\noindent\emph{Gloss of the added text:} ``Note: this tool is not the function you are being
+asked to implement. Do not pass the task function's parameters into it. Its only parameter,
+\texttt{code}, is the complete source text you wrote.''
+
+\textbf{Under this explicit warning 22/100 items still pass the task function's parameters},
+and they are the same parameter names that failed under \texttt{terse} (\S5.3, $p$=1.000).
+
+\texttt{strict} is \texttt{terse} plus \verb|"strict": true| on the function object, with
+\texttt{VLLM\_ENFORCE\_STRICT\_TOOL\_CALLING=true} (the default). This is the single change
+that takes the wrong-tool rate to zero.
+
+\subsection{The Thought-scaffold control (\S5.3)}
+
+To test whether ReAct's advantage is merely an extra reasoning step, the FC system prompt was
+given a Thought requirement and nothing else changed:
+
+\begin{quote}
+``First write out your reasoning in a Thought: what the problem asks for, what the edge cases
+are, what algorithm you intend to use. Once you have thought it through, call the
+\texttt{run\_tests} tool\ldots{}''
+\end{quote}
+
+The wrong-tool rate rose from 23 to 59 ($p<0.001$). We report this as a single wording, not
+as a claim about reasoning scaffolds in general.
+
+\subsection{The role-disambiguation few-shot (\S5.6)}
+
+Used at training scale (1.5B) after the wrong-tool failure was found to be semantic rather
+than syntactic. It shows the wrong call and the right call side by side.
+
+{\footnotesize
+\begin{verbatim}
+你是一个 Python 编程助手。请根据用户的描述实现所要求的函数。
+
+**你必须先调用 run_tests 工具验证你的代码**，不要直接给出答案。
+
+注意一个常见错误：**用户描述里要你实现的那个函数，不是可调用的工具。**
+你唯一可以调用的工具是 `run_tests`，它只有一个参数 `code`，内容是你写的完整源代码。
+
+错误示范（用户要求实现 join_integers）：
+{"name": "join_integers", "arguments": {"int_array": [1, 2, 3]}}
+—— 这是在调用你自己该编写的函数，run_tests 收不到任何代码。
+
+正确示范：
+{"name": "run_tests", "arguments": {"code": "def join_integers(int_array):\n
+   return ','.join(map(str, int_array))"}}
+—— 函数名恒为 run_tests，你写的整段代码作为字符串放进 code。
+
+工具会返回测试通过情况与报错；若有失败，请修改代码并再次调用 run_tests。
+\end{verbatim}
+}
+
+\textbf{It made things worse}: recoverable calls rose 52 $\to$ 64 while calls naming
+\texttt{run\_tests} stayed at \textbf{0} and final pass fell 15 $\to$ 13. The model became
+more fluent at emitting the wrong call.
+
+\subsection{The intent criterion}
+
+Every emitted-call count in this paper comes from one function, applied identically to every
+arm. There is no per-arm tuning.
+
+{\footnotesize
+\begin{verbatim}
+TIGHT = re.compile(
+    r'"name"\s*:\s*"run_tests".{0,200}?"arguments"\s*:\s*\{'
+    r'.{0,80}?"code"\s*:\s*"(.{0,4000}?)"\s*\}', re.S)
+
+REAL  = re.compile(r'\\n|def |class |return |import |lambda ')
+
+def is_tight_call(raw):
+    m = TIGHT.search(raw or "")
+    return bool(m and REAL.search(m.group(1)))
+\end{verbatim}
+}
+
+\texttt{TIGHT} requires the name, an \texttt{arguments} object, and a \texttt{code} key whose
+value is a \emph{string literal}; \texttt{REAL} then requires that literal to contain actual
+Python. Together they exclude schema echo (\texttt{parameters}/\texttt{description} present,
+\texttt{arguments} absent), identifiers passed instead of strings
+(\texttt{"code": test\_code}), and placeholders (\texttt{"<your code here>"}).
+
+The \texttt{strong} tier drops the payload requirement (name present, or an XML tool tag);
+\texttt{weak} counts JSON structure with no \texttt{run\_tests} name and is disjoint from
+both. Tiers are nested, not mutually exclusive, and the paper states which tier each number
+uses. Human validation of this criterion is in \S3.2; two independent blind annotators give
+inter-annotator $\kappa$ = 0.967 on items where both read identical bytes.

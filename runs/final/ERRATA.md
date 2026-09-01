@@ -75,7 +75,7 @@ Script consistency is instead guaranteed externally, by comparing against
 
 ## 5. Verified correct
 
-- **All 49 full-length (n=100) formal arms share one and the same 100-item set** (`clean[:100]`;
+- **All 50 full-length (n=100) formal arms share one and the same 100-item set** (`clean[:100]`;
   number of distinct sets = 1), so the pairing is valid.
   - Separately, `traj_v8_Llama8B_recheck.jsonl` is a 23-item qualitative re-run (by design it
     covers only those 23), and there are 8 `*smoke*` files at n=3. Neither counts as a formal arm.

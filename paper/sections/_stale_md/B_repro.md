@@ -20,7 +20,7 @@ behind §5.1's false-positive capability check, so a family's behaviour can chan
 repository revision. Every model path, its HF revision, and the serving flags used are
 recorded per arm in the trajectory provenance and in `runs/final/by_config/README.md`.
 
-Trajectories for all 49 full-length arms, the training logs, the errata, and the
+Trajectories for all 50 full-length arms, the training logs, the errata, and the
 per-configuration index are in `runs/final/`. Third-party parser: hanXen
 (`1b92150`, Apache 2.0), few-shot examples rewritten from `get_weather` to `run_tests`;
 original retained with both hashes recorded.

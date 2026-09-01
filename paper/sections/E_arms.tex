@@ -1,0 +1,79 @@
+\section{Arm inventory}
+\label{app:arms}
+
+Every full-length arm, generated from the trajectory files' own provenance rather than
+transcribed by hand. All 50 arms share one item set (\texttt{clean[:100]}; distinct-set
+count verified = 1), so every cross-arm comparison in the paper is exactly paired. Fields
+recorded as \texttt{---} were absent from that generation's provenance schema
+(Appendix~A.4); this is disclosed rather than back-filled. Seven arms carry a known-wrong
+\texttt{max\_tokens} record and are listed in Appendix~A.1; five are inadmissible for pass
+rates and are listed in Appendix~A.3.
+
+Not listed: \texttt{v8\_Llama8B\_recheck} (23 items, a targeted qualitative re-run) and
+eight \texttt{*smoke*} files at n=3. Neither is a formal arm.
+
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}[]{@{}llllllrrr@{}}
+\caption{All 50 full-length arms and their recorded configuration.}\label{tab:arms}\\
+\toprule
+Arm & Model & Prot. & Strength & Schema & Adapter & tok & temp & seed \\
+\midrule
+\endfirsthead
+\toprule
+Arm & Model & Prot. & Strength & Schema & Adapter & tok & temp & seed \\
+\midrule
+\endhead
+a14\_Qwen1.5B\_fc\_mandatory & Qwen-1.5B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+roleprobe\_Qwen1.5B\_fc\_roledisambig & Qwen-1.5B & fc & optional & terse & cross\_family & 2048 & 0.0 & 0 \\
+v11\_DS1.3b\_react & DS-1.3B & react & optional & terse & cross\_family & 2048 & --- & --- \\
+v11\_DS6.7b\_react & DS-6.7B & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v11\_Llama32\_1B\_fc\_strict & Llama-3.2-1B & fc & optional & strict & cross\_family & 2048 & 0.0 & --- \\
+v11\_Llama32\_1B\_react & Llama-3.2-1B & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v11\_Llama32\_3B\_fc\_strict & Llama-3.2-3B & fc & optional & strict & cross\_family & 2048 & 0.0 & --- \\
+v11\_Llama32\_3B\_react & Llama-3.2-3B & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v13\_DS1.3b\_react & DS-1.3B & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v13\_DS6.7b\_react & DS-6.7B & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v13\_Llama32\_1B\_react & Llama-3.2-1B & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v13\_Llama32\_3B\_react & Llama-3.2-3B & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v13\_Llama8B\_fcstrict\_t06\_s1 & Llama-3.1-8B-Instruct & fc & optional & strict & cross\_family & 2048 & 0.6 & 1 \\
+v13\_Llama8B\_fcstrict\_t06\_s2 & Llama-3.1-8B-Instruct & fc & optional & strict & cross\_family & 2048 & 0.6 & 2 \\
+v13\_Llama8B\_fcstrict\_t06\_s3 & Llama-3.1-8B-Instruct & fc & optional & strict & cross\_family & 2048 & 0.6 & 3 \\
+v13\_Llama8B\_react\_t06\_s1 & Llama-3.1-8B-Instruct & react & optional & terse & cross\_family & 2048 & 0.6 & 1 \\
+v13\_Llama8B\_react\_t06\_s2 & Llama-3.1-8B-Instruct & react & optional & terse & cross\_family & 2048 & 0.6 & 2 \\
+v13\_Llama8B\_react\_t06\_s3 & Llama-3.1-8B-Instruct & react & optional & terse & cross\_family & 2048 & 0.6 & 3 \\
+v14\_Llama8B\_react & Llama-3.1-8B-Instruct & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v14\_Mistral7B\_react & Mistral-7B & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v14\_Qwen7B\_react & Qwen-7B & react & optional & terse & cross\_family & 2048 & 0.0 & --- \\
+v3\_Llama8B\_fc & Llama-3.1-8B-Instruct & fc & optional & --- & cross\_family & 2048 & --- & --- \\
+v3\_Llama8B\_fc\_legacy & Llama-3.1-8B-Instruct & fc & optional & --- & cross\_family & 2048 & --- & --- \\
+v3\_Llama8B\_react & Llama-3.1-8B-Instruct & react & optional & --- & cross\_family & 2048 & --- & --- \\
+v3\_Mistral7B\_fc & Mistral-7B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v3\_Mistral7B\_react & Mistral-7B & react & optional & terse & cross\_family & 2048 & --- & --- \\
+v3\_Qwen7B\_fc\_legacy & Qwen-7B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v3\_Qwen7B\_fc\_nosuffix & Qwen-7B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v3\_Qwen7B\_react & Qwen-7B & react & optional & terse & cross\_family & 2048 & --- & --- \\
+v4\_Llama8B\_fc\_cot & Llama-3.1-8B-Instruct & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v4\_Llama8B\_fc\_rich & Llama-3.1-8B-Instruct & fc & optional & rich & cross\_family & 2048 & --- & --- \\
+v5\_Llama8B\_fc\_official & Llama-3.1-8B-Instruct & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v5\_Mistral7B\_fc\_official & Mistral-7B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v5\_Qwen1.5B\_fc\_intent & Qwen-1.5B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v5\_Qwen14B\_fc\_intent & Qwen-14B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v5\_Qwen32B\_fc\_intent & Qwen-32B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v5\_Qwen3B\_fc\_intent & Qwen-3B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v5\_Qwen7B\_fc\_intent & Qwen-7B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v6\_Llama8B\_fc\_strict & Llama-3.1-8B-Instruct & fc & optional & strict & cross\_family & 2048 & --- & --- \\
+v6b\_Qwen1.5B\_fc\_plugin & Qwen-1.5B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v6b\_Qwen3B\_fc\_plugin & Qwen-3B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v6b\_Qwen7B\_fc\_plugin & Qwen-7B & fc & optional & terse & cross\_family & 2048 & --- & --- \\
+v9\_Mistral7B\_fc\_official\_strict & Mistral-7B & fc & optional & strict & cross\_family & 2048 & --- & --- \\
+v9\_Mistral7B\_fc\_strict & Mistral-7B & fc & optional & strict & cross\_family & 2048 & --- & --- \\
+x2\_DS1.3B\_react & DS-1.3B & react & optional & --- & --- & --- & --- & --- \\
+x2\_DS6.7B\_react & DS-6.7B & react & optional & --- & --- & --- & --- & --- \\
+x2\_Llama8B\_fc & Llama-3.1-8B-Instruct & fc & optional & --- & --- & --- & --- & --- \\
+x2\_Llama8B\_react & Llama-3.1-8B-Instruct & react & optional & --- & --- & --- & --- & --- \\
+x2\_Mistral7B\_fc & Mistral-7B & fc & optional & --- & --- & --- & --- & --- \\
+x2\_Mistral7B\_react & Mistral-7B & react & optional & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{longtable}
+}

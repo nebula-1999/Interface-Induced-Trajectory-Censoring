@@ -1,7 +1,7 @@
 \section{Setup}
 
 \textbf{Task.} 100 problems drawn from a decontaminated KodCode subset (n-gram containment
-against EvalPlus). \textbf{All 49 full-length arms in this paper use the identical 100 items}
+against EvalPlus). \textbf{All 50 full-length arms in this paper use the identical 100 items}
 (verified: unique item-set count = 1), so every cross-arm comparison is paired.
 
 \textbf{Protocols.}
@@ -26,6 +26,9 @@ a protocol-agnostic intent classification (\S3.1). Execution, per-turn results, 
 pass are recorded per turn.
 
 \subsection{Intent criterion}
+
+\emph{The criterion's source, the three tiers, and every
+prompt and tool schema used in this paper are reproduced verbatim in Appendix~\ref{app:prompts}.}
 
 Reporting only server-parsed calls is the practice under examination, so we need an
 independent measure of what the model emitted. A single classifier (\texttt{analysis/intent.py})

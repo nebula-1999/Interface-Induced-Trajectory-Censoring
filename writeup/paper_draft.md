@@ -69,12 +69,12 @@ number of items rescued by turn 2 or later stayed flat at **6–9 out of 540** f
 to step 150. RL had improved first-draft quality and left multi-turn debugging untouched.
 
 <figure>
-<img src="fig4_training_curves.png" id="fig:training_curves" alt="The anomaly this paper explains. Left: pass@1 rises over 150 steps on all three runs, driven by first drafts (dashed) rather than final answers. Centre: the count of items rescued by turn 2 or later never moves — 6–9 out of 540 from step 0 to step 150, across two algorithms and two seeds. Right: the seeded-bug repair channel does improve, confirming the model is learning something about fixing code; it simply never does so across turns. Section 6 shows the tool was never successfully called in any of these runs." /><figcaption aria-hidden="true">The anomaly this paper explains. Left: pass@1 rises over 150 steps on all three
+<img src="fig4_training_curves.png" id="fig:training_curves" alt="The anomaly this paper explains. Left: pass@1 rises over 150 steps on all three runs, driven by first drafts (dashed) rather than final answers. Centre: the count of items rescued by turn 2 or later never moves — 6–9 out of 540 from step 0 to step 150, across two algorithms and two seeds. Right: the seeded-bug repair channel does improve, confirming the model is learning something about fixing code; it simply never does so across turns. Section [sec:results] shows the tool was never successfully called in any of these runs." /><figcaption aria-hidden="true">The anomaly this paper explains. Left: pass@1 rises over 150 steps on all three
 runs, driven by first drafts (dashed) rather than final answers. <strong>Centre: the count of
 items rescued by turn 2 or later never moves</strong> — 6–9 out of 540 from step 0 to step 150,
 across two algorithms and two seeds. Right: the seeded-bug repair channel does improve,
 confirming the model is learning something about fixing code; it simply never does so
-<em>across turns</em>. Section <a href="#sec:results" data-reference-type="ref" data-reference="sec:results">6</a> shows the tool was never successfully
+<em>across turns</em>. Section <a href="#sec:results" data-reference-type="ref" data-reference="sec:results">[sec:results]</a> shows the tool was never successfully
 called in any of these runs.</figcaption>
 </figure>
 
@@ -228,7 +228,7 @@ gradient can reach.
 # Setup
 
 **Task.** 100 problems drawn from a decontaminated KodCode subset (n-gram containment
-against EvalPlus). **All 49 full-length arms in this paper use the identical 100 items**
+against EvalPlus). **All 50 full-length arms in this paper use the identical 100 items**
 (verified: unique item-set count = 1), so every cross-arm comparison is paired.
 
 **Protocols.**
@@ -253,6 +253,9 @@ a protocol-agnostic intent classification (§3.1). Execution, per-turn results, 
 pass are recorded per turn.
 
 ## Intent criterion
+
+*The criterion’s source, the three tiers, and every
+prompt and tool schema used in this paper are reproduced verbatim in Appendix <a href="#app:prompts" data-reference-type="ref" data-reference="app:prompts">[app:prompts]</a>.*
 
 Reporting only server-parsed calls is the practice under examination, so we need an
 independent measure of what the model emitted. A single classifier (`analysis/intent.py`)
@@ -422,6 +425,10 @@ that *the pipeline is capable*; it does not establish that the model spontaneous
 </div>
 
 # Results
+
+*Serving flags per family and the full training configuration are in
+Appendix <a href="#app:config" data-reference-type="ref" data-reference="app:config">[app:config]</a>; every arm’s recorded configuration is in Appendix <a href="#app:arms" data-reference-type="ref" data-reference="app:arms">[app:arms]</a>.*
+<span id="sec:results" label="sec:results">\[sec:results\]</span>
 
 ## Four families, four failure layers — and the consequential ones are silent
 
@@ -1118,7 +1125,7 @@ present study.
     measured censoring a lower bound — but that is an argument, not a measurement.
 
 2.  **Item sampling.** 100 items per arm, taken as `clean[:100]` — **not a
-    random sample**. Pairing across arms is exact (verified: all 49 full-length arms share one
+    random sample**. Pairing across arms is exact (verified: all 50 full-length arms share one
     item set), so within-study comparisons are sound; generalisation to the corpus is not
     established. A random-sample replication at *n* = 300 is scripted but was not run
     (§<a href="#sec:future" data-reference-type="ref" data-reference="sec:future">[sec:future]</a>).
@@ -1338,7 +1345,7 @@ run is instead guaranteed externally, by hashing the probe before launch
 
 ## Verified correct
 
--   **All 49 full-length arms use the identical 100-item set**
+-   **All 50 full-length arms use the identical 100-item set**
     (`clean[:100]`; unique item-set count  = 1), so every cross-arm comparison in
     this paper is exactly paired.
 
@@ -1383,7 +1390,7 @@ behind §5.1’s false-positive capability check, so a family’s behaviour can 
 repository revision. Every model path, its HF revision, and the serving flags used are
 recorded per arm in the trajectory provenance and in `runs/final/by_config/README.md`.
 
-Trajectories for all 49 full-length arms, the training logs, the errata, and the
+Trajectories for all 50 full-length arms, the training logs, the errata, and the
 per-configuration index are in `runs/final/`. Third-party parser: hanXen
 (`1b92150`, Apache 2.0), few-shot examples rewritten from `get_weather` to `run_tests`;
 original retained with both hashes recorded.
