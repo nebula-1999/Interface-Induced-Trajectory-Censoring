@@ -155,6 +155,230 @@ $\dagger$ For arms where the server \emph{did} parse, offline content-only re-pa
 not zero}: a successful parse moves the call into the structured \texttt{tool\_calls} field and
 leaves \texttt{content} empty. Those rows are reported as N/A rather than 0.
 
+\paragraph{Within-lineage control: the same ladder in Qwen2.5-Instruct.}
+The ladder above is a within-family observation, which leaves open whether it reflects
+scale or simply that this one lineage is mismatched. Changing family cannot settle it ---
+of the other three, Llama parses correctly, Mistral returns 400, and DeepSeek never injects
+the template, so none of them can exhibit censoring at all. The informative control is
+inside the same lineage: Qwen2.5-\textbf{Instruct} at the same five sizes. The two share one
+chat template (Coder inherits it from Instruct, which is what produced the false positive of
+\S5.1); they differ in whether the checkpoint was trained on tool-call tokens. Same 100
+KodCode items, same \texttt{hermes} parser, same \texttt{tool\_choice:\ auto}, same
+\texttt{temperature\ =\ 0}, seed 0, and the same intent criterion of \S3.2.
+
+{\small
+\begin{longtable}[]{@{}lllll@{}}
+\caption{Qwen2.5-Instruct under the identical mismatched configuration. Unlike the Coder column, which is flat zero across the range, the server-parsed rate rises monotonically and reaches 88/100. Intent columns count \emph{unparsed} attempts, so they fall as the parsed column rises.}\label{tab:instruct}\\
+\toprule
+Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) \\
+\midrule
+\endfirsthead
+\toprule
+Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) \\
+\midrule
+\endhead
+1.5B & 1 & 0 & 1 & 7 \\
+3B & 11 & 56 & 65 & 2 \\
+7B & 63 & 21 & 34 & 0 \\
+14B & 77 & 19 & 20 & 0 \\
+\textbf{32B} & \textbf{88} & 8 & 11 & 0 \\
+\bottomrule
+\end{longtable}
+}
+
+Against the flat zero of Table~\ref{tab:scale}, the Instruct ladder runs 1, 11, 63, 77, 88.
+\textbf{The mismatch therefore tracks whether the checkpoint was trained on the format, not the
+family and not the scale.} This is the control we would otherwise have to concede, and it
+comes out on the side of the mechanism we claim.
+
+\paragraph{The residue is not the same failure in the two ladders.}
+It would be wrong to read Instruct's remaining unparsed items as the same quantity as
+Coder's. We therefore replay vLLM~0.27.1's \texttt{hermes} extractor line for line over the
+stored bytes (\texttt{analysis/failure\_layer.py}) and separate the layer at which each item is
+lost: no \texttt{\textless{}tool\_call\textgreater{}} envelope at all; envelope present but the JSON payload
+malformed; payload well-formed and rejected only because \texttt{json.loads} does not tolerate
+trailing text in the capture; or a genuine parser loss, meaning the replay succeeds where
+the server did not.
+
+{\small
+\begin{longtable}[]{@{}lllll@{}}
+\caption{Where the unparsed items are lost, by replaying the server's own extractor. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf{Genuine parser loss is zero in every arm} --- and across all 7405 first turns in the archive.}\label{tab:layer}\\
+\toprule
+Arm & no envelope & payload malformed & strictness only & \textbf{parser loss} \\
+\midrule
+\endfirsthead
+\toprule
+Arm & no envelope & payload malformed & strictness only & \textbf{parser loss} \\
+\midrule
+\endhead
+Coder 1.5B--32B (all sizes) & 100 & 0 & 0 & \textbf{0} \\
+Instruct 1.5B & 93 & 6 & 0 & \textbf{0} \\
+Instruct 3B & 22 & 41 & 26 & \textbf{0} \\
+Instruct 7B & 3 & 33 & 1 & \textbf{0} \\
+Instruct 14B & 13 & 6 & 4 & \textbf{0} \\
+Instruct 32B & 1 & 9 & 2 & \textbf{0} \\
+\bottomrule
+\end{longtable}
+}
+
+Two things follow, and the second qualifies our own wording. First, the two ladders fail at
+different layers: Coder emits a well-formed bare call and never the envelope, so
+\texttt{hermes} not seeing it is \emph{correct behaviour}; Instruct emits the envelope and then
+breaks the JSON, almost always by embedding Python whose docstring quotes or raw newlines
+are left unescaped inside the \texttt{code} string. Second, \textbf{in no arm --- across the whole
+archive --- did the server fail to parse a call that its own extractor would have accepted.}
+``Censoring'' throughout this paper therefore means \emph{the attempt never reaches the parser
+in a form it is defined to accept}, not \emph{the parser discards valid calls}. The single place
+where parser strictness alone costs anything is Instruct-3B, where 26 payloads are valid
+JSON followed by trailing text and a lenient \texttt{raw\_decode} would recover all of them.
+
+\paragraph{Are these merely well-formed calls carrying useless code?}
+A parse-rate control invites the objection that Instruct might emit better-shaped calls
+around worse contents. Answering it needs a task-success number, and the one recorded for
+these arms is void: the P2 host was provisioned without \texttt{pytest}, so every test
+invocation returned \texttt{No\ module\ named\ pytest} and all 241 executed turns received
+that string instead of a test result.
+
+The \emph{first-turn} half of that is recoverable exactly, and only the first turn. Turn~1 is
+generated before any observation exists --- the probe enters its loop with a context of
+\texttt{[system,\ user]} and no pending state (\texttt{probe\_react\_full.py}:480--484) --- so a
+missing test runner cannot have influenced it. We therefore executed the \emph{stored} turn-1
+programs afterwards on the same host, in the same virtual environment, through the same
+\texttt{sandbox.run\_tests(\ldots,\ mode="pytest")} call and the same \texttt{all\_passed}
+criterion the probe itself uses, adding only \texttt{pytest\ 8.3.5}
+(\texttt{p2/replay\_turn1.py}). This is a \textbf{derived quantity}, written to separate files;
+the void field in the trajectories is left as it stands.
+
+{\small
+\begin{longtable}[]{@{}lllll@{}}
+\caption{Task success at turn 1, both ladders. Coder's column is as recorded on a host where execution worked; Instruct's is the offline replay described above. Turn 1 is the right comparison for both --- and for Coder it is also the \emph{only} comparison, since its first-turn and final counts are equal at every size.}\label{tab:turn1}\\
+\toprule
+Size & Coder parsed & Coder turn-1 pass & Instruct parsed & Instruct turn-1 pass \\
+\midrule
+\endfirsthead
+\toprule
+Size & Coder parsed & Coder turn-1 pass & Instruct parsed & Instruct turn-1 pass \\
+\midrule
+\endhead
+1.5B & 0 & 31 & 1 & 14 \\
+3B & 0 & 37 & 11 & 14 \\
+7B & 0 & 53 & 63 & 34 \\
+14B & 0 & 53 & 77 & 38 \\
+32B & 0 & 68 & 88 & 42 \\
+\bottomrule
+\end{longtable}
+}
+
+The objection does not survive: Instruct solves 14--42\% of the items outright, rising with
+size. It is consistently weaker than the code-specialised Coder at the same size, which is
+what one expects of a general instruction model on a coding task, and it is nowhere near the
+zero that ``well-formed but empty'' would require.
+
+Comparing turn-1 numbers rather than final ones is not a concession forced by the defect.
+\textbf{In the Coder ladder the two are identical at every size} --- 31/31, 37/37, 53/53,
+53/53, 68/68 --- because multi-turn repair rescues nothing there, the same absence that
+\S\ref{sec:rl} traces into the gradient. The column labelled ``Final pass'' in
+Table~\ref{tab:scale} is therefore numerically its own turn-1 column, and placing Instruct's
+turn-1 beside it compares like with like.
+
+What the defect still costs is the multi-turn layer of the Instruct ladder: repair rate,
+conditional rescue and turn distribution are unrecoverable offline, because from turn~2
+onward the model was reacting to \texttt{No\ module\ named\ pytest} rather than to a test
+failure. We report none of them. Given that the corresponding quantities are identically zero
+in the Coder ladder, we do not expect them to carry a claim, and we did not spend a second
+GPU run to obtain them.
+
+\subsection{The same mismatch, measured on a standard benchmark}
+\label{sec:bfcl}
+
+Everything above is measured with our own probe on our own task set. A reader is entitled to
+ask whether the effect is a property of that instrument. We therefore replicate it on the
+Berkeley Function-Calling Leaderboard v4, using BFCL's official data, its multi-turn
+executor and its scorer at pinned Gorilla commit
+\texttt{6ea57973c7a6097fd7c5915698c54c17c5b1b6c8}, and changing \emph{only the serving parser}
+between two arms of the same model.
+
+One deviation from stock BFCL is required and we state it plainly. BFCL's shipped handler
+for local Qwen models posts to \texttt{/v1/completions} and extracts \texttt{\textless{}tool\_call\textgreater{}}
+blocks with a regular expression \emph{inside the benchmark process}. On that path the serving
+parser is never invoked, so the quantity under study cannot appear. We instead route BFCL's
+own OpenAI function-calling handler through \texttt{/v1/chat/completions}, adding exactly two
+things: an explicit \texttt{tool\_choice:\ auto}, and trace headers joining each HTTP request to
+its BFCL case id. Dataset loading, tool execution and scoring remain BFCL's code, and
+\texttt{bfcl\_eval}'s own files are left byte-identical --- registration happens in memory at
+import time. A recording proxy sits between benchmark and server and logs every request.
+
+Both arms serve Qwen2.5-Coder-7B-Instruct on vLLM~0.27.1 at
+\texttt{max\_model\_len\ =\ 16384}, \texttt{temperature\ =\ 0}, inference seed 0, with a subset of
+100 \texttt{simple\_python} and 100 \texttt{multi\_turn\_base} cases drawn at manifest seed
+20260901 and \textbf{identical in both arms}. The arms differ in one respect: arm~1 uses the
+documented \texttt{hermes} parser; arm~2 uses the vendored community Qwen2.5-Coder parser with
+its paired chat template.
+
+{\small
+\begin{longtable}[]{@{}llllllll@{}}
+\caption{BFCL v4, first HTTP request per case. Emitted format is measured only where the parse failed, so the intent columns are empty for the arm that parsed. Both arms issued every request successfully: zero HTTP errors on either side.}\label{tab:bfclfunnel}\\
+\toprule
+Arm & cases & HTTP err & first parsed & unparsed & tight & strong & weak \\
+\midrule
+\endfirsthead
+\toprule
+Arm & cases & HTTP err & first parsed & unparsed & tight & strong & weak \\
+\midrule
+\endhead
+\texttt{hermes} (documented) & 200 & 0 & \textbf{0} & 200 & 166 & 169 & 187 \\
+\texttt{qwen2\_5\_coder} (repaired) & 200 & 0 & \textbf{196} & 4 & 0 & 1 & 2 \\
+\bottomrule
+\end{longtable}
+}
+
+Under the configuration a practitioner would arrive at by following the documentation, the
+server parses \textbf{zero} of 200 cases --- while 166 of those same first responses contain a
+call that meets the strict criterion. Swapping the parser moves the same model to 196/200.
+
+The consequence is visible at every downstream layer, because BFCL executes the calls it
+parses and scores the resulting state:
+
+{\small
+\begin{longtable}[]{@{}lllllll@{}}
+\caption{BFCL \texttt{multi\_turn\_base}, n = 100, joined to the HTTP trace by case id. Nothing is executed in the \texttt{hermes} arm because nothing is parsed, so its success count is zero by construction rather than by capability.}\label{tab:bfcl5}\\
+\toprule
+Arm & tight (unparsed) & first parsed & any parsed & executed & \textbf{success} & rescued \\
+\midrule
+\endfirsthead
+\toprule
+Arm & tight (unparsed) & first parsed & any parsed & executed & \textbf{success} & rescued \\
+\midrule
+\endhead
+\texttt{hermes} & 69 & 0 & 0 & 0 & \textbf{0} & 0 \\
+\texttt{qwen2\_5\_coder} & 0 & 97 & 98 & 98 & \textbf{19} & 0 \\
+\bottomrule
+\end{longtable}
+}
+
+BFCL's own scorer reports the two arms as
+
+\begin{center}
+\texttt{simple\_python} 0.00 $\rightarrow$ \textbf{0.96} \qquad
+\texttt{multi\_turn\_base} 0.00 $\rightarrow$ \textbf{0.19}
+\end{center}
+
+\noindent for the same weights, the same items and the same seeds. \textbf{A published benchmark
+number for this model can differ by the entire span of the metric depending on a serving flag
+that the model card does not mention.} We make no claim that 0.19 is a good score; the claim
+is that 0.00 is not a measurement of the model.
+
+\paragraph{What was verified, and how far it reproduces.}
+Each arm passes a two-case end-to-end smoke test before its full run, and the run is rejected
+unless the result count, the score-file \texttt{total\_count} and the number of distinct case ids
+in the proxy log all agree at 200 with zero HTTP errors. We ran the pair twice. The
+\texttt{hermes} arm is identical across runs in every column (0/200 parsed, 166 tight, 480
+requests, 0 errors). The repaired arm moves by one case between runs --- 197 versus 196 first
+parsed, 99 versus 98 executed --- while \textbf{success is 19 in both}. Greedy decoding does not
+make vLLM bitwise deterministic across differing batch compositions, and this arm runs eight
+threads through a multi-turn executor; we therefore report the intermediate funnel columns of
+this arm as $\pm 1$ rather than exact.
+
 \subsection{A 23\% failure that survived three controls and fell to the fourth}
 \label{sec:llama}
 
@@ -420,6 +644,7 @@ at 3B}: the 3B checkpoint ignores the \texttt{\textless{}tools\textgreater{}} fe
 Adapter effectiveness is non-monotonic in scale, reinforcing \S5.1's per-checkpoint claim.
 
 \subsection{Censoring reaches RL training}
+\label{sec:rl}
 
 \begin{figure}[t]
 \centering

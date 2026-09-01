@@ -141,7 +141,7 @@ consequence:
     as a clean causal RL result — the comparison arm changes protocol and interface
     together, and the parser-repair control that would separate them is not constructible in
     this stack (§5.6). We further show that opening the channel is not by itself sufficient
-    (§<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.6.2</a>): the bottleneck is not singular.
+    (§<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a>): the bottleneck is not singular.
 
 5.  **A repair loop.** How much is recovered by installing a correct adapter, and what
     protocol gap survives the repair.
@@ -170,6 +170,26 @@ and observe score movement. **We identify a component of the measurement apparat
 serving stack’s tool-call parser — that can zero out a capability signal entirely, without
 any error, and whose distortion grows with model scale.**
 
+**Parsing-induced measurement error.** The mechanism we study — a parser, not a model,
+producing the observed failure — has been isolated once before, in a different domain.
+ (*When the Ruler is Broken*) show that in LLM-based
+security-log classification a strict regular-expression parser reports 0% threat accuracy
+while a corrected fuzzy parser recovers 76% on *identical* model outputs, with an
+unaffected severity metric serving as an internal control. We regard that work as the closest
+antecedent to ours and adopt the same standard of proof: one fixed set of bytes, re-parsed
+under different rules (§5.2). Three things separate the contributions. Their gap is a single
+mechanism in a single domain and they explicitly decline to generalise it, whereas we separate
+*four* layers at which the failure occurs — template, parser, schema, token — across
+four model families (§5.1). Their gap is a fixed quantity; ours is a function of scale, and it
+grows (§5.2). And their distortion terminates at the reported number, whereas we follow it
+into an RL rollout and identify which branch of the policy the gradient can no longer reach
+(§5.5). Outside the literature, the claim that tool-call failures originate in serving
+infrastructure rather than in models is already practitioner folklore
+; that account is qualitative and reports no measurements.
+**Our claim is not that the interface can fail silently, which is known; it is that the
+silent fraction is measurable, that it grows with capability, and that it propagates into
+training.**
+
 **Constrained decoding and its costs.**  (*Let Me Speak Freely?*) report that
 format restrictions and structured-output constraints can degrade reasoning. This bears
 directly on §5.3, where enabling `strict: true` eliminates a 23% role-confusion failure and
@@ -186,6 +206,38 @@ knowledge these report tool-call rates as parsed by the serving layer. §5.2 sho
 number can be zero while 80/100 well-formed calls are emitted, which — if the pattern
 replicates on their stacks — would affect any absolute tool-use rate they report.
 
+**Audits and failure taxonomies of tool use.** A cluster of concurrent 2026 work asks
+whether reported tool-use scores mean what they appear to mean, and stops one layer above us.
+ (*Benchmarking the Benchmarks*) audit BFCL v4,
+*τ*<sup>2</sup>-bench ,[1]
+LiveMCPBench and MCP-Atlas over 496 expert-reviewed tasks and report an 18.5%
+evaluator–human misalignment rate, attributing it to benchmark-design artifacts: brittle state
+matching, trajectory lock-in, rubric drift, judge variance. That audit has an industrial
+counterpart: *τ*<sup>2</sup>-Bench-Verified , a release of the same benchmark
+re-checked against its own stated policies, documents four categories of defect in the original
+ground truth — expected actions that violate the domain policy, wrong database references,
+logically impossible tasks, and instructions too vague to evaluate consistently. A benchmark in
+active use for ranking frontier agents needed a third-party correction pass before its labels
+agreed with its own rules.
+ (*Model or Harness?*) organise 41 failure modes by the
+interaction edge on which each arises and by whether the repair belongs to the model or to the
+harness.  (*ToolFailBench*) labels traces across 1,000
+tasks as Tool-Skip, Result-Ignore, Output-Fabrication or Unnecessary-Tool-Use.
+synthesise 27 taxonomy and audit papers from 2023–2026
+into six failure clusters, one of which is measurement validity.
+
+These are complementary rather than competing, and in two cases our result is a precondition
+for theirs. *Model or Harness?* supplies the vocabulary but no measurement; the four
+layers of §5.1 are a quantified instance of a single harness-side edge in its schema.
+*ToolFailBench*’s Tool-Skip label is read as a model behaviour — a model that never
+calls a needed tool — but it is also precisely what an unparsed emission produces, so the
+category is confounded by the interface unless the stack is verified first, which is what the
+preflight check of §7 does in seconds. And the most recent synthesis of the field’s failure
+modes places measurement validity among its six clusters
+without localising any part of it to the serving stack. **Every audit above varies
+something above the API boundary; the distortion we report occurs below it, and is invisible to
+all of them.**
+
 **Protocols and agent loops.** ReAct  is the text protocol we compare against.
 vLLM  is the serving stack; its tool-calling documentation specifies distinct
 per-family configuration, which §5.1 shows is not optional. verl  provides the RL training stack; importantly its AgentLoop performs **its own**
@@ -201,14 +253,16 @@ issue was closed as *not planned* and labelled *stale*. Section <a href="#sec:s
 reproduces this baseline exactly—zero `<tool_call>` and `<tools>` tags at
 every scale—and extends it to scale quantification, to three further families, and to
 training. A related verl issue  reports the same role-confusion
-signature we characterise in Section <a href="#sec:llama" data-reference-type="ref" data-reference="sec:llama">6.3</a>: the model calls the task function
+signature we characterise in Section <a href="#sec:llama" data-reference-type="ref" data-reference="sec:llama">6.4</a>: the model calls the task function
 (`solve_equation`) and the agent loop raises `KeyError`.
 
 **RL with tool feedback.** GRPO  and RLOO  are the estimators
 we train with; EvalPlus  and KodCode  supply held-out evaluation and training
 problems respectively. We are not aware of prior work measuring interface-layer censoring
 of tool trajectories inside an RL rollout, nor connecting it to which capability the policy
-gradient can reach.
+gradient can reach. A literature search conducted 2026-09-01 across the audits and taxonomies
+above returned nothing that follows the distortion below the API boundary into training; we
+state this as the scope of our search rather than as a claim of novelty.
 
 # Setup
 
@@ -565,6 +619,210 @@ column is precisely what the format mismatch removes.
 † For arms where the server *did* parse, offline content-only re-parsing is **undefined,
 not zero**: a successful parse moves the call into the structured `tool_calls` field and
 leaves `content` empty. Those rows are reported as N/A rather than 0.
+
+#### Within-lineage control: the same ladder in Qwen2.5-Instruct.
+
+The ladder above is a within-family observation, which leaves open whether it reflects
+scale or simply that this one lineage is mismatched. Changing family cannot settle it —
+of the other three, Llama parses correctly, Mistral returns 400, and DeepSeek never injects
+the template, so none of them can exhibit censoring at all. The informative control is
+inside the same lineage: Qwen2.5-**Instruct** at the same five sizes. The two share one
+chat template (Coder inherits it from Instruct, which is what produced the false positive of
+§5.1); they differ in whether the checkpoint was trained on tool-call tokens. Same 100
+KodCode items, same `hermes` parser, same `tool_choice: auto`, same
+`temperature = 0`, seed 0, and the same intent criterion of §3.2.
+
+<div id="tab:instruct">
+
+| Size    | Server-parsed | **tight** | strong (⊇ tight) | weak (disjoint) |
+|:--------|:--------------|:----------|:-----------------|:----------------|
+| Size    | Server-parsed | **tight** | strong (⊇ tight) | weak (disjoint) |
+| 1.5B    | 1             | 0         | 1                | 7               |
+| 3B      | 11            | 56        | 65               | 2               |
+| 7B      | 63            | 21        | 34               | 0               |
+| 14B     | 77            | 19        | 20               | 0               |
+| **32B** | **88**        | 8         | 11               | 0               |
+
+Qwen2.5-Instruct under the identical mismatched configuration. Unlike the Coder column, which is flat zero across the range, the server-parsed rate rises monotonically and reaches 88/100. Intent columns count *unparsed* attempts, so they fall as the parsed column rises.
+
+</div>
+
+Against the flat zero of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">5</a>, the Instruct ladder runs 1, 11, 63, 77, 88.
+**The mismatch therefore tracks whether the checkpoint was trained on the format, not the
+family and not the scale.** This is the control we would otherwise have to concede, and it
+comes out on the side of the mechanism we claim.
+
+#### The residue is not the same failure in the two ladders.
+
+It would be wrong to read Instruct’s remaining unparsed items as the same quantity as
+Coder’s. We therefore replay vLLM 0.27.1’s `hermes` extractor line for line over the
+stored bytes (`analysis/failure_layer.py`) and separate the layer at which each item is
+lost: no `<tool_call>` envelope at all; envelope present but the JSON payload
+malformed; payload well-formed and rejected only because `json.loads` does not tolerate
+trailing text in the capture; or a genuine parser loss, meaning the replay succeeds where
+the server did not.
+
+<div id="tab:layer">
+
+| Arm                        | no envelope | payload malformed | strictness only | **parser loss** |
+|:---------------------------|:------------|:------------------|:----------------|:----------------|
+| Arm                        | no envelope | payload malformed | strictness only | **parser loss** |
+| Coder 1.5B–32B (all sizes) | 100         | 0                 | 0               | **0**           |
+| Instruct 1.5B              | 93          | 6                 | 0               | **0**           |
+| Instruct 3B                | 22          | 41                | 26              | **0**           |
+| Instruct 7B                | 3           | 33                | 1               | **0**           |
+| Instruct 14B               | 13          | 6                 | 4               | **0**           |
+| Instruct 32B               | 1           | 9                 | 2               | **0**           |
+
+Where the unparsed items are lost, by replaying the server’s own extractor. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. **Genuine parser loss is zero in every arm** — and across all 7405 first turns in the archive.
+
+</div>
+
+Two things follow, and the second qualifies our own wording. First, the two ladders fail at
+different layers: Coder emits a well-formed bare call and never the envelope, so
+`hermes` not seeing it is *correct behaviour*; Instruct emits the envelope and then
+breaks the JSON, almost always by embedding Python whose docstring quotes or raw newlines
+are left unescaped inside the `code` string. Second, **in no arm — across the whole
+archive — did the server fail to parse a call that its own extractor would have accepted.**
+“Censoring” throughout this paper therefore means *the attempt never reaches the parser
+in a form it is defined to accept*, not *the parser discards valid calls*. The single place
+where parser strictness alone costs anything is Instruct-3B, where 26 payloads are valid
+JSON followed by trailing text and a lenient `raw_decode` would recover all of them.
+
+#### Are these merely well-formed calls carrying useless code?
+
+A parse-rate control invites the objection that Instruct might emit better-shaped calls
+around worse contents. Answering it needs a task-success number, and the one recorded for
+these arms is void: the P2 host was provisioned without `pytest`, so every test
+invocation returned `No module named pytest` and all 241 executed turns received
+that string instead of a test result.
+
+The *first-turn* half of that is recoverable exactly, and only the first turn. Turn 1 is
+generated before any observation exists — the probe enters its loop with a context of
+`[system, user]` and no pending state (`probe_react_full.py`:480–484) — so a
+missing test runner cannot have influenced it. We therefore executed the *stored* turn-1
+programs afterwards on the same host, in the same virtual environment, through the same
+`sandbox.run_tests(…, mode="pytest")` call and the same `all_passed`
+criterion the probe itself uses, adding only `pytest 8.3.5`
+(`p2/replay_turn1.py`). This is a **derived quantity**, written to separate files;
+the void field in the trajectories is left as it stands.
+
+<div id="tab:turn1">
+
+| Size | Coder parsed | Coder turn-1 pass | Instruct parsed | Instruct turn-1 pass |
+|:-----|:-------------|:------------------|:----------------|:---------------------|
+| Size | Coder parsed | Coder turn-1 pass | Instruct parsed | Instruct turn-1 pass |
+| 1.5B | 0            | 31                | 1               | 14                   |
+| 3B   | 0            | 37                | 11              | 14                   |
+| 7B   | 0            | 53                | 63              | 34                   |
+| 14B  | 0            | 53                | 77              | 38                   |
+| 32B  | 0            | 68                | 88              | 42                   |
+
+Task success at turn 1, both ladders. Coder’s column is as recorded on a host where execution worked; Instruct’s is the offline replay described above. Turn 1 is the right comparison for both — and for Coder it is also the *only* comparison, since its first-turn and final counts are equal at every size.
+
+</div>
+
+The objection does not survive: Instruct solves 14–42% of the items outright, rising with
+size. It is consistently weaker than the code-specialised Coder at the same size, which is
+what one expects of a general instruction model on a coding task, and it is nowhere near the
+zero that “well-formed but empty” would require.
+
+Comparing turn-1 numbers rather than final ones is not a concession forced by the defect.
+**In the Coder ladder the two are identical at every size** — 31/31, 37/37, 53/53,
+53/53, 68/68 — because multi-turn repair rescues nothing there, the same absence that
+§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a> traces into the gradient. The column labelled “Final pass” in
+Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">5</a> is therefore numerically its own turn-1 column, and placing Instruct’s
+turn-1 beside it compares like with like.
+
+What the defect still costs is the multi-turn layer of the Instruct ladder: repair rate,
+conditional rescue and turn distribution are unrecoverable offline, because from turn 2
+onward the model was reacting to `No module named pytest` rather than to a test
+failure. We report none of them. Given that the corresponding quantities are identically zero
+in the Coder ladder, we do not expect them to carry a claim, and we did not spend a second
+GPU run to obtain them.
+
+## The same mismatch, measured on a standard benchmark
+
+Everything above is measured with our own probe on our own task set. A reader is entitled to
+ask whether the effect is a property of that instrument. We therefore replicate it on the
+Berkeley Function-Calling Leaderboard v4, using BFCL’s official data, its multi-turn
+executor and its scorer at pinned Gorilla commit
+`6ea57973c7a6097fd7c5915698c54c17c5b1b6c8`, and changing *only the serving parser*
+between two arms of the same model.
+
+One deviation from stock BFCL is required and we state it plainly. BFCL’s shipped handler
+for local Qwen models posts to `/v1/completions` and extracts `<tool_call>`
+blocks with a regular expression *inside the benchmark process*. On that path the serving
+parser is never invoked, so the quantity under study cannot appear. We instead route BFCL’s
+own OpenAI function-calling handler through `/v1/chat/completions`, adding exactly two
+things: an explicit `tool_choice: auto`, and trace headers joining each HTTP request to
+its BFCL case id. Dataset loading, tool execution and scoring remain BFCL’s code, and
+`bfcl_eval`’s own files are left byte-identical — registration happens in memory at
+import time. A recording proxy sits between benchmark and server and logs every request.
+
+Both arms serve Qwen2.5-Coder-7B-Instruct on vLLM 0.27.1 at
+`max_model_len = 16384`, `temperature = 0`, inference seed 0, with a subset of
+100 `simple_python` and 100 `multi_turn_base` cases drawn at manifest seed
+20260901 and **identical in both arms**. The arms differ in one respect: arm 1 uses the
+documented `hermes` parser; arm 2 uses the vendored community Qwen2.5-Coder parser with
+its paired chat template.
+
+<div id="tab:bfclfunnel">
+
+| Arm                        | cases | HTTP err | first parsed | unparsed | tight | strong | weak |
+|:---------------------------|:------|:---------|:-------------|:---------|:------|:-------|:-----|
+| Arm                        | cases | HTTP err | first parsed | unparsed | tight | strong | weak |
+| `hermes` (documented)      | 200   | 0        | **0**        | 200      | 166   | 169    | 187  |
+| `qwen2_5_coder` (repaired) | 200   | 0        | **196**      | 4        | 0     | 1      | 2    |
+
+BFCL v4, first HTTP request per case. Emitted format is measured only where the parse failed, so the intent columns are empty for the arm that parsed. Both arms issued every request successfully: zero HTTP errors on either side.
+
+</div>
+
+Under the configuration a practitioner would arrive at by following the documentation, the
+server parses **zero** of 200 cases — while 166 of those same first responses contain a
+call that meets the strict criterion. Swapping the parser moves the same model to 196/200.
+
+The consequence is visible at every downstream layer, because BFCL executes the calls it
+parses and scores the resulting state:
+
+<div id="tab:bfcl5">
+
+| Arm             | tight (unparsed) | first parsed | any parsed | executed | **success** | rescued |
+|:----------------|:-----------------|:-------------|:-----------|:---------|:------------|:--------|
+| Arm             | tight (unparsed) | first parsed | any parsed | executed | **success** | rescued |
+| `hermes`        | 69               | 0            | 0          | 0        | **0**       | 0       |
+| `qwen2_5_coder` | 0                | 97           | 98         | 98       | **19**      | 0       |
+
+BFCL `multi_turn_base`, n = 100, joined to the HTTP trace by case id. Nothing is executed in the `hermes` arm because nothing is parsed, so its success count is zero by construction rather than by capability.
+
+</div>
+
+BFCL’s own scorer reports the two arms as
+
+<div class="center">
+
+`simple_python` 0.00 → **0.96**
+`multi_turn_base` 0.00 → **0.19**
+
+</div>
+
+for the same weights, the same items and the same seeds. **A published benchmark
+number for this model can differ by the entire span of the metric depending on a serving flag
+that the model card does not mention.** We make no claim that 0.19 is a good score; the claim
+is that 0.00 is not a measurement of the model.
+
+#### What was verified, and how far it reproduces.
+
+Each arm passes a two-case end-to-end smoke test before its full run, and the run is rejected
+unless the result count, the score-file `total_count` and the number of distinct case ids
+in the proxy log all agree at 200 with zero HTTP errors. We ran the pair twice. The
+`hermes` arm is identical across runs in every column (0/200 parsed, 166 tight, 480
+requests, 0 errors). The repaired arm moves by one case between runs — 197 versus 196 first
+parsed, 99 versus 98 executed — while **success is 19 in both**. Greedy decoding does not
+make vLLM bitwise deterministic across differing batch compositions, and this arm runs eight
+threads through a multi-turn executor; we therefore report the intermediate funnel columns of
+this arm as  ± 1 rather than exact.
 
 ## A 23% failure that survived three controls and fell to the fourth
 
@@ -969,7 +1227,7 @@ this metric.
 Composition barely moved either: adjacent checkpoints have solved-set Jaccard 0.974–0.983
 (3–6 items gained, 3–5 lost). This contrasts with the generation-level churn between steps
 15 and 30, where 85 of 542 first-turn completions changed verbatim — **the policy
-moves, the solved set does not** (§<a href="#sec:composition" data-reference-type="ref" data-reference="sec:composition">6.9</a>).
+moves, the solved set does not** (§<a href="#sec:composition" data-reference-type="ref" data-reference="sec:composition">6.10</a>).
 
 **What this does and does not license.** It does not license “interface repair unlocks
 multi-turn capability”; we tested the closest available version of that claim and it failed.
@@ -1036,7 +1294,7 @@ The mechanism is compensation in the rescue count — 19 / 16 / **29**, largest 
 turn-1 was worst — and in all three seeds the count of “passed at turn 1 but failed
 finally” is **0**: the repair loop is monotone. **The three identical finals are a
 coincidence of totals, not identical item sets**, and sd = 0.00 must not be read as “ReAct is
-perfectly stable”; §<a href="#sec:composition" data-reference-type="ref" data-reference="sec:composition">6.9</a> gives the item-level evidence.
+perfectly stable”; §<a href="#sec:composition" data-reference-type="ref" data-reference="sec:composition">6.10</a> gives the item-level evidence.
 
 <div class="center">
 
@@ -1053,7 +1311,7 @@ yet the sets of solved items have pairwise Jaccard 0.71–0.80 — 15–24 items
 seeds. Turn-1 pass varies widely (43–56, sd 6.8) and the rescue count compensates inversely
 (19 / 16 / 29).
 
-**Across training steps** (§<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.6.2</a>): between step 15 and step 30 of the ReAct run, 85 of 542
+**Across training steps** (§<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a>): between step 15 and step 30 of the ReAct run, 85 of 542
 first-turn completions changed verbatim and 6 items flipped outcome — 3 gained, 3 lost —
 leaving turn-1 and final pass numerically identical (340 / 346 at both checkpoints). The
 policy is demonstrably moving; the aggregate is not.
@@ -1147,8 +1405,15 @@ present study.
     Qwen2.5-Coder alone, against one mismatched interface, on one task. We claim a
     within-family monotone relation between checkpoint size and absolute undercount. We do
     *not* claim that censoring is generally scale-increasing, and we do not equate
-    parameter count with capability. A second family’s scale ladder is the cheapest test that
-    would promote or refute this.
+    parameter count with capability. The Qwen2.5-Instruct ladder of
+    Table <a href="#tab:instruct" data-reference-type="ref" data-reference="tab:instruct">7</a> narrows what remains open: it holds the lineage, template, task,
+    parser and decoding fixed and varies only whether the checkpoint was trained on the
+    tool-call format, and the server-parsed rate then rises with size instead of staying flat.
+    That attributes the mismatch to format training rather than to the family — but it is a
+    control on the *mechanism*, not a second ladder of undercount, and its execution layer
+    is void (the P2 host lacked `pytest`, §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>). A second *family*’s
+    ladder, on a host with a working executor, remains the cheapest test that would promote or
+    refute the scale claim itself.
 
 4.  **The taxonomy is four instances, not an enumeration.** The evidence behind the four
     layers is deliberately asymmetric: Qwen has a scale ladder, an offline replay matrix and a
@@ -1202,7 +1467,7 @@ present study.
     *at 1.5B* — but it is a replication, not the training run itself.
 
 12. **Opening the channel is tested only through ReAct.** The 75-step arm executing
-    23,676 calls (§<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.6.2</a>) shows that a working channel does not by itself
+    23,676 calls (§<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a>) shows that a working channel does not by itself
     move multi-turn rescues. Because it is not a parser-repair control, it cannot separate “a
     working channel is insufficient” from “ReAct in particular is insufficient”, and it is
     75 steps on one seed at 1.5B against 150-step historical baselines.
@@ -1247,20 +1512,28 @@ We name these so the claims are falsifiable rather than merely hedged.
 
 -   A **broken-FC versus repaired-FC RL comparison** on a rollout backend exposing guided
     decoding, everything else fixed. If repaired-FC recovers multi-turn learning, our
-    sufficiency claim in §<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.6.2</a> is wrong. If it does not, the “bottleneck is
+    sufficiency claim in §<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a> is wrong. If it does not, the “bottleneck is
     not singular” reading strengthens from one arm to two.
 
 -   A **second independent annotator** on 100–200 stratified outputs. If inter-annotator
     *κ* falls well below 0.9, the magnitude of the scale curve — though not its
     direction, which the raw-tag counts establish independently — needs restating.
 
--   The same five-layer measurement on a **standard tool-use benchmark** (BFCL,
-    *τ*-bench). If emitted intent, server parse, execution and task success coincide there,
-    the measurement-validity concern is specific to self-built harnesses and the paper’s scope
-    narrows accordingly.
+-   The same five-layer measurement on a **standard tool-use benchmark**. Done for BFCL v4
+    (§<a href="#sec:bfcl" data-reference-type="ref" data-reference="sec:bfcl">6.3</a>): the funnel reproduces on official data, executor and scorer, and the
+    measurement-validity concern is therefore *not* specific to our harness. It remains
+    open for interactive suites such as *τ*-bench, whose multi-turn state and user simulator
+    differ enough that the result should not be assumed to carry over.
 
--   A **second family’s scale ladder**. If the undercount does not grow with checkpoint
-    size elsewhere, §5.2 is a Qwen-plus-hermes fact, not a scaling phenomenon.
+-   A **second family’s scale ladder**, with a working test executor. The within-lineage
+    Instruct control (Table <a href="#tab:instruct" data-reference-type="ref" data-reference="tab:instruct">7</a>) shows the mismatch tracks format training
+    rather than family, but it does not supply a second ladder of undercount: if the undercount
+    does not grow with checkpoint size in another family, §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>’s scale claim is a
+    Qwen-plus-hermes fact rather than a scaling phenomenon.
+
+-   **Re-running the Instruct ladder with `pytest` present.** Its parse-layer
+    columns are sound, but every pass rate, repair rate and turn distribution from that host is
+    an artefact of a missing dependency and is reported nowhere in this paper.
 
 # Conclusion
 
@@ -1407,3 +1680,7 @@ Trajectories for all 50 full-length arms, the training logs, the errata, and the
 per-configuration index are in `runs/final/`. Third-party parser: hanXen
 (`1b92150`, Apache 2.0), few-shot examples rewritten from `get_weather` to `run_tests`;
 original retained with both hashes recorded.
+
+[1] *τ*<sup>2</sup>-bench is a distinct,
+later benchmark from the *τ*-bench of cited above — a
+dual-control environment in which the simulated user also acts on the shared state.

@@ -26,8 +26,15 @@ present study.
   Qwen2.5-Coder alone, against one mismatched interface, on one task. We claim a
   within-family monotone relation between checkpoint size and absolute undercount. We do
   \emph{not} claim that censoring is generally scale-increasing, and we do not equate
-  parameter count with capability. A second family's scale ladder is the cheapest test that
-  would promote or refute this.
+  parameter count with capability. The Qwen2.5-Instruct ladder of
+  Table~\ref{tab:instruct} narrows what remains open: it holds the lineage, template, task,
+  parser and decoding fixed and varies only whether the checkpoint was trained on the
+  tool-call format, and the server-parsed rate then rises with size instead of staying flat.
+  That attributes the mismatch to format training rather than to the family --- but it is a
+  control on the \emph{mechanism}, not a second ladder of undercount, and its execution layer
+  is void (the P2 host lacked \texttt{pytest}, \S\ref{sec:scale}). A second \emph{family}'s
+  ladder, on a host with a working executor, remains the cheapest test that would promote or
+  refute the scale claim itself.
 \item
   \textbf{The taxonomy is four instances, not an enumeration.} The evidence behind the four
   layers is deliberately asymmetric: Qwen has a scale ladder, an offline replay matrix and a
@@ -148,11 +155,19 @@ We name these so the claims are falsifiable rather than merely hedged.
   $\kappa$ falls well below 0.9, the magnitude of the scale curve --- though not its
   direction, which the raw-tag counts establish independently --- needs restating.
 \item
-  The same five-layer measurement on a \textbf{standard tool-use benchmark} (BFCL,
-  $\tau$-bench). If emitted intent, server parse, execution and task success coincide there,
-  the measurement-validity concern is specific to self-built harnesses and the paper's scope
-  narrows accordingly.
+  The same five-layer measurement on a \textbf{standard tool-use benchmark}. Done for BFCL~v4
+  (\S\ref{sec:bfcl}): the funnel reproduces on official data, executor and scorer, and the
+  measurement-validity concern is therefore \emph{not} specific to our harness. It remains
+  open for interactive suites such as $\tau$-bench, whose multi-turn state and user simulator
+  differ enough that the result should not be assumed to carry over.
 \item
-  A \textbf{second family's scale ladder}. If the undercount does not grow with checkpoint
-  size elsewhere, \S5.2 is a Qwen-plus-hermes fact, not a scaling phenomenon.
+  A \textbf{second family's scale ladder}, with a working test executor. The within-lineage
+  Instruct control (Table~\ref{tab:instruct}) shows the mismatch tracks format training
+  rather than family, but it does not supply a second ladder of undercount: if the undercount
+  does not grow with checkpoint size in another family, \S\ref{sec:scale}'s scale claim is a
+  Qwen-plus-hermes fact rather than a scaling phenomenon.
+\item
+  \textbf{Re-running the Instruct ladder with \texttt{pytest} present.} Its parse-layer
+  columns are sound, but every pass rate, repair rate and turn distribution from that host is
+  an artefact of a missing dependency and is reported nowhere in this paper.
 \end{itemize}
