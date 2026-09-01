@@ -309,8 +309,13 @@ BFCL_DATA=$BFCL_SRC/berkeley-function-call-leaderboard/bfcl_eval/data
   echo "vllm_version=$vllm_version"
   echo "model_path=$MODEL_PATH"
   echo "manifest_seed=$SEED inference_seed=0 n_single=$N_SINGLE n_multi=$N_MULTI threads=$THREADS max_model_len=$MAX_MODEL_LEN"
-  sha256sum "$RUN_ROOT/test_case_ids_to_generate.json" "$P1_ROOT/bfcl_registration.py" \
-    "$P1_ROOT/toolcall_proxy.py" "$P1_ROOT/analyze_p1.py" \
+  # run_p1.sh 与 validate_p1.py 原来不在这张清单里，于是干净重跑那次的
+  # provenance.txt 恰恰没钉住产出它的脚本本身；恢复版里那两行是当时手工补的。
+  # sitecustomize/register_qwen_coder 决定注册了哪些模型，同样属于判据的一部分。
+  sha256sum "$RUN_ROOT/test_case_ids_to_generate.json" \
+    "$P1_ROOT/run_p1.sh" "$P1_ROOT/bfcl_registration.py" \
+    "$P1_ROOT/register_qwen_coder.py" "$P1_ROOT/sitecustomize.py" \
+    "$P1_ROOT/toolcall_proxy.py" "$P1_ROOT/analyze_p1.py" "$P1_ROOT/validate_p1.py" \
     "$P1_ROOT/plugin/qwen2_5_coder_tool_parser.py" \
     "$P1_ROOT/plugin/tool_chat_template_qwen2_5_coder.jinja"
 } > "$RUN_ROOT/provenance.txt"
