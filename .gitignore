@@ -21,3 +21,8 @@ vllm_*.log
 # 旧副本，已被取代。两者合计 68 MB，不进公开仓库的历史。本地仍保留。
 runs/p1_clean/bfcl_run/*/score/
 runs/p1_clean/bfcl_run/*/score.pre_reaggregate_*/
+
+# BFCL 运行时产生的锁目录与它要求存在的空 .env：都是瞬时文件，不是产物。
+# .env 尤其不该进公开仓库——名字看起来像密钥，实际是个 0 字节占位文件。
+runs/**/.file_locks/
+runs/**/.env

@@ -1,0 +1,10 @@
+bfcl_commit=6ea57973c7a6097fd7c5915698c54c17c5b1b6c8
+vllm_version=0.27.1
+model_path=/root/autodl-tmp/models/Qwen2.5-Coder-7B-Instruct
+manifest_seed=20260901 inference_seed=0 n_single=100 n_multi=100 threads=8 max_model_len=16384
+6d33ad1a50da5da4255e56888af60b31de0085fba555df72a989880c79c66a05  /root/autodl-tmp/p1/bfcl_run/test_case_ids_to_generate.json
+5ecca8a34c41c1b8b8404599bb0723cd3e28837b57a8e1a5f5e846afa75aa96c  /root/autodl-tmp/p1/bfcl_registration.py
+b94fafa5e6a6396589a267062ed5bbc7dd41a0cecfd790641432dcb88f7d1c92  /root/autodl-tmp/p1/toolcall_proxy.py
+3d14115e159aa9cd417daf1d4b7eb527f5c2bde37f2e1dfb4189bd1317633ae5  /root/autodl-tmp/p1/analyze_p1.py
+c16bb1f88936a2d96c7c987eeb354193a2e7e6b146c71faafc7a8944ca040d88  /root/autodl-tmp/p1/plugin/qwen2_5_coder_tool_parser.py
+736bd175adbf90942c1dc6427e74a626f898d1fd4a9bb40550aefd2c8f49f026  /root/autodl-tmp/p1/plugin/tool_chat_template_qwen2_5_coder.jinja
