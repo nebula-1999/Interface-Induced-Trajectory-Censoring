@@ -20,21 +20,23 @@ be zero while the model emits well-formed calls: **the interface censors the tra
 before anything downstream sees it**.
 
 Configuring four model families for function calling on vLLM *following official
-documentation*, each fails at a different layer — template, parser, schema, token — and
-every failure but one returns HTTP 200 with an empty `tool_calls` array. Within
+documentation*, each fails at a different layer — template, parser, schema, token — all but one
+returning HTTP 200 with an empty `tool_calls` array. Within
 Qwen2.5-Coder the undercount grows with checkpoint size: the server parses **0/100** at
 every scale while well-formed emitted calls rise to **80/100** at 32B (*κ* = 0.967
 between two blind annotators on the 62 identically-presented items;
 **≈<!-- -->72** after calibration against a third-party adjudicated gold standard).
 Llama-3.1-8B’s 23% rate of calling *the task function itself* as a tool falls to
-**0** under one `strict: true` flag, a remedy three single-variable controls
-missed.
+**0** under one `strict: true` flag.
 
 **This is not an artefact of our harness.** On BFCL v4’s own data, executor and scorer,
 the same weights score **0.00** under the documented configuration and **0.96** /
 **0.19** (`simple_python` / `multi_turn_base`) under a dedicated serving
 adapter: a published number spanning nearly the whole metric range on an undocumented
-serving flag.
+serving flag. A 2 × 2 ablation locates the effect precisely: swapping the parser alone
+does nothing, swapping the chat template alone does nothing, and **both main effects are
+exactly zero with the entire effect in their interaction** — no component is defective, and
+repairing one side of the contract buys nothing.
 
 **The mismatch reaches RL training.** A 10-step GRPO run executes **zero** tool
 calls while `critic/rewards/mean` climbs 0.233→<!-- -->0.281: a healthy dashboard over an
@@ -163,17 +165,23 @@ consequence:
     changing only the *serving adapter configuration*, the reported score moves from
     **0.00** to **0.96** on `simple_python` and **0.19** on
     `multi_turn_base`. The measurement-validity problem is therefore not a property of
-    our harness. The intervention swaps a parser together with its paired chat template, so we
-    attribute the effect to the adapter as a unit and do not decompose it.
+    our harness. A 2 × 2 ablation over template and parser decomposes it: both main effects
+    are exactly zero and the whole effect is their interaction, so the failure is a property of
+    the *pairing* rather than of either component.
 
-4.  **Four concrete failure modes motivating a layered taxonomy.** Four families failing
+4.  **A counterfactual for the scale result.** The undercount grows with checkpoint size
+    only under a mismatched interface. Run under a *matched* one, across a comparable span
+    of scale, the silent fraction stays at 0–2 instead of rising to 80
+    (§<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>) — capability growth alone does not manufacture an undercount.
+
+5.  **Four concrete failure modes motivating a layered taxonomy.** Four families failing
     at four different layers — template, parser, schema, token — with different remedies
     and different detectability. The evidence is deliberately asymmetric and we mark it as
     such: Qwen carries a scale ladder, a replay matrix and a repair; Llama carries a
     single-variable intervention; Mistral has no admissible comparison at all; DeepSeek is a
     template check. This is four instances, not an enumeration of the failure space.
 
-5.  **RL contamination, measured.** Direct instrumentation showing the censored interface
+6.  **RL contamination, measured.** Direct instrumentation showing the censored interface
     yields zero tool executions in training rollouts, so the sampled experience contains no
     tool-mediated trajectory to reinforce and the branch is effectively inaccessible to
     policy-gradient learning in this cold-start regime. We argue this from the sampled
@@ -186,7 +194,7 @@ consequence:
     75-step ReAct run the bottleneck was not singular. That is an observation about one arm,
     not a general sufficiency theorem.
 
-6.  **A repair loop.** How much is recovered by installing a correct adapter, and what
+7.  **A repair loop.** How much is recovered by installing a correct adapter, and what
     protocol gap survives the repair.
 
 We deliberately foreground (2) and (4). A reader who takes this as a catalogue of
@@ -1512,6 +1520,18 @@ We recommend that agent evaluations report at minimum: (i) server-parsed calls,
 (iv) the exact serving configuration. Reporting only (i) is the practice this paper argues
 against, and (ii) is where the 21× scale trend lives.
 
+**The guidance for this flag lives in the wrong place.** We surveyed the HuggingFace
+model cards of nine families for any mention of `--tool-call-parser`. Of the eight
+reachable cards, **none mentions it**, while six recommend serving the model with vLLM.
+The publisher tells you which server to use and the server asks you which parser to use, and
+neither side treats the pairing as its responsibility — which is how a practitioner
+following the model card arrives at a mismatched default without ever being told the choice
+matters. We do *not* read this as evidence that mismatch is common in deployment: we
+surveyed documents, not deployments, and vLLM ships dedicated parsers for some forty families,
+so following *its* table generally works. The claim is narrower and, we think, more
+actionable: **the one piece of configuration that can silently zero a capability
+measurement is documented by neither party at the point of use.**
+
 **Pre-flight, don’t post-hoc.** A missing `--enable-auto-tool-choice` is the only failure
 that announces itself. We therefore treat a `tools`-bearing request returning HTTP 200 —
 *and* a server-parsed call under `tool_choice: required` — as a required pre-flight for any
@@ -1718,29 +1738,6 @@ present study.
 ## What would change our conclusions
 
 We name these so the claims are falsifiable rather than merely hedged.
-
--   A **2** **×** **2** **template**×**parser ablation on BFCL**. §<a href="#sec:bfcl" data-reference-type="ref" data-reference="sec:bfcl">6.3</a>
-    substitutes the community parser *and* its paired chat template together, so the
-    0 → 196 jump cannot be apportioned between them. Four cells — documented template with
-    `hermes`; dedicated template with `hermes`; documented template with the
-    dedicated parser; dedicated template with the dedicated parser — on the same 200 cases,
-    seeds and scorer, would separate emission-side from parse-side contribution and reveal any
-    interaction. Cell 1 and cell 4 are already run. Cost is two additional vLLM launches; no new
-    model, data or annotation. Until this exists, every causal statement about
-    §<a href="#sec:bfcl" data-reference-type="ref" data-reference="sec:bfcl">6.3</a> must remain at adapter granularity, as it now does.
-
--   A **rollout-path probe inside verl on Qwen2.5-Coder-7B**, no training required.
-    §<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>’s run is 1.5B, where the probe of §<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a> shows the missing
-    calls are largely *not* well-formed-but-censored: the policy emits call-shaped output
-    that names the wrong tool. That leaves the causal chain complete for evaluation but not for
-    training. At 7B the serving-side numbers are different — 21/100 tight emitted calls
-    against 0 parsed — so a single rollout batch through verl’s own AgentLoop under the
-    documented `hermes` configuration, logging raw emissions, parser verdict, tool
-    executions and observations per turn, would show whether well-formed `run_tests`
-    calls are emitted *and* dropped inside the training stack. A positive result
-    (emitted  &gt; 0, accepted  = 0, executed  = 0) closes emitted → parsed → executed → 
-    observed → gradient; a negative one would confine our RL claim to distributional absence,
-    which is what we claim now. This is the highest-value remaining experiment.
 
 -   A **broken-FC versus repaired-FC RL comparison** on a rollout backend exposing guided
     decoding, everything else fixed. If repaired-FC recovers multi-turn learning, our

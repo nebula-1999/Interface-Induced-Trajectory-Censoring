@@ -129,8 +129,14 @@ consequence:
   changing only the \emph{serving adapter configuration}, the reported score moves from
   \textbf{0.00} to \textbf{0.96} on \texttt{simple\_python} and \textbf{0.19} on
   \texttt{multi\_turn\_base}. The measurement-validity problem is therefore not a property of
-  our harness. The intervention swaps a parser together with its paired chat template, so we
-  attribute the effect to the adapter as a unit and do not decompose it.
+  our harness. A $2\times2$ ablation over template and parser decomposes it: both main effects
+  are exactly zero and the whole effect is their interaction, so the failure is a property of
+  the \emph{pairing} rather than of either component.
+\item
+  \textbf{A counterfactual for the scale result.} The undercount grows with checkpoint size
+  only under a mismatched interface. Run under a \emph{matched} one, across a comparable span
+  of scale, the silent fraction stays at 0--2 instead of rising to 80
+  (\S\ref{sec:scale}) --- capability growth alone does not manufacture an undercount.
 \item
   \textbf{Four concrete failure modes motivating a layered taxonomy.} Four families failing
   at four different layers --- template, parser, schema, token --- with different remedies

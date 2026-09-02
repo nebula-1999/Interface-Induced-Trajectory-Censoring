@@ -7,6 +7,18 @@ We recommend that agent evaluations report at minimum: (i) server-parsed calls,
 (iv) the exact serving configuration. Reporting only (i) is the practice this paper argues
 against, and (ii) is where the 21$\times$ scale trend lives.
 
+\textbf{The guidance for this flag lives in the wrong place.} We surveyed the HuggingFace
+model cards of nine families for any mention of \texttt{-\/-tool-call-parser}. Of the eight
+reachable cards, \textbf{none mentions it}, while six recommend serving the model with vLLM.
+The publisher tells you which server to use and the server asks you which parser to use, and
+neither side treats the pairing as its responsibility --- which is how a practitioner
+following the model card arrives at a mismatched default without ever being told the choice
+matters. We do \emph{not} read this as evidence that mismatch is common in deployment: we
+surveyed documents, not deployments, and vLLM ships dedicated parsers for some forty families,
+so following \emph{its} table generally works. The claim is narrower and, we think, more
+actionable: \textbf{the one piece of configuration that can silently zero a capability
+measurement is documented by neither party at the point of use.}
+
 \textbf{Pre-flight, don't post-hoc.} A missing \texttt{-\/-enable-auto-tool-choice} is the only failure
 that announces itself. We therefore treat a \texttt{tools}-bearing request returning HTTP 200 ---
 \emph{and} a server-parsed call under \texttt{tool\_choice:\ required} --- as a required pre-flight for any
