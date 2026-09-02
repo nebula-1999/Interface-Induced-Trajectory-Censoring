@@ -24,7 +24,7 @@ documentation*, each fails at a different layer — template, parser, schema, to
 every failure but one returns HTTP 200 with an empty `tool_calls` array. Within
 Qwen2.5-Coder the undercount grows with checkpoint size: the server parses **0/100** at
 every scale while well-formed emitted calls rise to **80/100** at 32B (*κ* = 0.967
-between two blind annotators on the 62 items shown to both as identical bytes;
+between two blind annotators on the 62 identically-presented items;
 **≈<!-- -->72** after calibration against a third-party adjudicated gold standard).
 Llama-3.1-8B’s 23% rate of calling *the task function itself* as a tool falls to
 **0** under one `strict: true` flag, a remedy three single-variable controls
@@ -33,13 +33,13 @@ missed.
 **This is not an artefact of our harness.** On BFCL v4’s own data, executor and scorer,
 the same weights score **0.00** under the documented configuration and **0.96** /
 **0.19** (`simple_python` / `multi_turn_base`) under a dedicated serving
-adapter: a benchmark number spanning nearly the whole metric range on a flag the model card
-never mentions.
+adapter: a published number spanning nearly the whole metric range on an undocumented
+serving flag.
 
 **The mismatch reaches RL training.** A 10-step GRPO run executes **zero** tool
-calls while `critic/rewards/mean` climbs 0.233→<!-- -->0.281 — a healthy dashboard over a
-sampled experience distribution containing no tool-mediated trajectory, so that branch
-receives no direct on-policy gradient.
+calls while `critic/rewards/mean` climbs 0.233→<!-- -->0.281: a healthy dashboard over an
+experience distribution containing no tool-mediated trajectory, so that branch receives no
+direct on-policy gradient.
 
 **Repair recovers the mechanism but not the outcome.** An adapter restores parsing
 0 → 84 and multi-turn rescues 0 → 9, yet pass rate moves 53→<!-- -->62 (n.s.); a 75-step
@@ -116,6 +116,30 @@ correlates with the very quantity being measured. We show below that it
 correlates *positively* with checkpoint size within this family: the larger the
 checkpoint, the more of its
 behaviour is censored.
+
+#### Where the boundary sits, and why it is not a parser bug.
+
+The term invites a reading we must refuse at the outset: that some parser is defective. It is
+not. Replaying vLLM’s own `hermes` extractor line by line over every stored first turn
+in our archive — 4254 of them, after removing byte-identical duplicate files — we find
+**zero** cases in which the server failed to
+parse a call that its own rules would have accepted (§<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>). Each parser behaves
+exactly as specified. What fails is the *contract* between three parties that were
+configured independently: what the checkpoint was trained to emit, what the chat template
+tells it to emit, and what the parser is defined to accept. Qwen2.5-Coder emits a
+well-formed bare call and never the `<tool_call>` envelope, so
+`hermes` not seeing it is *correct behaviour*; Qwen2.5-Instruct emits the envelope
+and then breaks the JSON inside it.
+
+This matters because it decides what a reader concludes should be fixed. Censoring can occur
+at any boundary along
+`emission \to serialization \to parse \to execution`, and at every one of
+them the observable is the same: HTTP 200 with an empty `tool_calls` array. The claim
+of this paper is therefore not that parsers are buggy but that **a tool-call rate is a
+property of a three-way contract, and is routinely reported as though it were a property of
+the model alone**. The one place where parser strictness alone costs anything in our data is
+narrow and repairable: 26 payloads at Qwen2.5-Instruct-3B are valid JSON followed by trailing
+text, which a lenient `raw_decode` would accept (§<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>).
 
 ## What is and is not new here
 
@@ -696,7 +720,7 @@ the server did not.
 | Instruct 14B               | 13          | 6                 | 4               | **0**           |
 | Instruct 32B               | 1           | 9                 | 2               | **0**           |
 
-Where the unparsed items are lost, by replaying the server’s own extractor. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. **Genuine parser loss is zero in every arm** — and across all 7405 first turns in the archive.
+Where the unparsed items are lost, by replaying the server’s own extractor. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. **Genuine parser loss is zero in every arm** — and across all 4254 de-duplicated first turns in the archive.
 
 </div>
 
@@ -761,6 +785,11 @@ onward the model was reacting to `No module named pytest` rather than to a te
 failure. We report none of them. Given that the corresponding quantities are identically zero
 in the Coder ladder, we do not expect them to carry a claim, and we did not spend a second
 GPU run to obtain them.
+
+The defect is confined to that host, and we state so rather than leaving it to be asked. The
+Coder ladder of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">5</a> ran on different hardware and records non-zero first-turn
+passes at every size — 31, 37, 53, 53, 68 — so its executor demonstrably worked. No result
+outside this one control is affected.
 
 ## The same mismatch, measured on a standard benchmark
 
@@ -837,7 +866,11 @@ BFCL’s own scorer reports the two arms as
 for the same weights, the same items and the same seeds. **A published benchmark
 number for this model can differ by the entire span of the metric depending on a serving flag
 that the model card does not mention.** We make no claim that 0.19 is a good score; the claim
-is that 0.00 is not a measurement of the model.
+is that 0.00 is not a measurement of the model. Note also the direction of any residual error.
+The repaired arm uses the community adapter, not a verified-optimal one, and 4 of its 200 first
+requests still fail to parse; whatever it leaves unrecovered is charged to the model under this
+comparison. 0 → 19 is therefore a **lower bound** on what the interface was removing,
+not an estimate of it.
 
 #### What was verified, and how far it reproduces.
 

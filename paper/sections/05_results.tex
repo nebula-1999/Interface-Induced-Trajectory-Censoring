@@ -203,7 +203,7 @@ the server did not.
 
 {\small
 \begin{longtable}[]{@{}lllll@{}}
-\caption{Where the unparsed items are lost, by replaying the server's own extractor. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf{Genuine parser loss is zero in every arm} --- and across all 7405 first turns in the archive.}\label{tab:layer}\\
+\caption{Where the unparsed items are lost, by replaying the server's own extractor. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf{Genuine parser loss is zero in every arm} --- and across all 4254 de-duplicated first turns in the archive.}\label{tab:layer}\\
 \toprule
 Arm & no envelope & payload malformed & strictness only & \textbf{parser loss} \\
 \midrule
@@ -284,6 +284,11 @@ onward the model was reacting to \texttt{No\ module\ named\ pytest} rather than 
 failure. We report none of them. Given that the corresponding quantities are identically zero
 in the Coder ladder, we do not expect them to carry a claim, and we did not spend a second
 GPU run to obtain them.
+
+The defect is confined to that host, and we state so rather than leaving it to be asked. The
+Coder ladder of Table~\ref{tab:scale} ran on different hardware and records non-zero first-turn
+passes at every size --- 31, 37, 53, 53, 68 --- so its executor demonstrably worked. No result
+outside this one control is affected.
 
 \subsection{The same mismatch, measured on a standard benchmark}
 \label{sec:bfcl}
@@ -369,7 +374,11 @@ BFCL's own scorer reports the two arms as
 \noindent for the same weights, the same items and the same seeds. \textbf{A published benchmark
 number for this model can differ by the entire span of the metric depending on a serving flag
 that the model card does not mention.} We make no claim that 0.19 is a good score; the claim
-is that 0.00 is not a measurement of the model.
+is that 0.00 is not a measurement of the model. Note also the direction of any residual error.
+The repaired arm uses the community adapter, not a verified-optimal one, and 4 of its 200 first
+requests still fail to parse; whatever it leaves unrecovered is charged to the model under this
+comparison. $0\to19$ is therefore a \textbf{lower bound} on what the interface was removing,
+not an estimate of it.
 
 \paragraph{What was verified, and how far it reproduces.}
 Each arm passes a two-case end-to-end smoke test before its full run, and the run is rejected

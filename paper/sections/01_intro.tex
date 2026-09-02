@@ -80,6 +80,29 @@ correlates \emph{positively} with checkpoint size within this family: the larger
 checkpoint, the more of its
 behaviour is censored.
 
+\paragraph{Where the boundary sits, and why it is not a parser bug.}
+The term invites a reading we must refuse at the outset: that some parser is defective. It is
+not. Replaying vLLM's own \texttt{hermes} extractor line by line over every stored first turn
+in our archive --- 4254 of them, after removing byte-identical duplicate files --- we find
+\textbf{zero} cases in which the server failed to
+parse a call that its own rules would have accepted (\S\ref{sec:scale}). Each parser behaves
+exactly as specified. What fails is the \emph{contract} between three parties that were
+configured independently: what the checkpoint was trained to emit, what the chat template
+tells it to emit, and what the parser is defined to accept. Qwen2.5-Coder emits a
+well-formed bare call and never the \texttt{\textless{}tool\_call\textgreater{}} envelope, so
+\texttt{hermes} not seeing it is \emph{correct behaviour}; Qwen2.5-Instruct emits the envelope
+and then breaks the JSON inside it.
+
+This matters because it decides what a reader concludes should be fixed. Censoring can occur
+at any boundary along
+\texttt{emission\ $\to$\ serialization\ $\to$\ parse\ $\to$\ execution}, and at every one of
+them the observable is the same: HTTP 200 with an empty \texttt{tool\_calls} array. The claim
+of this paper is therefore not that parsers are buggy but that \textbf{a tool-call rate is a
+property of a three-way contract, and is routinely reported as though it were a property of
+the model alone}. The one place where parser strictness alone costs anything in our data is
+narrow and repairable: 26 payloads at Qwen2.5-Instruct-3B are valid JSON followed by trailing
+text, which a lenient \texttt{raw\_decode} would accept (\S\ref{sec:scale}).
+
 \subsection{What is and is not new here}
 
 The specific observation that Qwen2.5-Coder does not emit \texttt{hermes}-format tool calls was

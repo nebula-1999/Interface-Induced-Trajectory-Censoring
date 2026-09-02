@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import collections
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -69,6 +70,19 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     paths = ([Path(a) for a in args] if args
              else sorted(p for p in root.glob("runs/**/traj_*.jsonl")))
+
+    # 归档里有 64 个字节完全相同的镜像文件（by_config/、xfam2/ 下各存了一份）。
+    # 不去重的话「全库 N 个首轮」会双重计数——这个数会进论文正文，必须可复现。
+    if not args:
+        seen, unique = {}, []
+        for p in paths:
+            h = hashlib.sha256(p.read_bytes()).hexdigest()
+            if h not in seen:
+                seen[h] = p; unique.append(p)
+        if len(unique) != len(paths):
+            print(f"（去重：{len(paths)} 个文件中 {len(paths)-len(unique)} 个内容重复，已略过）",
+                  file=sys.stderr)
+        paths = unique
 
     rows = []
     for p in paths:
