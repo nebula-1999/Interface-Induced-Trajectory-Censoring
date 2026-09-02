@@ -606,18 +606,17 @@ Python), and `weak` counts items with JSON structure but *no* `run_tests` name �
 from both. At 32B, `strong = 100` and `tight = 80` means every item contained a named call
 and 80 of them carried a usable payload.
 
-<div id="tab:scale">
+<div class="center">
+
+<span id="tab:scale" label="tab:scale">\[tab:scale\]</span>
 
 | Size    | Server-parsed | **tight** | strong (⊇ tight) | weak (disjoint) | Final pass |
 |:--------|:--------------|:----------|:-----------------|:----------------|:-----------|
-| Size    | Server-parsed | **tight** | strong (⊇ tight) | weak (disjoint) | Final pass |
 | 1.5B    | 0             | 0         | 0                | 27\*            | 31         |
 | 3B      | 0             | 4         | 5                | 28              | 37         |
 | 7B      | 0             | 21        | 22               | 1               | 53         |
 | 14B     | 0             | 36        | 42               | 3               | 53         |
 | **32B** | **0**         | **80**    | 100              | 0               | 68         |
-
-Censoring against scale, Qwen2.5-Coder under the documented `hermes` configuration. The server column is flat zero across a 21× range while emitted well-formed calls rise to 80/100. \*At 1.5B the 27 weak-tier items are JSON-shaped answers, not attempted calls.
 
 </div>
 
@@ -640,18 +639,17 @@ throughout.
 **Offline re-parse matrix.** To exclude “your extractor is simply better than hermes”, we
 re-parsed the *same stored bytes* under four rules (`analysis/reparse_matrix.py`, no GPU):
 
-<div id="tab:reparse">
+<div class="center">
+
+<span id="tab:reparse" label="tab:reparse">\[tab:reparse\]</span>
 
 | Arm (server-parsed = 0) | server | hermes replay | `<tools>` replay | bare JSON | tight  |
 |:------------------------|:-------|:--------------|:-----------------|:----------|:-------|
-| Arm (server-parsed = 0) | server | hermes replay | `<tools>` replay | bare JSON | tight  |
 | Qwen-1.5B               | 0      | 0             | 0                | 0         | 0      |
 | Qwen-3B                 | 0      | 0             | 0                | 5         | 4      |
 | Qwen-7B                 | 0      | 0             | 0                | 22        | 21     |
 | Qwen-14B                | 0      | 0             | 0                | 42        | 36     |
 | Qwen-32B                | 0      | **0**         | 0                | **100**   | **80** |
-
-The same bytes, re-parsed offline under four rules. Where the server already parsed a call, `content` is empty and offline replay has nothing to read; those cells are N/A rather than zero. The gap is a parser mismatch, not a claim that no parser could have read the output.
 
 </div>
 
@@ -675,7 +673,9 @@ chat template (Coder inherits it from Instruct, which is what produced the false
 KodCode items, same `hermes` parser, same `tool_choice: auto`, same
 `temperature = 0`, seed 0, and the same intent criterion of §<a href="#sec:humanval" data-reference-type="ref" data-reference="sec:humanval">4.2</a>.
 
-<div id="tab:instruct">
+<div class="center">
+
+<span id="tab:instruct" label="tab:instruct">\[tab:instruct\]</span>
 
 | Size    | Server-parsed | **tight** | strong (⊇ tight) | weak (disjoint) |
 |:--------|:--------------|:----------|:-----------------|:----------------|
@@ -685,18 +685,16 @@ KodCode items, same `hermes` parser, same `tool_choice: auto`, same
 | 14B     | 77            | 19        | 20               | 0               |
 | **32B** | **88**        | 8         | 11               | 0               |
 
-Qwen2.5-Instruct under the identical mismatched configuration. Unlike the Coder column, which is flat zero across the range, the server-parsed rate rises monotonically and reaches 88/100. Intent columns count *unparsed* attempts, so they fall as the parsed column rises.
-
 </div>
 
-Against the flat zero of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">5</a>, the Instruct ladder runs 1, 11, 63, 77, 88.
+Against the flat zero of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">[tab:scale]</a>, the Instruct ladder runs 1, 11, 63, 77, 88.
 **The contrast localises the mismatch to checkpoint-specific training rather than to the
 shared family and template, or to parameter count alone.** We stop short of naming
 tool-call-format training as *the* cause: Coder and Instruct differ in their whole
 post-training mixture — coding specialisation, instruction data, preference alignment —
 and this experiment varies that bundle, not one element of it. What it does rule out is the
 reading that `hermes` is simply inoperative for the Qwen2.5 template, which the flat
-zero of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">5</a> would otherwise leave open.
+zero of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">[tab:scale]</a> would otherwise leave open.
 
 #### The residue is not the same failure in the two ladders.
 
@@ -708,19 +706,18 @@ malformed; payload well-formed and rejected only because `json.loads` does not t
 trailing text in the capture; or a genuine parser loss, meaning the replay succeeds where
 the server did not.
 
-<div id="tab:layer">
+<div class="center">
+
+<span id="tab:layer" label="tab:layer">\[tab:layer\]</span>
 
 | Arm                        | no envelope | payload malformed | strictness only | **parser loss** |
 |:---------------------------|:------------|:------------------|:----------------|:----------------|
-| Arm                        | no envelope | payload malformed | strictness only | **parser loss** |
 | Coder 1.5B–32B (all sizes) | 100         | 0                 | 0               | **0**           |
 | Instruct 1.5B              | 93          | 6                 | 0               | **0**           |
 | Instruct 3B                | 22          | 41                | 26              | **0**           |
 | Instruct 7B                | 3           | 33                | 1               | **0**           |
 | Instruct 14B               | 13          | 6                 | 4               | **0**           |
 | Instruct 32B               | 1           | 9                 | 2               | **0**           |
-
-Where the unparsed items are lost, by replaying the server’s own extractor. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. **Genuine parser loss is zero in every arm** — and across all 4254 de-duplicated first turns in the archive.
 
 </div>
 
@@ -753,7 +750,9 @@ criterion the probe itself uses, adding only `pytest 8.3.5`
 (`p2/replay_turn1.py`). This is a **derived quantity**, written to separate files;
 the void field in the trajectories is left as it stands.
 
-<div id="tab:turn1">
+<div class="center">
+
+<span id="tab:turn1" label="tab:turn1">\[tab:turn1\]</span>
 
 | Size | Coder parsed | Coder turn-1 pass | Instruct parsed | Instruct turn-1 pass |
 |:-----|:-------------|:------------------|:----------------|:---------------------|
@@ -762,8 +761,6 @@ the void field in the trajectories is left as it stands.
 | 7B   | 0            | 53                | 63              | 34                   |
 | 14B  | 0            | 53                | 77              | 38                   |
 | 32B  | 0            | 68                | 88              | 42                   |
-
-Task success at turn 1, both ladders. Coder’s column is as recorded on a host where execution worked; Instruct’s is the offline replay described above. Turn 1 is the right comparison for both — and for Coder it is also the *only* comparison, since its first-turn and final counts are equal at every size.
 
 </div>
 
@@ -776,7 +773,7 @@ Comparing turn-1 numbers rather than final ones is not a concession forced by th
 **In the Coder ladder the two are identical at every size** — 31/31, 37/37, 53/53,
 53/53, 68/68 — because multi-turn repair rescues nothing there, the same absence that
 §<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a> traces into the gradient. The column labelled “Final pass” in
-Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">5</a> is therefore numerically its own turn-1 column, and placing Instruct’s
+Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">[tab:scale]</a> is therefore numerically its own turn-1 column, and placing Instruct’s
 turn-1 beside it compares like with like.
 
 What the defect still costs is the multi-turn layer of the Instruct ladder: repair rate,
@@ -787,7 +784,7 @@ in the Coder ladder, we do not expect them to carry a claim, and we did not spen
 GPU run to obtain them.
 
 The defect is confined to that host, and we state so rather than leaving it to be asked. The
-Coder ladder of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">5</a> ran on different hardware and records non-zero first-turn
+Coder ladder of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">[tab:scale]</a> ran on different hardware and records non-zero first-turn
 passes at every size — 31, 37, 53, 53, 68 — so its executor demonstrably worked. No result
 outside this one control is affected.
 
@@ -822,15 +819,14 @@ Both arms serve Qwen2.5-Coder-7B-Instruct on vLLM 0.27.1 at
 documented `hermes` parser; arm 2 uses the vendored community Qwen2.5-Coder parser with
 its paired chat template.
 
-<div id="tab:bfclfunnel">
+<div class="center">
+
+<span id="tab:bfclfunnel" label="tab:bfclfunnel">\[tab:bfclfunnel\]</span>
 
 | Arm                        | cases | HTTP err | first parsed | unparsed | tight | strong | weak |
 |:---------------------------|:------|:---------|:-------------|:---------|:------|:-------|:-----|
-| Arm                        | cases | HTTP err | first parsed | unparsed | tight | strong | weak |
 | `hermes` (documented)      | 200   | 0        | **0**        | 200      | 166   | 169    | 187  |
 | `qwen2_5_coder` (repaired) | 200   | 0        | **196**      | 4        | 0     | 1      | 2    |
-
-BFCL v4, first HTTP request per case. Emitted format is measured only where the parse failed, so the intent columns are empty for the arm that parsed. Both arms issued every request successfully: zero HTTP errors on either side.
 
 </div>
 
@@ -842,15 +838,14 @@ with the dedicated Qwen2.5-Coder adapter moves the same model to 196/200.
 The consequence is visible at every downstream layer, because BFCL executes the calls it
 parses and scores the resulting state:
 
-<div id="tab:bfcl5">
+<div class="center">
+
+<span id="tab:bfcl5" label="tab:bfcl5">\[tab:bfcl5\]</span>
 
 | Arm             | tight (unparsed) | first parsed | any parsed | executed | **success** | rescued |
 |:----------------|:-----------------|:-------------|:-----------|:---------|:------------|:--------|
-| Arm             | tight (unparsed) | first parsed | any parsed | executed | **success** | rescued |
 | `hermes`        | 69               | 0            | 0          | 0        | **0**       | 0       |
 | `qwen2_5_coder` | 0                | 97           | 98         | 98       | **19**      | 0       |
-
-BFCL `multi_turn_base`, n = 100, joined to the HTTP trace by case id. Nothing is executed in the `hermes` arm because nothing is parsed, so its success count is zero by construction rather than by capability.
 
 </div>
 
@@ -896,17 +891,16 @@ configuration reproduced 23/23 as wrong-tool calls.
 the tool name, these 23 were counted as initiations. **Llama’s true `run_tests` initiation
 rate is 74/100, not 97/100** (`ERRATA.md` §<a href="#sec:related" data-reference-type="ref" data-reference="sec:related">3</a>).
 
-<div id="tab:controls">
+<div class="center">
+
+<span id="tab:controls" label="tab:controls">\[tab:controls\]</span>
 
 | Alternative explanation                 | Control                   | Empty-argument rate                | Verdict      |
 |:----------------------------------------|:--------------------------|:-----------------------------------|:-------------|
-| Alternative explanation                 | Control                   | Empty-argument rate                | Verdict      |
 | schema lacks a parameter description    | rich vs terse             | → 22 (*p*=1.000)                   | rejected     |
 | ReAct merely adds a reasoning step      | FC + Thought scaffold     | → **59** (*p*&lt;0.001, **worse**) | rejected     |
 | server not configured per documentation | \+ official chat template | → 22 (*p*=0.125)                   | rejected     |
 | **schema constraint not enabled**       | **+ `strict: true`**      | **23 → 0 (*p*=0.0001)**            | **accepted** |
-
-Four single-variable controls on Llama-3.1-8B’s 23% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion.
 
 </div>
 
@@ -915,17 +909,16 @@ Four single-variable controls on Llama-3.1-8B’s 23% wrong-tool rate. The first
 Adding the official template alone changes nothing; adding `strict` on top of it changes
 everything. Isolating the single variable:
 
-<div id="tab:llama_arms">
+<div class="center">
+
+<span id="tab:llama_arms" label="tab:llama_arms">\[tab:llama\_arms\]</span>
 
 | Arm                                 | Calls issued | Wrong-tool | Executed | Turn-1 | Final  |
 |:------------------------------------|:-------------|:-----------|:---------|:-------|:-------|
-| Arm                                 | Calls issued | Wrong-tool | Executed | Turn-1 | Final  |
 | terse (parser only)                 | 97           | 23         | 74       | 34     | 49     |
 | \+ official template                | 95           | 22         | 73       | 33     | 44     |
 | \+ official template **+ `strict`** | 98           | **0**      | **97**   | **46** | **61** |
 | ReAct (reference)                   | 98           | 0          | 97       | **61** | 80     |
-
-Llama-3.1-8B arms, paired on the same 100 items. Adding the official chat template changes nothing; adding `strict: true` eliminates the wrong-tool calls entirely and lifts final pass by 12 points.
 
 </div>
 
@@ -938,16 +931,15 @@ execute and become repairable. All 98 calls under `strict` carry code containing
 
 **A three-rung ladder, both rungs significant.** Paired McNemar on the identical 100 items:
 
-<div id="tab:decomposition">
+<div class="center">
+
+<span id="tab:decomposition" label="tab:decomposition">\[tab:decomposition\]</span>
 
 | Comparison                     | b/c  | *p*        | Attributable to           |
 |:-------------------------------|:-----|:-----------|:--------------------------|
-| Comparison                     | b/c  | *p*        | Attributable to           |
 | terse-FC → strict-FC (49 → 61) | 15/3 | **0.0075** | **interface repair, +12** |
 | strict-FC → ReAct (61 → 80)    | 27/8 | **0.0019** | **protocol, +19**         |
 | terse-FC → ReAct (49 → 80)     | 38/7 | 3.1e-06    | both, +31                 |
-
-Decomposing the ReAct–FC gap on Llama. Interface repair accounts for 12 of the original 31 points; the remaining 19 survive a fully-configured interface and are attributable to the protocol itself.
 
 </div>
 
@@ -987,19 +979,17 @@ problem into a draft as a model deficiency.
 
 All arms: true `max_tokens=2048`, identical 100 items, `temperature=0`.
 
-<div id="tab:main">
+<div class="center">
+
+<span id="tab:main" label="tab:main">\[tab:main\]</span>
 
 |                  |        |        |        |       |      |            |                           |
 |:-----------------|:-------|:-------|:-------|:------|:-----|:-----------|:--------------------------|
 | Model            | ReAct  |        | FC     |       | b/c  | *p*        | FC arm                    |
 | (lr)2-3(lr)4-5   | turn-1 | final  | turn-1 | final |      |            |                           |
-| Model            | ReAct  |        | FC     |       | b/c  | *p*        | FC arm                    |
-| (lr)2-3(lr)4-5   | turn-1 | final  | turn-1 | final |      |            |                           |
 | Llama-3.1-8B     | 61     | **80** | 46     | 61    | 27/8 | **0.0019** | official tmpl. + `strict` |
 | Qwen2.5-Coder-7B | 57     | **74** | 53     | 62    | 17/5 | **0.0169** | dedicated adapter         |
 | Mistral-7B-v0.3  | 26     | 33     | N/A    | N/A   | N/A  | N/A        | —                         |
-
-Main table. All arms genuinely at `max_tokens`=2048, one shared 100-item set, `temperature`=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no *p*-value are computed.
 
 </div>
 
@@ -1017,16 +1007,15 @@ help (42 → 39).
 Qwen2.5-Coder-7B, identical items, `tool_choice: auto` throughout, changing only the
 adapter combination:
 
-<div id="tab:repair">
+<div class="center">
+
+<span id="tab:repair" label="tab:repair">\[tab:repair\]</span>
 
 | Arm                    | Parsed | Mean turns | ≥<!-- -->2 turns | Turn-1 | Final  | Rescued |
 |:-----------------------|:-------|:-----------|:-----------------|:-------|:-------|:--------|
-| Arm                    | Parsed | Mean turns | ≥<!-- -->2 turns | Turn-1 | Final  | Rescued |
 | ReAct                  | 95     | 1.92       | 40               | 57     | **74** | 17      |
 | FC + hermes            | **0**  | 0.96       | **0**            | 53     | 53     | **0**   |
 | FC + dedicated adapter | **84** | 1.82       | **37**           | 53     | **62** | **9**   |
-
-Repair loop on Qwen2.5-Coder-7B, `tool_choice: auto` held fixed, changing only the adapter. Every mechanism is restored from literal zero; the pass rate recovers only partly. The two FC arms’ identical turn-1 pass (53 vs 53) is the internal-validity check: an adapter can only affect what happens after the first turn.
 
 </div>
 
@@ -1054,15 +1043,14 @@ The adapter recovers 84/100 parses while ReAct reaches 95/100, so part of the re
 74-vs-62 gap may simply be the 11 items FC never got to attempt. Restricting to items
 **both** arms parsed successfully:
 
-<div id="tab:conditioned">
+<div class="center">
+
+<span id="tab:conditioned" label="tab:conditioned">\[tab:conditioned\]</span>
 
 | Family           | Items both parsed | ReAct | FC  | b/c  | *p*              |
 |:-----------------|:------------------|:------|:----|:-----|:-----------------|
-| Family           | Items both parsed | ReAct | FC  | b/c  | *p*              |
 | Qwen2.5-Coder-7B | 83                | 63    | 56  | 11/4 | **0.119 (n.s.)** |
 | Llama-3.1-8B     | 96                | 78    | 60  | 25/7 | **0.0021**       |
-
-Conditioning on items where both protocols parsed successfully. The residual protocol gap holds on Llama and does not reach significance on Qwen — the honest reading is one family out of two, not a general law.
 
 </div>
 
@@ -1078,16 +1066,15 @@ other**; §<a href="#sec:maintable" data-reference-type="ref" data-reference="se
 
 Where the gap does exist, it is not about reaching the second turn (Qwen):
 
-<div id="tab:given_feedback">
+<div class="center">
+
+<span id="tab:given_feedback" label="tab:given_feedback">\[tab:given\_feedback\]</span>
 
 | Arm          | Reached turn ≥<!-- -->2 | Rescued | Repair success given feedback |
 |:-------------|:------------------------|:--------|:------------------------------|
-| Arm          | Reached turn ≥<!-- -->2 | Rescued | Repair success given feedback |
 | ReAct        | 40                      | 17      | **42%**                       |
 | FC + adapter | 37                      | 9       | **24%**                       |
 | FC + hermes  | **0**                   | **0**   | undefined                     |
-
-Repair success given that feedback was actually received. Conditioned this way the two protocols are much closer, which locates the gap in *how often feedback arrives* rather than in what the model does with it.
 
 </div>
 
@@ -1121,15 +1108,14 @@ Same model, data, hyper-parameters and seed; **prompt strength matched** — the
 mandatory instruction (*“you must call `run_tests` to verify your code; do not answer
 directly”*):
 
-<div id="tab:training">
+<div class="center">
+
+<span id="tab:training" label="tab:training">\[tab:training\]</span>
 
 | Arm                        | Steps | `num_turns/mean`     | Tool time  | Tool calls / rollout |
 |:---------------------------|:------|:---------------------|:-----------|:---------------------|
-| Arm                        | Steps | `num_turns/mean`     | Tool time  | Tool calls / rollout |
 | FC (`tool_agent` + hermes) | 10    | **2.000** (constant) | **0.00 s** | **0.000**            |
 | ReAct (`react_agent`)      | 3     | 5.883                | 12.21 s    | **2.052**            |
-
-RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength. Three independent signals agree that the FC arm never executed a tool: `num_turns` pinned at its minimum, tool time exactly zero, and a dedicated counter at zero.
 
 </div>
 
@@ -1193,22 +1179,24 @@ implemented a `qwen2_5_coder` parser inside verl’s registry accepting
 condition (1.5B, mandatory prompt, *n* = 100) it lifts recoverable calls from
 **0/100 (hermes) to 52/100**. Of those 52, **zero name** `run_tests`.
 
-<div id="tab:probe_categories">
+<div class="center">
+
+<span id="tab:probe_categories" label="tab:probe_categories">\[tab:probe\_categories\]</span>
 
 | Category                                                   | n      | %   |
 |:-----------------------------------------------------------|:-------|:----|
-| Category                                                   | n      | %   |
 | wrong name, `arguments` carry complete code                | **0**  | 0%  |
 | wrong name, `arguments` are the task function’s parameters | **36** | 69% |
 | wrong name, executable code present elsewhere in the body  | 16     | 31% |
 
-Probe replication on the 1.5B model actually being trained, same mandatory prompt (n=100). Not one output names `run_tests`, so at this scale the missing calls are not a parser mismatch — there was nothing well-formed to censor.
-
 </div>
 
 Every call targets the function the task asks the model to *write* —
-`can_form_word({"tiles","word"})`, `check_password_strength({"password"})` — the same
-signature as Llama’s failure in §<a href="#sec:llama" data-reference-type="ref" data-reference="sec:llama">6.4</a>, now at a 5× smaller model. **Name normalisation
+`can_form_word({"tiles",``"word"})` and
+`check_password_strength(``{"password"})` — the same
+signature as Llama’s failure in §<a href="#sec:llama" data-reference-type="ref" data-reference="sec:llama">6.4</a>, now at a 5× smaller model.
+
+**Name normalisation
 cannot repair this: no call carries code to normalise.**
 
 **(iii) A role-disambiguation few-shot makes it worse, not better.** Since the failure is
@@ -1216,15 +1204,14 @@ semantic rather than syntactic, we targeted it directly: a system prompt contain
 wrong call and the right call side by side, with an explicit warning that the task function
 is not a tool. Same model, same 100 items, same server; only the system prompt changes.
 
-<div id="tab:pressure">
+<div class="center">
+
+<span id="tab:pressure" label="tab:pressure">\[tab:pressure\]</span>
 
 |                                 | recoverable calls | **naming `run_tests`** | final pass |
 |:--------------------------------|:------------------|:-----------------------|:-----------|
-|                                 | recoverable calls | **naming `run_tests`** | final pass |
 | mandatory prompt (baseline)     | 52                | **0**                  | 15         |
 | \+ role-disambiguation few-shot | **64**            | **0**                  | **13**     |
-
-Increasing pressure on the 1.5B model. Stronger instruction and few-shot examples raise the number of recoverable code payloads but never produce a call that names the tool; the count that matters stays at zero.
 
 </div>
 
@@ -1327,17 +1314,16 @@ is both unwilling *and* incapable.
 
 Llama-3.1-8B, `temperature=0.6`, n=100 × 3 seeds:
 
-<div id="tab:variance">
+<div class="center">
+
+<span id="tab:variance" label="tab:variance">\[tab:variance\]</span>
 
 |              | seed 1 | seed 2 | seed 3 | admissible |
 |:-------------|:-------|:-------|:-------|:-----------|
-|              | seed 1 | seed 2 | seed 3 | admissible |
 | ReAct turn-1 | 53     | 56     | 43     | 3/3        |
 | ReAct final  | 72     | 72     | 72     | 3/3        |
 | FC turn-1    | 44     | 44     | 45     | —          |
 | FC final     | 62     | 66     | ~~57~~ | **2/3**    |
-
-Sampling variance at `temperature`=0.6, Llama-3.1-8B. FC seed 3 is inadmissible (a parallel tool call vLLM rejects), leaving two arms — too few for a standard deviation, so only the interval is reported. ReAct’s three identical finals are a coincidence of totals: pairwise Jaccard between the passing sets is 0.71–0.80.
 
 </div>
 
@@ -1466,7 +1452,7 @@ present study.
     within-family monotone relation between checkpoint size and absolute undercount. We do
     *not* claim that censoring is generally scale-increasing, and we do not equate
     parameter count with capability. The Qwen2.5-Instruct ladder of
-    Table <a href="#tab:instruct" data-reference-type="ref" data-reference="tab:instruct">7</a> narrows what remains open: it holds the lineage, template, task,
+    Table <a href="#tab:instruct" data-reference-type="ref" data-reference="tab:instruct">[tab:instruct]</a> narrows what remains open: it holds the lineage, template, task,
     parser and decoding fixed and varies only whether the checkpoint was trained on the
     tool-call format, and the server-parsed rate then rises with size instead of staying flat.
     That attributes the mismatch to format training rather than to the family — but it is a
@@ -1638,7 +1624,7 @@ We name these so the claims are falsifiable rather than merely hedged.
     differ enough that the result should not be assumed to carry over.
 
 -   A **second family’s scale ladder**, with a working test executor. The within-lineage
-    Instruct control (Table <a href="#tab:instruct" data-reference-type="ref" data-reference="tab:instruct">7</a>) localises the mismatch to checkpoint-specific
+    Instruct control (Table <a href="#tab:instruct" data-reference-type="ref" data-reference="tab:instruct">[tab:instruct]</a>) localises the mismatch to checkpoint-specific
     training rather than the shared family and template, but it does not supply a second ladder
     of undercount: if the undercount
     does not grow with checkpoint size in another family, §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>’s scale claim is a

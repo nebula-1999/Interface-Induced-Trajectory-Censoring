@@ -89,25 +89,21 @@ Python), and \texttt{weak} counts items with JSON structure but \emph{no} \textt
 from both. At 32B, \texttt{strong\ =\ 100} and \texttt{tight\ =\ 80} means every item contained a named call
 and 80 of them carried a usable payload.
 
-{\small
-\begin{longtable}[]{@{}llllll@{}}
-\caption{Censoring against scale, Qwen2.5-Coder under the documented \texttt{hermes} configuration. The server column is flat zero across a 21$\times$ range while emitted well-formed calls rise to 80/100. *At 1.5B the 27 weak-tier items are JSON-shaped answers, not attempted calls.}\label{tab:scale}\\
+\begin{center}
+\small
+\captionof{table}{Censoring against scale, Qwen2.5-Coder under the documented \texttt{hermes} configuration. The server column is flat zero across a 21$\times$ range while emitted well-formed calls rise to 80/100. *At 1.5B the 27 weak-tier items are JSON-shaped answers, not attempted calls.}\label{tab:scale}
+\begin{tabular}{@{}llllll@{}}
 \toprule
 Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) & Final pass \\
 \midrule
-\endfirsthead
-\toprule
-Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) & Final pass \\
-\midrule
-\endhead
 1.5B & 0 & 0 & 0 & 27* & 31 \\
 3B & 0 & 4 & 5 & 28 & 37 \\
 7B & 0 & 21 & 22 & 1 & 53 \\
 14B & 0 & 36 & 42 & 3 & 53 \\
 \textbf{32B} & \textbf{0} & \textbf{80} & 100 & 0 & 68 \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 Across a 21$\times$ range the server reports a flat zero while well-formed emitted calls rise to
 80/100. \textbf{Within this family, the larger the checkpoint, the larger the absolute undercount
@@ -128,25 +124,21 @@ throughout.
 \textbf{Offline re-parse matrix.} To exclude ``your extractor is simply better than hermes'', we
 re-parsed the \emph{same stored bytes} under four rules (\texttt{analysis/reparse\_matrix.py}, no GPU):
 
-{\small
-\begin{longtable}[]{@{}llllll@{}}
-\caption{The same bytes, re-parsed offline under four rules. Where the server already parsed a call, \texttt{content} is empty and offline replay has nothing to read; those cells are N/A rather than zero. The gap is a parser mismatch, not a claim that no parser could have read the output.}\label{tab:reparse}\\
+\begin{center}
+\small
+\captionof{table}{The same bytes, re-parsed offline under four rules. Where the server already parsed a call, \texttt{content} is empty and offline replay has nothing to read; those cells are N/A rather than zero. The gap is a parser mismatch, not a claim that no parser could have read the output.}\label{tab:reparse}
+\begin{tabular}{@{}llllll@{}}
 \toprule
 Arm (server-parsed = 0) & server & hermes replay & \texttt{\textless{}tools\textgreater{}} replay & bare JSON & tight \\
 \midrule
-\endfirsthead
-\toprule
-Arm (server-parsed = 0) & server & hermes replay & \texttt{\textless{}tools\textgreater{}} replay & bare JSON & tight \\
-\midrule
-\endhead
 Qwen-1.5B & 0 & 0 & 0 & 0 & 0 \\
 Qwen-3B & 0 & 0 & 0 & 5 & 4 \\
 Qwen-7B & 0 & 0 & 0 & 22 & 21 \\
 Qwen-14B & 0 & 0 & 0 & 42 & 36 \\
 Qwen-32B & 0 & \textbf{0} & 0 & \textbf{100} & \textbf{80} \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 The \texttt{hermes} column is zero at every scale: the model never produces that format. The
 bare-JSON and tight columns are not: the calls exist. Their difference from the server
@@ -167,9 +159,9 @@ chat template (Coder inherits it from Instruct, which is what produced the false
 KodCode items, same \texttt{hermes} parser, same \texttt{tool\_choice:\ auto}, same
 \texttt{temperature\ =\ 0}, seed 0, and the same intent criterion of \S\ref{sec:humanval}.
 
-\begin{table}[t]
-\centering\small
-\caption{Qwen2.5-Instruct under the identical mismatched configuration. Unlike the Coder column, which is flat zero across the range, the server-parsed rate rises monotonically and reaches 88/100. Intent columns count \emph{unparsed} attempts, so they fall as the parsed column rises.}\label{tab:instruct}
+\begin{center}
+\small
+\captionof{table}{Qwen2.5-Instruct under the identical mismatched configuration. Unlike the Coder column, which is flat zero across the range, the server-parsed rate rises monotonically and reaches 88/100. Intent columns count \emph{unparsed} attempts, so they fall as the parsed column rises.}\label{tab:instruct}
 \begin{tabular}{@{}lllll@{}}
 \toprule
 Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) \\
@@ -181,7 +173,7 @@ Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjo
 \textbf{32B} & \textbf{88} & 8 & 11 & 0 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
 Against the flat zero of Table~\ref{tab:scale}, the Instruct ladder runs 1, 11, 63, 77, 88.
 \textbf{The contrast localises the mismatch to checkpoint-specific training rather than to the
@@ -201,17 +193,13 @@ malformed; payload well-formed and rejected only because \texttt{json.loads} doe
 trailing text in the capture; or a genuine parser loss, meaning the replay succeeds where
 the server did not.
 
-{\small
-\begin{longtable}[]{@{}lllll@{}}
-\caption{Where the unparsed items are lost, by replaying the server's own extractor. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf{Genuine parser loss is zero in every arm} --- and across all 4254 de-duplicated first turns in the archive.}\label{tab:layer}\\
+\begin{center}
+\small
+\captionof{table}{Where the unparsed items are lost, by replaying the server's own extractor. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf{Genuine parser loss is zero in every arm} --- and across all 4254 de-duplicated first turns in the archive.}\label{tab:layer}
+\begin{tabular}{@{}lllll@{}}
 \toprule
 Arm & no envelope & payload malformed & strictness only & \textbf{parser loss} \\
 \midrule
-\endfirsthead
-\toprule
-Arm & no envelope & payload malformed & strictness only & \textbf{parser loss} \\
-\midrule
-\endhead
 Coder 1.5B--32B (all sizes) & 100 & 0 & 0 & \textbf{0} \\
 Instruct 1.5B & 93 & 6 & 0 & \textbf{0} \\
 Instruct 3B & 22 & 41 & 26 & \textbf{0} \\
@@ -219,8 +207,8 @@ Instruct 7B & 3 & 33 & 1 & \textbf{0} \\
 Instruct 14B & 13 & 6 & 4 & \textbf{0} \\
 Instruct 32B & 1 & 9 & 2 & \textbf{0} \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 Two things follow, and the second qualifies our own wording. First, the two ladders fail at
 different layers: Coder emits a well-formed bare call and never the envelope, so
@@ -250,9 +238,9 @@ criterion the probe itself uses, adding only \texttt{pytest\ 8.3.5}
 (\texttt{p2/replay\_turn1.py}). This is a \textbf{derived quantity}, written to separate files;
 the void field in the trajectories is left as it stands.
 
-\begin{table}[t]
-\centering\small
-\caption{Task success at turn 1, both ladders. Coder's column is as recorded on a host where execution worked; Instruct's is the offline replay described above. Turn 1 is the right comparison for both --- and for Coder it is also the \emph{only} comparison, since its first-turn and final counts are equal at every size.}\label{tab:turn1}
+\begin{center}
+\small
+\captionof{table}{Task success at turn 1, both ladders. Coder's column is as recorded on a host where execution worked; Instruct's is the offline replay described above. Turn 1 is the right comparison for both --- and for Coder it is also the \emph{only} comparison, since its first-turn and final counts are equal at every size.}\label{tab:turn1}
 \begin{tabular}{@{}lllll@{}}
 \toprule
 Size & Coder parsed & Coder turn-1 pass & Instruct parsed & Instruct turn-1 pass \\
@@ -264,7 +252,7 @@ Size & Coder parsed & Coder turn-1 pass & Instruct parsed & Instruct turn-1 pass
 32B & 0 & 68 & 88 & 42 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
 The objection does not survive: Instruct solves 14--42\% of the items outright, rising with
 size. It is consistently weaker than the code-specialised Coder at the same size, which is
@@ -322,22 +310,18 @@ Both arms serve Qwen2.5-Coder-7B-Instruct on vLLM~0.27.1 at
 documented \texttt{hermes} parser; arm~2 uses the vendored community Qwen2.5-Coder parser with
 its paired chat template.
 
-{\small
-\begin{longtable}[]{@{}llllllll@{}}
-\caption{BFCL v4, first HTTP request per case. Emitted format is measured only where the parse failed, so the intent columns are empty for the arm that parsed. Both arms issued every request successfully: zero HTTP errors on either side.}\label{tab:bfclfunnel}\\
+\begin{center}
+\small
+\captionof{table}{BFCL v4, first HTTP request per case. Emitted format is measured only where the parse failed, so the intent columns are empty for the arm that parsed. Both arms issued every request successfully: zero HTTP errors on either side.}\label{tab:bfclfunnel}
+\begin{tabular}{@{}llllllll@{}}
 \toprule
 Arm & cases & HTTP err & first parsed & unparsed & tight & strong & weak \\
 \midrule
-\endfirsthead
-\toprule
-Arm & cases & HTTP err & first parsed & unparsed & tight & strong & weak \\
-\midrule
-\endhead
 \texttt{hermes} (documented) & 200 & 0 & \textbf{0} & 200 & 166 & 169 & 187 \\
 \texttt{qwen2\_5\_coder} (repaired) & 200 & 0 & \textbf{196} & 4 & 0 & 1 & 2 \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 Under the configuration a practitioner would arrive at by following the documentation, the
 server parses \textbf{zero} of 200 cases --- while 166 of those same first responses contain a
@@ -347,22 +331,18 @@ with the dedicated Qwen2.5-Coder adapter moves the same model to 196/200.
 The consequence is visible at every downstream layer, because BFCL executes the calls it
 parses and scores the resulting state:
 
-{\small
-\begin{longtable}[]{@{}lllllll@{}}
-\caption{BFCL \texttt{multi\_turn\_base}, n = 100, joined to the HTTP trace by case id. Nothing is executed in the \texttt{hermes} arm because nothing is parsed, so its success count is zero by construction rather than by capability.}\label{tab:bfcl5}\\
+\begin{center}
+\small
+\captionof{table}{BFCL \texttt{multi\_turn\_base}, n = 100, joined to the HTTP trace by case id. Nothing is executed in the \texttt{hermes} arm because nothing is parsed, so its success count is zero by construction rather than by capability.}\label{tab:bfcl5}
+\begin{tabular}{@{}lllllll@{}}
 \toprule
 Arm & tight (unparsed) & first parsed & any parsed & executed & \textbf{success} & rescued \\
 \midrule
-\endfirsthead
-\toprule
-Arm & tight (unparsed) & first parsed & any parsed & executed & \textbf{success} & rescued \\
-\midrule
-\endhead
 \texttt{hermes} & 69 & 0 & 0 & 0 & \textbf{0} & 0 \\
 \texttt{qwen2\_5\_coder} & 0 & 97 & 98 & 98 & \textbf{19} & 0 \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 BFCL's own scorer reports the two arms as
 
@@ -404,50 +384,44 @@ configuration reproduced 23/23 as wrong-tool calls.
 the tool name, these 23 were counted as initiations. \textbf{Llama's true \texttt{run\_tests} initiation
 rate is 74/100, not 97/100} (\texttt{ERRATA.md} \S\ref{sec:related}).
 
-\begin{longtable}[]{@{}
+\begin{center}
+\small
+\captionof{table}{Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion.}\label{tab:controls}
+\begin{tabular}{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.25}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.25}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.25}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.25}}@{}}
-\caption{Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion.}\label{tab:controls}\\
 \toprule
 Alternative explanation & Control & Empty-argument rate & Verdict \\
 \midrule
-\endfirsthead
-\toprule
-Alternative explanation & Control & Empty-argument rate & Verdict \\
-\midrule
-\endhead
 schema lacks a parameter description & rich vs terse & 23 $\to$ 22 (\emph{p}=1.000) & rejected \\
 ReAct merely adds a reasoning step & FC + Thought scaffold & 23 $\to$ \textbf{59} (\emph{p}\textless0.001, \textbf{worse}) & rejected \\
 server not configured per documentation & + official chat template & 23 $\to$ 22 (\emph{p}=0.125) & rejected \\
 \textbf{schema constraint not enabled} & \textbf{+ \texttt{strict:\ true}} & \textbf{23 $\to$ 0 (\emph{p}=0.0001)} & \textbf{accepted} \\
 \bottomrule
-\end{longtable}
+\end{tabular}
+\end{center}
 
 \subsubsection{The constraint penetrates to task performance}
 
 Adding the official template alone changes nothing; adding \texttt{strict} on top of it changes
 everything. Isolating the single variable:
 
-{\small
-\begin{longtable}[]{@{}llllll@{}}
-\caption{Llama-3.1-8B arms, paired on the same 100 items. Adding the official chat template changes nothing; adding \texttt{strict: true} eliminates the wrong-tool calls entirely and lifts final pass by 12 points.}\label{tab:llama_arms}\\
+\begin{center}
+\small
+\captionof{table}{Llama-3.1-8B arms, paired on the same 100 items. Adding the official chat template changes nothing; adding \texttt{strict: true} eliminates the wrong-tool calls entirely and lifts final pass by 12 points.}\label{tab:llama_arms}
+\begin{tabular}{@{}llllll@{}}
 \toprule
 Arm & Calls issued & Wrong-tool & Executed & Turn-1 & Final \\
 \midrule
-\endfirsthead
-\toprule
-Arm & Calls issued & Wrong-tool & Executed & Turn-1 & Final \\
-\midrule
-\endhead
 terse (parser only) & 97 & 23 & 74 & 34 & 49 \\
 + official template & 95 & 22 & 73 & 33 & 44 \\
 + official template \textbf{+ \texttt{strict}} & 98 & \textbf{0} & \textbf{97} & \textbf{46} & \textbf{61} \\
 ReAct (reference) & 98 & 0 & 97 & \textbf{61} & 80 \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 The official template moves nothing (22 wrong-tool, 73 executed, 33/44 --- marginally worse
 than terse). \texttt{strict} alone drives the chain
@@ -458,23 +432,19 @@ execute and become repairable. All 98 calls under \texttt{strict} carry code con
 
 \textbf{A three-rung ladder, both rungs significant.} Paired McNemar on the identical 100 items:
 
-{\small
-\begin{longtable}[]{@{}llll@{}}
-\caption{Decomposing the ReAct--FC gap on Llama. Interface repair accounts for 12 of the original 31 points; the remaining 19 survive a fully-configured interface and are attributable to the protocol itself.}\label{tab:decomposition}\\
+\begin{center}
+\small
+\captionof{table}{Decomposing the ReAct--FC gap on Llama. Interface repair accounts for 12 of the original 31 points; the remaining 19 survive a fully-configured interface and are attributable to the protocol itself.}\label{tab:decomposition}
+\begin{tabular}{@{}llll@{}}
 \toprule
 Comparison & b/c & \emph{p} & Attributable to \\
 \midrule
-\endfirsthead
-\toprule
-Comparison & b/c & \emph{p} & Attributable to \\
-\midrule
-\endhead
 terse-FC $\to$ strict-FC (49 $\to$ 61) & 15/3 & \textbf{0.0075} & \textbf{interface repair, +12} \\
 strict-FC $\to$ ReAct (61 $\to$ 80) & 27/8 & \textbf{0.0019} & \textbf{protocol, +19} \\
 terse-FC $\to$ ReAct (49 $\to$ 80) & 38/7 & 3.1e-06 & both, +31 \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 Roughly \textbf{two fifths of what looked like a protocol effect was an interface effect}, and
 each rung is separately significant. This delivers the quantification claim on a
@@ -513,28 +483,22 @@ problem into a draft as a model deficiency.
 
 All arms: true \texttt{max\_tokens=2048}, identical 100 items, \texttt{temperature=0}.
 
-{\small
+\begin{center}
+\small
 \setlength{\tabcolsep}{4pt}
-\begin{longtable}[]{@{}llllllll@{}}
-\caption{Main table. All arms genuinely at \texttt{max\_tokens}=2048, one shared 100-item set, \texttt{temperature}=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no \emph{p}-value are computed.}\label{tab:main}\\
+\captionof{table}{Main table. All arms genuinely at \texttt{max\_tokens}=2048, one shared 100-item set, \texttt{temperature}=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no \emph{p}-value are computed.}\label{tab:main}
+\begin{tabular}{@{}llllllll@{}}
 \toprule
 Model & \multicolumn{2}{c}{ReAct} & \multicolumn{2}{c}{FC} & b/c & \emph{p} & FC arm \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}
  & turn-1 & final & turn-1 & final & & & \\
 \midrule
-\endfirsthead
-\toprule
-Model & \multicolumn{2}{c}{ReAct} & \multicolumn{2}{c}{FC} & b/c & \emph{p} & FC arm \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}
- & turn-1 & final & turn-1 & final & & & \\
-\midrule
-\endhead
 Llama-3.1-8B & 61 & \textbf{80} & 46 & 61 & 27/8 & \textbf{0.0019} & official tmpl.\ + \texttt{strict} \\
 Qwen2.5-Coder-7B & 57 & \textbf{74} & 53 & 62 & 17/5 & \textbf{0.0169} & dedicated adapter \\
 Mistral-7B-v0.3 & 26 & 33 & N/A & N/A & N/A & N/A & --- \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 \textbf{Mistral has no admissible FC arm.} All four configurations produce request errors ---
 parser only: 2; official template: \textbf{42}; parser + strict: 3; official template + strict:
@@ -551,23 +515,19 @@ help (42 $\to$ 39).
 Qwen2.5-Coder-7B, identical items, \texttt{tool\_choice:\ auto} throughout, changing only the
 adapter combination:
 
-{\small
-\begin{longtable}[]{@{}lllllll@{}}
-\caption{Repair loop on Qwen2.5-Coder-7B, \texttt{tool\_choice: auto} held fixed, changing only the adapter. Every mechanism is restored from literal zero; the pass rate recovers only partly. The two FC arms' identical turn-1 pass (53 vs 53) is the internal-validity check: an adapter can only affect what happens after the first turn.}\label{tab:repair}\\
+\begin{center}
+\small
+\captionof{table}{Repair loop on Qwen2.5-Coder-7B, \texttt{tool\_choice: auto} held fixed, changing only the adapter. Every mechanism is restored from literal zero; the pass rate recovers only partly. The two FC arms' identical turn-1 pass (53 vs 53) is the internal-validity check: an adapter can only affect what happens after the first turn.}\label{tab:repair}
+\begin{tabular}{@{}lllllll@{}}
 \toprule
 Arm & Parsed & Mean turns & $\geq$2 turns & Turn-1 & Final & Rescued \\
 \midrule
-\endfirsthead
-\toprule
-Arm & Parsed & Mean turns & $\geq$2 turns & Turn-1 & Final & Rescued \\
-\midrule
-\endhead
 ReAct & 95 & 1.92 & 40 & 57 & \textbf{74} & 17 \\
 FC + hermes & \textbf{0} & 0.96 & \textbf{0} & 53 & 53 & \textbf{0} \\
 FC + dedicated adapter & \textbf{84} & 1.82 & \textbf{37} & 53 & \textbf{62} & \textbf{9} \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 The mechanism returns unambiguously: parse 0$\to$84, items reaching a second turn 0$\to$37,
 multi-turn rescues 0$\to$9. \textbf{Multi-turn repair is restored from literal zero.}
@@ -593,22 +553,18 @@ The adapter recovers 84/100 parses while ReAct reaches 95/100, so part of the re
 74-vs-62 gap may simply be the 11 items FC never got to attempt. Restricting to items
 \textbf{both} arms parsed successfully:
 
-{\small
-\begin{longtable}[]{@{}llllll@{}}
-\caption{Conditioning on items where both protocols parsed successfully. The residual protocol gap holds on Llama and does not reach significance on Qwen --- the honest reading is one family out of two, not a general law.}\label{tab:conditioned}\\
+\begin{center}
+\small
+\captionof{table}{Conditioning on items where both protocols parsed successfully. The residual protocol gap holds on Llama and does not reach significance on Qwen --- the honest reading is one family out of two, not a general law.}\label{tab:conditioned}
+\begin{tabular}{@{}llllll@{}}
 \toprule
 Family & Items both parsed & ReAct & FC & b/c & \emph{p} \\
 \midrule
-\endfirsthead
-\toprule
-Family & Items both parsed & ReAct & FC & b/c & \emph{p} \\
-\midrule
-\endhead
 Qwen2.5-Coder-7B & 83 & 63 & 56 & 11/4 & \textbf{0.119 (n.s.)} \\
 Llama-3.1-8B & 96 & 78 & 60 & 25/7 & \textbf{0.0021} \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 \textbf{The answer differs by family, and we report it as such.} On Llama --- where \texttt{strict}
 equalises execution at 97/97 --- the protocol gap is unambiguous. On Qwen the residual difference is \textbf{not detected} at this sample size: the paired
@@ -622,23 +578,19 @@ other}; \S\ref{sec:maintable}'s headline comparison should be read with this dec
 
 Where the gap does exist, it is not about reaching the second turn (Qwen):
 
-{\small
-\begin{longtable}[]{@{}llll@{}}
-\caption{Repair success given that feedback was actually received. Conditioned this way the two protocols are much closer, which locates the gap in \emph{how often feedback arrives} rather than in what the model does with it.}\label{tab:given_feedback}\\
+\begin{center}
+\small
+\captionof{table}{Repair success given that feedback was actually received. Conditioned this way the two protocols are much closer, which locates the gap in \emph{how often feedback arrives} rather than in what the model does with it.}\label{tab:given_feedback}
+\begin{tabular}{@{}llll@{}}
 \toprule
 Arm & Reached turn $\geq$2 & Rescued & Repair success given feedback \\
 \midrule
-\endfirsthead
-\toprule
-Arm & Reached turn $\geq$2 & Rescued & Repair success given feedback \\
-\midrule
-\endhead
 ReAct & 40 & 17 & \textbf{42\%} \\
 FC + adapter & 37 & 9 & \textbf{24\%} \\
 FC + hermes & \textbf{0} & \textbf{0} & undefined \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 Access is nearly equal (40 vs 37); what differs is what the model does with the
 observation once it arrives. \textbf{The interface determines whether feedback arrives; the
@@ -674,22 +626,18 @@ Same model, data, hyper-parameters and seed; \textbf{prompt strength matched} --
 mandatory instruction (\emph{``you must call \texttt{run\_tests} to verify your code; do not answer
 directly''}):
 
-{\small
-\begin{longtable}[]{@{}lllll@{}}
-\caption{RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength. Three independent signals agree that the FC arm never executed a tool: \texttt{num\_turns} pinned at its minimum, tool time exactly zero, and a dedicated counter at zero.}\label{tab:training}\\
+\begin{center}
+\small
+\captionof{table}{RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength. Three independent signals agree that the FC arm never executed a tool: \texttt{num\_turns} pinned at its minimum, tool time exactly zero, and a dedicated counter at zero.}\label{tab:training}
+\begin{tabular}{@{}lllll@{}}
 \toprule
 Arm & Steps & \texttt{num\_turns/mean} & Tool time & Tool calls / rollout \\
 \midrule
-\endfirsthead
-\toprule
-Arm & Steps & \texttt{num\_turns/mean} & Tool time & Tool calls / rollout \\
-\midrule
-\endhead
 FC (\texttt{tool\_agent} + hermes) & 10 & \textbf{2.000} (constant) & \textbf{0.00 s} & \textbf{0.000} \\
 ReAct (\texttt{react\_agent}) & 3 & 5.883 & 12.21 s & \textbf{2.052} \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 Instrumentation is placed at the two agent-side call sites (\texttt{CodeTool.execute},
 \texttt{ReActAgentLoop.\_run\_tests}). It \textbf{must not} be placed in the sandbox entry point: the
@@ -757,27 +705,26 @@ implemented a \texttt{qwen2\_5\_coder} parser inside verl's registry accepting
 condition (1.5B, mandatory prompt, $n{=}100$) it lifts recoverable calls from
 \textbf{0/100 (hermes) to 52/100}. Of those 52, \textbf{zero name} \texttt{run\_tests}.
 
-{\small
-\begin{longtable}[]{@{}lll@{}}
-\caption{Probe replication on the 1.5B model actually being trained, same mandatory prompt (n=100). Not one output names \texttt{run\_tests}, so at this scale the missing calls are not a parser mismatch --- there was nothing well-formed to censor.}\label{tab:probe_categories}\\
+\begin{center}
+\small
+\captionof{table}{Probe replication on the 1.5B model actually being trained, same mandatory prompt (n=100). Not one output names \texttt{run\_tests}, so at this scale the missing calls are not a parser mismatch --- there was nothing well-formed to censor.}\label{tab:probe_categories}
+\begin{tabular}{@{}lll@{}}
 \toprule
 Category & n & \% \\
 \midrule
-\endfirsthead
-\toprule
-Category & n & \% \\
-\midrule
-\endhead
 wrong name, \texttt{arguments} carry complete code & \textbf{0} & 0\% \\
 wrong name, \texttt{arguments} are the task function's parameters & \textbf{36} & 69\% \\
 wrong name, executable code present elsewhere in the body & 16 & 31\% \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
+\begin{sloppypar}
 Every call targets the function the task asks the model to \emph{write} ---
-\texttt{can\_form\_word(\{"tiles","word"\})}, \texttt{check\_password\_strength(\{"password"\})} --- the same
-signature as Llama's failure in \S\ref{sec:llama}, now at a 5$\times$ smaller model. \textbf{Name normalisation
+\texttt{can\_form\_word(\{"tiles",}\allowbreak\texttt{"word"\})} and
+\texttt{check\_password\_strength(}\allowbreak\texttt{\{"password"\})} --- the same
+signature as Llama's failure in \S\ref{sec:llama}, now at a 5$\times$ smaller model.
+\end{sloppypar} \textbf{Name normalisation
 cannot repair this: no call carries code to normalise.}
 
 \textbf{(iii) A role-disambiguation few-shot makes it worse, not better.} Since the failure is
@@ -785,22 +732,18 @@ semantic rather than syntactic, we targeted it directly: a system prompt contain
 wrong call and the right call side by side, with an explicit warning that the task function
 is not a tool. Same model, same 100 items, same server; only the system prompt changes.
 
-{\small
-\begin{longtable}[]{@{}llll@{}}
-\caption{Increasing pressure on the 1.5B model. Stronger instruction and few-shot examples raise the number of recoverable code payloads but never produce a call that names the tool; the count that matters stays at zero.}\label{tab:pressure}\\
+\begin{center}
+\small
+\captionof{table}{Increasing pressure on the 1.5B model. Stronger instruction and few-shot examples raise the number of recoverable code payloads but never produce a call that names the tool; the count that matters stays at zero.}\label{tab:pressure}
+\begin{tabular}{@{}llll@{}}
 \toprule
 & recoverable calls & \textbf{naming \texttt{run\_tests}} & final pass \\
 \midrule
-\endfirsthead
-\toprule
-& recoverable calls & \textbf{naming \texttt{run\_tests}} & final pass \\
-\midrule
-\endhead
 mandatory prompt (baseline) & 52 & \textbf{0} & 15 \\
 + role-disambiguation few-shot & \textbf{64} & \textbf{0} & \textbf{13} \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 The intervention made the model \emph{more fluent at emitting the wrong call} and slightly worse
 at the task. This is the third independent instance of \S\ref{sec:pressure}'s pattern.
@@ -908,24 +851,20 @@ is both unwilling \emph{and} incapable.
 
 Llama-3.1-8B, \texttt{temperature=0.6}, n=100 $\times$ 3 seeds:
 
-{\small
-\begin{longtable}[]{@{}lllll@{}}
-\caption{Sampling variance at \texttt{temperature}=0.6, Llama-3.1-8B. FC seed 3 is inadmissible (a parallel tool call vLLM rejects), leaving two arms --- too few for a standard deviation, so only the interval is reported. ReAct's three identical finals are a coincidence of totals: pairwise Jaccard between the passing sets is 0.71--0.80.}\label{tab:variance}\\
+\begin{center}
+\small
+\captionof{table}{Sampling variance at \texttt{temperature}=0.6, Llama-3.1-8B. FC seed 3 is inadmissible (a parallel tool call vLLM rejects), leaving two arms --- too few for a standard deviation, so only the interval is reported. ReAct's three identical finals are a coincidence of totals: pairwise Jaccard between the passing sets is 0.71--0.80.}\label{tab:variance}
+\begin{tabular}{@{}lllll@{}}
 \toprule
 & seed 1 & seed 2 & seed 3 & admissible \\
 \midrule
-\endfirsthead
-\toprule
-& seed 1 & seed 2 & seed 3 & admissible \\
-\midrule
-\endhead
 ReAct turn-1 & 53 & 56 & 43 & 3/3 \\
 ReAct final & 72 & 72 & 72 & 3/3 \\
 FC turn-1 & 44 & 44 & 45 & --- \\
 FC final & 62 & 66 & \sout{57} & \textbf{2/3} \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{center}
 
 FC seed 3 contains one request error --- the model emitted parallel tool calls and vLLM
 returned \emph{``This model only supports single tool-calls at once''} (documented: Llama 3 does
