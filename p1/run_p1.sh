@@ -327,6 +327,16 @@ run_arm repaired P1-Qwen2.5-Coder-7B-Repaired-FC p1-qwen25-coder7b-repaired \
   --tool-call-parser qwen2_5_coder \
   --chat-template "$P1_ROOT/plugin/tool_chat_template_qwen2_5_coder.jinja"
 
+# ── 2×2 消融：上面两条是对角线（documented+hermes / dedicated+dedicated），
+# 单独看无法把 0→196 在 parser 与 chat template 之间分摊。补上两个非对角格。
+# 已完成的臂靠 .READY 自动跳过，所以重跑本脚本只会执行下面两条。
+run_arm hermes_dedtpl P1-Qwen2.5-Coder-7B-HermesDedTpl-FC p1-qwen25-coder7b-hermesdedtpl \
+  --tool-call-parser hermes \
+  --chat-template "$P1_ROOT/plugin/tool_chat_template_qwen2_5_coder.jinja"
+run_arm dedparser_doctpl P1-Qwen2.5-Coder-7B-DedParserDocTpl-FC p1-qwen25-coder7b-dedparserdoctpl \
+  --tool-parser-plugin "$P1_ROOT/plugin/qwen2_5_coder_tool_parser.py" \
+  --tool-call-parser qwen2_5_coder
+
 "$BFCL_VENV/bin/python" "$P1_ROOT/analyze_p1.py" "$LOG_ROOT/bfcl_hermes.jsonl" \
   "$LOG_ROOT/bfcl_repaired.jsonl" \
   --result-root "$RUN_ROOT/full_hermes/result" \

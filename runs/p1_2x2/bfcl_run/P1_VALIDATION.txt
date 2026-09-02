@@ -1,0 +1,3 @@
+hermes: results=200 score_total=200 cases=200 requests=480 parsed_request_rows=0 errors=0
+repaired: results=200 score_total=200 cases=200 requests=1048 parsed_request_rows=677 errors=0
+P1 validation passed
