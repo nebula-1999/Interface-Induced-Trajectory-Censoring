@@ -24,7 +24,9 @@ export HF_ENDPOINT=https://hf-mirror.com   # AutoDL 直连不了 HF，旧机同�
 export HF_HUB_DISABLE_XET=1                # 不设会导致 hf-mirror 下载全部 401
 export HF_HOME=/root/autodl-tmp/hf
 export VLLM_ENFORCE_STRICT_TOOL_CALLING=true
-OUT=$P/runs
+# 输出目录可覆盖：补跑执行层时写到独立目录，既保住第一轮的产物，也让幂等
+# 跳过不会把五条臂全跳掉（旧目录里已有合格产物）。
+OUT="${P2_OUT:-$P/runs}"
 PORT=8000
 LOG=$P/p2_run.log
 mkdir -p "$OUT" "$M"
