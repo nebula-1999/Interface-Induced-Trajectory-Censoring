@@ -1511,6 +1511,39 @@ present study.
     round’s apparent unreliability (*κ*=0.713) was an artefact of a 2400-character
     truncation in the annotation pack, not of the raters; that pack is superseded.
 
+14. **The training verifier has two exploitable seams, which we audited rather than
+    assumed away.** The GRPO reward is outcome-only: it extracts the last submitted program from
+    the trajectory, runs the item’s own `pytest` suite in the sandbox, and returns the
+    pass ratio (`reward_code.py`). Three common reward-hacking routes are closed by
+    construction — a run in which no test executes scores **0** rather than 1, a timeout
+    scores 0, and an item with no test string scores 0 (returning credit there would manufacture
+    free-full-marks items that GRPO would learn to seek). Two seams remain. *(i)* The
+    summary parser searches `(\d+) passed` over the merged stdout/stderr
+    buffer and takes the first match, so a program that itself prints a pytest-like line could be
+    scored on its own output; this needs no understanding of the harness and could fire by
+    accident. *(ii)* `skipped` and `xfail` are not counted in the
+    denominator, so a rollout that skips the hard tests and passes the easy ones is scored on the
+    subset it did not skip. Solutions execute at import time under the double-file layout, so
+    both are reachable in principle.
+
+    We therefore audited rather than asserted. Across the five training logs that retain
+    generated code (`full`, `full_rloo`, `full_seed1`,
+    `train_REACT`, `train_FC3`) there are **zero** occurrences of a
+    printed `“N passed”`, of `pytest.skip` / `allow_module_level`,
+    and of `sys.exit` / `os._exit`; `critic/rewards/mean` oscillates in
+    0.46–0.73 without the step change that a discovered exploit produces. The audit’s own limit
+    is that **full rollout text was not retained**, so this covers the code fragments those
+    logs happen to carry, not the entire rollout corpus — retaining rollouts is a change we
+    would make before any further training.
+
+    Neither seam can reach the reported pass rates: evaluation uses a different and stricter
+    path (`mode="script"`, exit code only, and `all_passed` additionally
+    requires `status=="ok"`), so the headline EvalPlus numbers are not computed by the
+    mechanism described here. Before any further training run we would anchor the summary regex
+    to `pytest`’s own summary line, count `skipped` and `xfail` in the
+    denominator, and separate model stdout from harness output. We do not change it now: doing so
+    would make future runs incomparable to the ones reported here.
+
 ## Environment dependence and provenance
 
 14. **Serving-stack version dependence.** Every measurement is against vLLM 0.27.1 and
