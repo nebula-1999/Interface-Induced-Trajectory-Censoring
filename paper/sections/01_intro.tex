@@ -66,9 +66,10 @@ failure is in the interface'':
 the agent's effective action space.}
 \end{quote}
 
-Under RL this is not a metaphor. The interface sits literally between policy and
-environment, \texttt{$\theta$\ $\to$\ Y\ $\to$\ I(Y)\ $\to$\ a\ $\to$\ o\ $\to$\ r}; when \texttt{I(Y)\ =\ $\varnothing$} holds for every tool-intended
-\texttt{Y}, the experience distribution contains no tool-mediated trajectory at all.
+Under RL this is not a metaphor. The interface sits literally between the policy and the
+environment: whatever the policy emits must survive serialisation and parsing before it
+becomes an action that earns a reward. When nothing tool-intended survives that passage, the
+experience distribution contains no tool-mediated trajectory at all.
 
 \emph{Censoring} is borrowed \textbf{by analogy}, and we state the analogy's limit. In survival
 analysis censoring is a threshold on a continuous variable; a parser is instead a

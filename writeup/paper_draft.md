@@ -103,9 +103,10 @@ failure is in the interface”:
 > **The serving interface is simultaneously part of the measurement function and part of
 > the agent’s effective action space.**
 
-Under RL this is not a metaphor. The interface sits literally between policy and
-environment, `\theta \to Y \to I(Y) \to a \to o \to r`; when `I(Y) = \varnothing` holds for every tool-intended
-`Y`, the experience distribution contains no tool-mediated trajectory at all.
+Under RL this is not a metaphor. The interface sits literally between the policy and the
+environment: whatever the policy emits must survive serialisation and parsing before it
+becomes an action that earns a reward. When nothing tool-intended survives that passage, the
+experience distribution contains no tool-mediated trajectory at all.
 
 *Censoring* is borrowed **by analogy**, and we state the analogy’s limit. In survival
 analysis censoring is a threshold on a continuous variable; a parser is instead a
@@ -432,11 +433,7 @@ and in every one of them A1 answered `N` while A2 answered `Y` — A1 said “no
 call” because the call was not in the copy they were given. On the 62 items where both read
 identical bytes, the two annotators agree on 61 and **inter-annotator *κ* = 0.967**.
 
-We keep this rather than quietly regenerating a clean number, because it is the paper’s own
-thesis arriving uninvited in our methods section: **a truncating instrument sat between
-the evidence and the observer, and what came out was “the model did not call the tool”** —
-the same sentence the `hermes` parser produces, from the same bytes, for the same
-reason. We were measuring censoring with a censored instrument.
+We were measuring censoring with a censored instrument.
 
 **Third-party adjudication, and the final labels.** Fifteen items were not unanimous
 across A1, A2 and the classifier. All fifteen went to a third adjudicator under the
@@ -734,59 +731,68 @@ JSON followed by trailing text and a lenient `raw_decode` would recover all of t
 
 #### Are these merely well-formed calls carrying useless code?
 
-A parse-rate control invites the objection that Instruct might emit better-shaped calls
-around worse contents. Answering it needs a task-success number, and the one recorded for
-these arms is void: the P2 host was provisioned without `pytest`, so every test
-invocation returned `No module named pytest` and all 241 executed turns received
-that string instead of a test result.
+A parse-rate control invites the objection that Instruct might emit better-shaped calls around
+worse contents. Answering it needs a task-success number, so we measure one on the same items
+under the same criterion (Table <a href="#tab:turn1" data-reference-type="ref" data-reference="tab:turn1">[tab:turn1]</a>).
 
-The *first-turn* half of that is recoverable exactly, and only the first turn. Turn 1 is
-generated before any observation exists — the probe enters its loop with a context of
-`[system, user]` and no pending state (`probe_react_full.py`:480–484) — so a
-missing test runner cannot have influenced it. We therefore executed the *stored* turn-1
-programs afterwards on the same host, in the same virtual environment, through the same
-`sandbox.run_tests(…, mode="pytest")` call and the same `all_passed`
-criterion the probe itself uses, adding only `pytest 8.3.5`
-(`p2/replay_turn1.py`). This is a **derived quantity**, written to separate files;
-the void field in the trajectories is left as it stands.
+The objection does not survive at any size: Instruct solves 13–42% of the items outright on
+turn 1, rising with scale, and 13–65% by the end of the episode. It is consistently weaker
+than the code-specialised Coder at the same size, which is what one expects of a general
+instruction model on a coding task, and it is nowhere near the zero that “well-formed but
+empty” would require.
 
 <div class="center">
 
 <span id="tab:turn1" label="tab:turn1">\[tab:turn1\]</span>
 
-| Size | Coder parsed | Coder turn-1 pass | Instruct parsed | Instruct turn-1 pass |
-|:-----|:-------------|:------------------|:----------------|:---------------------|
-| 1.5B | 0            | 31                | 1               | 14                   |
-| 3B   | 0            | 37                | 11              | 14                   |
-| 7B   | 0            | 53                | 63              | 34                   |
-| 14B  | 0            | 53                | 77              | 38                   |
-| 32B  | 0            | 68                | 88              | 42                   |
+|      |               |                |                  |        |       |             |
+|:-----|:--------------|:---------------|:-----------------|:-------|:------|:------------|
+|      | Qwen2.5-Coder |                | Qwen2.5-Instruct |        |       |             |
+| Size | parsed        | turn-1 = final | parsed           | turn-1 | final | **rescued** |
+| 1.5B | 0             | 31             | 1                | 13     | 13    | **0**       |
+| 3B   | 0             | 37             | 11               | 14     | 17    | **+3**      |
+| 7B   | 0             | 53             | 63               | 34     | 40    | **+6**      |
+| 14B  | 0             | 53             | 77               | 38     | 52    | **+14**     |
+| 32B  | 0             | 68             | 88               | 42     | 65    | **+23**     |
 
 </div>
 
-The objection does not survive: Instruct solves 14–42% of the items outright, rising with
-size. It is consistently weaker than the code-specialised Coder at the same size, which is
-what one expects of a general instruction model on a coding task, and it is nowhere near the
-zero that “well-formed but empty” would require.
+Note also that the column labelled “Final pass” in Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">[tab:scale]</a> is numerically its
+own turn-1 column, since Coder’s two are equal at every size; comparisons against it are
+therefore comparisons at turn 1.
 
-Comparing turn-1 numbers rather than final ones is not a concession forced by the defect.
-**In the Coder ladder the two are identical at every size** — 31/31, 37/37, 53/53,
-53/53, 68/68 — because multi-turn repair rescues nothing there, the same absence that
-§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a> traces into the gradient. The column labelled “Final pass” in
-Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">[tab:scale]</a> is therefore numerically its own turn-1 column, and placing Instruct’s
-turn-1 beside it compares like with like.
+#### Multi-turn rescue is bounded by how much the interface lets through.
 
-What the defect still costs is the multi-turn layer of the Instruct ladder: repair rate,
-conditional rescue and turn distribution are unrecoverable offline, because from turn 2
-onward the model was reacting to `No module named pytest` rather than to a test
-failure. We report none of them. Given that the corresponding quantities are identically zero
-in the Coder ladder, we do not expect them to carry a claim, and we did not spend a second
-GPU run to obtain them.
+The multi-turn layer of this ladder was initially void — the host lacked `pytest`, so
+every test call returned `No module named pytest` and the model reacted to that
+string instead of a test result. We re-ran all five arms with the executor working, changing
+nothing else and **not touching the probe binary**, so any drift in the parse layer would
+be attributable to sampling alone. There is none: the parsed column reproduces value for value
+at all five sizes (1, 11, 63, 77, 88), which also confirms that repairing the executor did not
+disturb the upstream measurement.
 
-The defect is confined to that host, and we state so rather than leaving it to be asked. The
-Coder ladder of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">[tab:scale]</a> ran on different hardware and records non-zero first-turn
-passes at every size — 31, 37, 53, 53, 68 — so its executor demonstrably worked. No result
-outside this one control is affected.
+The recovered column is the informative one. **Rescues rise with the parsed column** —
+0, +3, +6, +14, +23 against 1, 11, 63, 77, 88 — and the two are monotone together. This
+supplies a control the paper previously lacked. In the Coder ladder first-turn and final
+passes are *identical at every size* (31/31, 37/37, 53/53, 53/53, 68/68), and it would be
+natural to read that as multi-turn repair being useless at this scale or on this task. The
+Instruct ladder, on the same items, the same criterion and the same probe, shows it is not:
+when the interface admits tool feedback, later turns do recover items, and they recover more
+of them as more feedback is admitted. Coder’s flat zero is a consequence of its parsed column
+being zero, not evidence about multi-turn learning.
+
+We therefore state the repair result as a ceiling rather than an absence:
+**how much multi-turn recovers is bounded by how much of the tool channel the interface
+leaves open**. That is a stronger and narrower claim than “a working channel is not
+sufficient” (§<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a>), and the two are consistent: opening the channel is
+necessary for rescue and does not by itself guarantee learning.
+
+Two cross-checks. First, the recovered turn-1 numbers (13, 14, 34, 38, 42) match an offline
+replay of the *stored* turn-1 programs run beforehand on a machine with no GPU
+(14, 14, 34, 38, 42) — identical at four of five sizes, off by one at 1.5B. That replay was
+sound for the reason given above: turn 1 precedes any observation. Second, the defect was
+always confined to that host; the Coder ladder ran on different hardware and records non-zero
+first-turn passes at every size, so its executor demonstrably worked.
 
 ## The same mismatch, measured on a standard benchmark
 
@@ -971,10 +977,6 @@ We cannot show from these experiments that the underlying tendency persists once
 constrained — only that it stops reaching the action space. vLLM’s `auto` mode is
 unconstrained by default.
 
-**This section is itself an instance of the paper’s claim.** We approached with explicit
-suspicion, ran three single-variable paired controls, and still wrote a configuration
-problem into a draft as a model deficiency.
-
 ## Main table, unified configuration
 
 All arms: true `max_tokens=2048`, identical 100 items, `temperature=0`.
@@ -1036,6 +1038,15 @@ constraint restores it — hence 34 → 46. **Different failure layers leave dif
 downstream signatures, and the direction of the turn-1 effect identifies the layer.**
 
 The pass-rate gain is smaller and **not significant** (53→<!-- -->62, *p*=0.093).
+A pre-planned replication on a **random** sample of 300 items reproduces the direction
+with three times the data — 160/300 → 178/300, 43 discordant pairs against 25, exact
+McNemar *p*=0.0385. That is nominally below 0.05, but this paper runs roughly a dozen
+McNemar tests, and at that family size the Bonferroni threshold is ≈<!-- -->0.0042.
+**The repair gain therefore still does not survive correction, and we continue to rest
+no claim on it.** What the larger sample does establish is that the direction is stable and the
+effect is not an artefact of the non-random `clean[:100]` subset. By contrast the
+protocol gap measured on the same 300 items — adapter → ReAct, 178/300 → 219/300,
+*p*=3.1×<!-- -->10<sup> − 6</sup> — clears the corrected threshold by three orders of magnitude.
 
 ### Does the residual gap survive conditioning on a successful parse?
 
@@ -1441,11 +1452,15 @@ present study.
     single-tool schema is the *easiest* case for a parser, which if anything makes the
     measured censoring a lower bound — but that is an argument, not a measurement.
 
-2.  **Item sampling.** 100 items per arm, taken as `clean[:100]` — **not a
-    random sample**. Pairing across arms is exact (verified: all 50 full-length arms share one
-    item set), so within-study comparisons are sound; generalisation to the corpus is not
-    established. A random-sample replication at *n* = 300 is scripted but was not run
-    (§<a href="#sec:future" data-reference-type="ref" data-reference="sec:future">[sec:future]</a>).
+2.  **Item sampling.** The 50 full-length arms use 100 items taken as `clean[:100]`
+    — **not a random sample**. Pairing across arms is exact (verified: all 50 share one
+    item set), so within-study comparisons are sound. Generalisation to the corpus rests on a
+    separate replication on a **random** 300-item sample (seed 20260901), which reproduces
+    the ladder: server-parsed remains 0 at every size across 1500 items, and the strict emitted
+    counts scale to 0, 4, 30, 40, 81 per 100 against the original 0, 4, 21, 36, 80. One
+    discrepancy is worth recording: 7B moves from 21 to 30 per 100, so the original subset
+    understated that rung — direction and monotonicity are unaffected, but a single 100-item
+    subset is evidently not a stable estimate of an intermediate rung.
 
 3.  **The scale result is within one family.** The 0 → 4 → 21 → 36 → 80 ladder is
     Qwen2.5-Coder alone, against one mismatched interface, on one task. We claim a
@@ -1472,9 +1487,14 @@ present study.
     is estimated only on Llama-3.1-8B, and there only 2 of 3 FC arms are admissible, which is
     too few for a standard deviation.
 
-6.  **Multiple comparisons.** Roughly a dozen McNemar tests, **uncorrected**. The
-    main effects (order 10<sup> − 3</sup>) survive Bonferroni at this family size; the marginal
-    results (*p*=0.093, 0.118, 0.125) do not, and we do not rest any claim on them.
+6.  **Multiple comparisons.** Roughly a dozen McNemar tests; the Bonferroni threshold at
+    that family size is ≈<!-- -->0.0042. Surviving it: the `strict: true` intervention
+    (*p*=0.0001), the protocol gap on 300 random items (*p*=3.1×<!-- -->10<sup> − 6</sup>), and the main
+    effects of order 10<sup> − 3</sup>. **Not surviving it**: the repair-loop pass gain
+    (*p*=0.093 at *n*=100, *p*=0.0385 at *n*=300), the Llama protocol contrast at *n*=300
+    (*p*=0.0352), and the residual-gap estimates (*p*=0.118, 0.125). We rest no claim on the
+    latter group, and report the *n*=300 values precisely so that a reader can see the direction
+    is stable even where significance is not claimed.
 
 7.  **Model scale stops at 32B**, on a single A800; no frontier models.
 
@@ -1630,11 +1650,46 @@ We name these so the claims are falsifiable rather than merely hedged.
     does not grow with checkpoint size in another family, §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>’s scale claim is a
     Qwen-plus-hermes fact rather than a scaling phenomenon.
 
--   **Re-running the Instruct ladder with `pytest` present.** Its parse-layer
-    columns are sound, but every pass rate, repair rate and turn distribution from that host is
-    an artefact of a missing dependency and is reported nowhere in this paper.
-
 # Conclusion
+
+Tool-call interfaces censor agent trajectories, and the censoring is silent and
+checkpoint-specific; within Qwen2.5-Coder the absolute undercount increases monotonically with
+checkpoint size, which we report as a within-family observation rather than a general law. In
+reinforcement learning the same mismatch leaves the sampled experience distribution with no
+tool-mediated trajectories at all, so the tool-using branch receives no direct on-policy
+gradient signal under the observed rollout distribution. Repairing the interface restores the
+mechanism but recovers only part of the outcome gap, and a genuine protocol difference
+remains underneath on one of the two families that admit a comparison.
+
+The most uncomfortable finding is methodological. We ran three single-variable paired
+controls on a 23% failure and concluded it was a model deficiency; a fourth control, taken
+from a sentence in the serving documentation, reduced it to zero. sectionConclusion
+
+Tool-call interfaces censor agent trajectories, and the censoring is silent and
+checkpoint-specific; within Qwen2.5-Coder the absolute undercount increases monotonically with
+checkpoint size, which we report as a within-family observation rather than a general law. In
+reinforcement learning the same mismatch leaves the sampled experience distribution with no
+tool-mediated trajectories at all, so the tool-using branch receives no direct on-policy
+gradient signal under the observed rollout distribution. Repairing the interface restores the
+mechanism but recovers only part of the outcome gap, and a genuine protocol difference
+remains underneath on one of the two families that admit a comparison.
+
+The most uncomfortable finding is methodological. We ran three single-variable paired
+controls on a 23% failure and concluded it was a model deficiency; a fourth control, taken
+from a sentence in the serving documentation, reduced it to zero. sectionConclusion
+
+Tool-call interfaces censor agent trajectories, and the censoring is silent and
+checkpoint-specific; within Qwen2.5-Coder the absolute undercount increases monotonically with
+checkpoint size, which we report as a within-family observation rather than a general law. In
+reinforcement learning the same mismatch leaves the sampled experience distribution with no
+tool-mediated trajectories at all, so the tool-using branch receives no direct on-policy
+gradient signal under the observed rollout distribution. Repairing the interface restores the
+mechanism but recovers only part of the outcome gap, and a genuine protocol difference
+remains underneath on one of the two families that admit a comparison.
+
+The most uncomfortable finding is methodological. We ran three single-variable paired
+controls on a 23% failure and concluded it was a model deficiency; a fourth control, taken
+from a sentence in the serving documentation, reduced it to zero. sectionConclusion
 
 Tool-call interfaces censor agent trajectories, and the censoring is silent and
 checkpoint-specific; within Qwen2.5-Coder the absolute undercount increases monotonically with

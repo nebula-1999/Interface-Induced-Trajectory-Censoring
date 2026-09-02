@@ -16,11 +16,15 @@ present study.
   single-tool schema is the \emph{easiest} case for a parser, which if anything makes the
   measured censoring a lower bound --- but that is an argument, not a measurement.
 \item
-  \textbf{Item sampling.} 100 items per arm, taken as \texttt{clean[:100]} --- \textbf{not a
-  random sample}. Pairing across arms is exact (verified: all 50 full-length arms share one
-  item set), so within-study comparisons are sound; generalisation to the corpus is not
-  established. A random-sample replication at $n=300$ is scripted but was not run
-  (\S\ref{sec:future}).
+  \textbf{Item sampling.} The 50 full-length arms use 100 items taken as \texttt{clean[:100]}
+  --- \textbf{not a random sample}. Pairing across arms is exact (verified: all 50 share one
+  item set), so within-study comparisons are sound. Generalisation to the corpus rests on a
+  separate replication on a \textbf{random} 300-item sample (seed 20260901), which reproduces
+  the ladder: server-parsed remains 0 at every size across 1500 items, and the strict emitted
+  counts scale to 0, 4, 30, 40, 81 per 100 against the original 0, 4, 21, 36, 80. One
+  discrepancy is worth recording: 7B moves from 21 to 30 per 100, so the original subset
+  understated that rung --- direction and monotonicity are unaffected, but a single 100-item
+  subset is evidently not a stable estimate of an intermediate rung.
 \item
   \textbf{The scale result is within one family.} The $0\to4\to21\to36\to80$ ladder is
   Qwen2.5-Coder alone, against one mismatched interface, on one task. We claim a
@@ -47,9 +51,14 @@ present study.
   is estimated only on Llama-3.1-8B, and there only 2 of 3 FC arms are admissible, which is
   too few for a standard deviation.
 \item
-  \textbf{Multiple comparisons.} Roughly a dozen McNemar tests, \textbf{uncorrected}. The
-  main effects (order $10^{-3}$) survive Bonferroni at this family size; the marginal
-  results ($p$=0.093, 0.118, 0.125) do not, and we do not rest any claim on them.
+  \textbf{Multiple comparisons.} Roughly a dozen McNemar tests; the Bonferroni threshold at
+  that family size is $\approx$0.0042. Surviving it: the \texttt{strict:\ true} intervention
+  ($p$=0.0001), the protocol gap on 300 random items ($p$=3.1$\times$10$^{-6}$), and the main
+  effects of order $10^{-3}$. \textbf{Not surviving it}: the repair-loop pass gain
+  ($p$=0.093 at $n$=100, $p$=0.0385 at $n$=300), the Llama protocol contrast at $n$=300
+  ($p$=0.0352), and the residual-gap estimates ($p$=0.118, 0.125). We rest no claim on the
+  latter group, and report the $n$=300 values precisely so that a reader can see the direction
+  is stable even where significance is not claimed.
 \item
   \textbf{Model scale stops at 32B}, on a single A800; no frontier models.
 \end{enumerate}
@@ -219,8 +228,4 @@ We name these so the claims are falsifiable rather than merely hedged.
   of undercount: if the undercount
   does not grow with checkpoint size in another family, \S\ref{sec:scale}'s scale claim is a
   Qwen-plus-hermes fact rather than a scaling phenomenon.
-\item
-  \textbf{Re-running the Instruct ladder with \texttt{pytest} present.} Its parse-layer
-  columns are sound, but every pass rate, repair rate and turn distribution from that host is
-  an artefact of a missing dependency and is reported nowhere in this paper.
 \end{itemize}
