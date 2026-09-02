@@ -94,3 +94,45 @@ parser**，因此**做不出 rescue 对照**。按上一条的标准，没有 re
 3. 写了「剩下三个各自只有一两个尺寸」。**事实错误**：Qwen3 有完整 dense 梯子
    0.6B/1.7B/4B/8B/14B/32B，六档均已核实存在。
 4. 写了「任一条不符即推翻机制」。**说大了**：被推翻的是模板预测规则的当前形式。
+
+---
+
+## 协议偏离记录 #1：Qwen3 关闭思考模式（写于跑批之前）
+
+**发现**：Qwen3 模板默认 `enable_thinking=true`。用 0.6B 实测 preflight：
+
+```
+[auto]      tool_calls 为空   finish=length
+            content: '<think>\nOkay, I need to implement the add function...'
+[required]  tool_calls=1  name='run_tests' ✅
+```
+
+模型把 `max_tokens=2048` 全部用在思考块上，**在写到工具调用之前就被截断**，
+`finish=length`。这与信封无关，是预算耗尽。
+
+**为什么必须处理**：若照原样跑，Qwen3 会得到解析率 ≈ 0，看起来像预注册预测被
+推翻（「连信封一致的家族也被 censor」），而真实原因与本实验的自变量毫无关系。
+这是混淆，不是发现。
+
+**处理**：服务端加 `--default-chat-template-kwargs '{"enable_thinking": false}'`。
+选它而不是改探针，原因有二：
+
+1. 探针文件保持与产出全部历史臂的那份**逐字节相同**，跨实验可比性不受影响；
+2. 它是服务端配置，与本文研究的对象同类，不引入新的分析代码。
+
+**验证**：关闭后 `finish=stop`，思考块消失。0.6B 在 auto 下仍不调用工具而是直接
+给代码——这是底档模型的行为，与 Coder-1.5B（0）、Instruct-1.5B（1）相容，
+**不构成对预测的否定**；预测检验的是梯子形状，不是单点。
+
+**记入正文**：Qwen3 各臂均在 `enable_thinking=false` 下服务，其余参数与 §5.2
+的 50 条臂逐项对齐。这一项差异必须在报告 Qwen3 结果时写明。
+
+## 磁盘约束下的最终臂表
+
+数据盘 75 GB 可用，故梯子取四档（14B 需另 28 GB，放弃）：
+
+| 臂 | parser | 思考 | 预测 |
+|---|---|---|---|
+| Qwen3-0.6B / 1.7B / 4B / 8B | hermes | off | 解析率 > 0 且随尺寸上升 |
+| Granite-3.1-8B | hermes | — | ≈ 0 |
+| Granite-3.1-8B | granite | — | > 0（rescue 对照） |
