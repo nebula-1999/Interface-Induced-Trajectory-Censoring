@@ -120,6 +120,9 @@ For completeness, the three layers that block the control experiment a reader wi
   \texttt{strict} key belongs to the profiler.
 \end{enumerate}
 
-This is a property of the training stack, not a proof that FC is irreparable in principle.
-Forced tool choice through a rollout backend that exposes guided decoding remains untested,
-and is the single experiment we would run next.
+This is a property of the training stack's \emph{configuration surface}, not a proof that FC
+is irreparable in principle. We previously named the missing capability as guided decoding;
+\S\ref{sec:rl} corrects that. The repaired arm needs a parser registered in verl's own
+registry that accepts the model's actual output format --- a code change rather than a
+different backend --- and must be run at 7B under parameter-efficient tuning, for the reasons
+given there.

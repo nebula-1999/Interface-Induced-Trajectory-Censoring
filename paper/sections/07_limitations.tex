@@ -73,8 +73,10 @@ present study.
   against ReAct, which changes \textbf{protocol and interface together}. ReAct is a
   positive-control interaction channel, not a parser-repair control. The experiment that
   would isolate the interface --- broken-FC RL versus repaired-FC RL, everything else held
-  fixed --- is not constructible in verl 0.9.0, whose vLLM rollout path exposes no guided
-  decoding (\S\ref{sec:rl}). Consequently we claim that \textbf{interface censoring can be observed
+  fixed --- was not constructible through verl 0.9.0's rollout \emph{configuration}
+  (\S\ref{sec:rl}). We previously attributed this to the absence of guided decoding; that was
+  wrong, and the corrected account, together with the scale constraint that actually blocks
+  the arm, is given in \S\ref{sec:rl} and \S\ref{sec:future}. Consequently we claim that \textbf{interface censoring can be observed
   directly inside rollout collection and eliminates tool-mediated samples}; we do
   \textbf{not} claim to have causally proven that it prevents RL from learning multi-turn
   repair.
@@ -188,10 +190,16 @@ We name these so the claims are falsifiable rather than merely hedged.
 \begin{itemize}
 \tightlist
 \item
-  A \textbf{broken-FC versus repaired-FC RL comparison} on a rollout backend exposing guided
-  decoding, everything else fixed. If repaired-FC recovers multi-turn learning, our
-  sufficiency claim in \S\ref{sec:sufficiency} is wrong. If it does not, the ``bottleneck is
-  not singular'' reading strengthens from one arm to two.
+  A \textbf{broken-FC versus repaired-FC RL comparison}, everything else fixed. The repaired
+  arm requires registering a parser that accepts the model's actual output format in verl's
+  own parser registry --- a code change, not a different backend. It must be run at
+  \textbf{7B}, because the 1.5B checkpoint emits no well-formed call for a repaired parser to
+  accept, and therefore under parameter-efficient tuning, because 7B full-parameter RL does
+  not fit our single card. Two arms differing only in that registration. If repaired-FC
+  recovers multi-turn learning, our sufficiency claim in \S\ref{sec:sufficiency} is
+  \textbf{wrong}; if it does not, the ``bottleneck is not singular'' reading strengthens from
+  one arm to two, the second being single-variable. This is the experiment most likely to
+  overturn something we have written, which is why we name it precisely.
 \item
   The same five-layer measurement on a \textbf{standard tool-use benchmark}. Done for BFCL~v4
   (\S\ref{sec:bfcl}): the funnel reproduces on official data, executor and scorer, and the

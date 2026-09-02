@@ -1352,9 +1352,28 @@ evaluation time — forcing the tool choice, or schema-constrained decoding — 
 by verl 0.9.0’s vLLM rollout path (its only `strict` key belongs to the profiler).
 
 We therefore state the limitation precisely: **no executable repaired-FC condition was
-available through the existing verl 0.9.0 vLLM rollout configuration.** This is a property
-of the training stack, not a proof that FC is irreparable in principle; forced tool choice
-via a rollout backend that exposes guided decoding remains untested. Accordingly, **ReAct
+available through the existing verl 0.9.0 vLLM rollout *configuration*.** This is a
+property of the training stack, not a proof that FC is irreparable in principle.
+
+**Correcting our own prescription.** We previously named the missing capability as
+guided decoding, and that was the wrong diagnosis. Guided decoding *forces* the model
+into a format; the repair this paper argues for everywhere else is the opposite — accept
+what the model already emits (§<a href="#sec:bfcl" data-reference-type="ref" data-reference="sec:bfcl">6.3</a>’s 2 × 2 shows the effect lives entirely
+in the template–parser pairing). What a repaired-FC arm actually needs is a parser in
+verl’s own registry that accepts the bare-JSON call Qwen2.5-Coder emits. That registry is
+extensible by the same mechanism the stock parsers use, and we have since demonstrated that
+code can be installed into it and intercept every generation
+(§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>’s rollout probe). The obstacle is therefore a small amount of code, not a
+different rollout backend.
+
+**What does block it is scale.** Two of our own measurements settle this. At 1.5B — the
+checkpoint actually trained — **0 of 52** call-shaped outputs name the tool, so a
+repaired parser would have nothing to accept and the arm would be void for the same reason we
+reject the Granite arm in §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>. The checkpoint that does emit well-formed calls
+is 7B (45 of 115 in the rollout probe), and 7B full-parameter RL exhausted memory on our
+single 80 GB card during the actor update. A repaired-FC control is thus a 7B experiment
+under parameter-efficient tuning, not a stack-replacement project; we scope it that way in
+§<a href="#sec:future" data-reference-type="ref" data-reference="sec:future">[sec:future]</a> rather than leaving it filed under an obstacle that does not exist. Accordingly, **ReAct
 serves as a positive-control interaction channel, not as a parser-repair control**, and the
 comparison changes protocol and interface together. We flag this rather than let the
 comparison be read as a clean single-variable intervention.
@@ -1634,8 +1653,10 @@ present study.
     against ReAct, which changes **protocol and interface together**. ReAct is a
     positive-control interaction channel, not a parser-repair control. The experiment that
     would isolate the interface — broken-FC RL versus repaired-FC RL, everything else held
-    fixed — is not constructible in verl 0.9.0, whose vLLM rollout path exposes no guided
-    decoding (§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>). Consequently we claim that **interface censoring can be observed
+    fixed — was not constructible through verl 0.9.0’s rollout *configuration*
+    (§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>). We previously attributed this to the absence of guided decoding; that was
+    wrong, and the corrected account, together with the scale constraint that actually blocks
+    the arm, is given in §<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a> and §<a href="#sec:future" data-reference-type="ref" data-reference="sec:future">[sec:future]</a>. Consequently we claim that **interface censoring can be observed
     directly inside rollout collection and eliminates tool-mediated samples**; we do
     **not** claim to have causally proven that it prevents RL from learning multi-turn
     repair.
@@ -1739,10 +1760,16 @@ present study.
 
 We name these so the claims are falsifiable rather than merely hedged.
 
--   A **broken-FC versus repaired-FC RL comparison** on a rollout backend exposing guided
-    decoding, everything else fixed. If repaired-FC recovers multi-turn learning, our
-    sufficiency claim in §<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a> is wrong. If it does not, the “bottleneck is
-    not singular” reading strengthens from one arm to two.
+-   A **broken-FC versus repaired-FC RL comparison**, everything else fixed. The repaired
+    arm requires registering a parser that accepts the model’s actual output format in verl’s
+    own parser registry — a code change, not a different backend. It must be run at
+    **7B**, because the 1.5B checkpoint emits no well-formed call for a repaired parser to
+    accept, and therefore under parameter-efficient tuning, because 7B full-parameter RL does
+    not fit our single card. Two arms differing only in that registration. If repaired-FC
+    recovers multi-turn learning, our sufficiency claim in §<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a> is
+    **wrong**; if it does not, the “bottleneck is not singular” reading strengthens from
+    one arm to two, the second being single-variable. This is the experiment most likely to
+    overturn something we have written, which is why we name it precisely.
 
 -   The same five-layer measurement on a **standard tool-use benchmark**. Done for BFCL v4
     (§<a href="#sec:bfcl" data-reference-type="ref" data-reference="sec:bfcl">6.3</a>): the funnel reproduces on official data, executor and scorer, and the

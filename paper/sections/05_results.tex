@@ -879,9 +879,28 @@ evaluation time --- forcing the tool choice, or schema-constrained decoding --- 
 by verl 0.9.0's vLLM rollout path (its only \texttt{strict} key belongs to the profiler).
 
 We therefore state the limitation precisely: \textbf{no executable repaired-FC condition was
-available through the existing verl 0.9.0 vLLM rollout configuration.} This is a property
-of the training stack, not a proof that FC is irreparable in principle; forced tool choice
-via a rollout backend that exposes guided decoding remains untested. Accordingly, \textbf{ReAct
+available through the existing verl 0.9.0 vLLM rollout \emph{configuration}.} This is a
+property of the training stack, not a proof that FC is irreparable in principle.
+
+\textbf{Correcting our own prescription.} We previously named the missing capability as
+guided decoding, and that was the wrong diagnosis. Guided decoding \emph{forces} the model
+into a format; the repair this paper argues for everywhere else is the opposite --- accept
+what the model already emits (\S\ref{sec:bfcl}'s $2\times2$ shows the effect lives entirely
+in the template--parser pairing). What a repaired-FC arm actually needs is a parser in
+verl's own registry that accepts the bare-JSON call Qwen2.5-Coder emits. That registry is
+extensible by the same mechanism the stock parsers use, and we have since demonstrated that
+code can be installed into it and intercept every generation
+(\S\ref{sec:rl}'s rollout probe). The obstacle is therefore a small amount of code, not a
+different rollout backend.
+
+\textbf{What does block it is scale.} Two of our own measurements settle this. At 1.5B --- the
+checkpoint actually trained --- \textbf{0 of 52} call-shaped outputs name the tool, so a
+repaired parser would have nothing to accept and the arm would be void for the same reason we
+reject the Granite arm in \S\ref{sec:scale}. The checkpoint that does emit well-formed calls
+is 7B (45 of 115 in the rollout probe), and 7B full-parameter RL exhausted memory on our
+single 80\,GB card during the actor update. A repaired-FC control is thus a 7B experiment
+under parameter-efficient tuning, not a stack-replacement project; we scope it that way in
+\S\ref{sec:future} rather than leaving it filed under an obstacle that does not exist. Accordingly, \textbf{ReAct
 serves as a positive-control interaction channel, not as a parser-repair control}, and the
 comparison changes protocol and interface together. We flag this rather than let the
 comparison be read as a clean single-variable intervention.
