@@ -693,6 +693,52 @@ and this experiment varies that bundle, not one element of it. What it does rule
 reading that `hermes` is simply inoperative for the Qwen2.5 template, which the flat
 zero of Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">[tab:scale]</a> would otherwise leave open.
 
+#### A counterfactual ladder: scale under a *matched* interface.
+
+The scale result has one confound we can state precisely. The server column is flat zero, so
+the growth in Table <a href="#tab:scale" data-reference-type="ref" data-reference="tab:scale">[tab:scale]</a> comes entirely from the emitted column — and larger
+checkpoints emit more well-formed JSON for reasons that have nothing to do with tool calling.
+The clean test is a ladder run under an interface that *matches*: if the undercount is a
+property of scale, it should grow there too; if it is a property of the mismatch, it should
+not appear at all. Qwen3 supplies one. Its template injects tools and requires
+`<tool_call>`, the envelope `hermes` accepts, and it ships a dense size
+ladder. We committed the prediction — “parsed  &gt; 0 at every size” — to the repository
+before running (`p4/PREREGISTRATION.md`).
+
+<div class="center">
+
+<span id="tab:counterfactual" label="tab:counterfactual">\[tab:counterfactual\]</span>
+
+| Size                                | server-parsed   | **silent fraction (tight, unparsed)** |
+|:------------------------------------|:----------------|:--------------------------------------|
+| Qwen3-0.6B                          | 86              | **1**                                 |
+| Qwen3-1.7B                          | 44              | **1**                                 |
+| Qwen3-4B                            | 70              | **2**                                 |
+| Qwen3-8B                            | 97              | **0**                                 |
+| Qwen2.5-Coder 1.5B–32B (mismatched) | 0 at every size | **0 → 4 → 21 → 36 → 80**              |
+
+</div>
+
+**Across a comparable span of scale, the silent fraction stays at 0–2 when the envelope
+matches and rises to 80 when it does not.** Capability growth alone does not manufacture an
+undercount; the mismatch is what converts it into one. Two caveats we state rather than bury:
+the parsed column is **not monotone** (86, 44, 70, 97), so this ladder shows presence,
+not a trend; and Qwen3 was served with `enable_thinking=false`, because with thinking
+on the model spends its entire token budget in a `<think>` block and is truncated
+before it emits a call — a confound unrelated to the envelope, recorded as a protocol
+deviation before the run.
+
+#### What we could not obtain.
+
+A second family exhibiting the *same* undercount
+would be stronger still, and we did not get one. Surveying nine families’ chat templates
+beforehand, six do not inject OpenAI-style tools at all — they cannot exhibit
+envelope-layer censoring, though template omission is itself a failure layer
+(§<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a>) — and of the remaining three, Granite-3.1-8B turned out not to
+attempt tool calls on this task at all. We ran it under `hermes` and under its own
+`granite` parser: both give 0, and the rescue arm is what tells us the arm is
+*uninformative* rather than confirmatory. We report it as such and claim nothing from it.
+
 #### The residue is not the same failure in the two ladders.
 
 It would be wrong to read Instruct’s remaining unparsed items as the same quantity as
