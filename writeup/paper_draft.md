@@ -804,9 +804,30 @@ executor and its scorer at pinned Gorilla commit
 configuration* between two arms of the same model — weights, benchmark cases, decoding,
 seeds, executor and scorer all held fixed. We say *adapter configuration*, not
 *parser*: arm 2 substitutes the community Qwen2.5-Coder parser **together with its
-paired chat template**, so the intervention is the pair, and this experiment cannot apportion
-the effect between them. §<a href="#sec:future" data-reference-type="ref" data-reference="sec:future">[sec:future]</a> specifies the 2 × 2 template×parser
-ablation that would.
+paired chat template**, so the intervention is the pair.
+
+We ran the 2 × 2 that separates them, on the same 200 cases and seeds:
+
+<div class="center">
+
+<span id="tab:bfcl2x2" label="tab:bfcl2x2">\[tab:bfcl2x2\]</span>
+
+|                  | documented template | dedicated template |
+|:-----------------|:--------------------|:-------------------|
+| `hermes` parser  | 0/200               | **0/200**          |
+| dedicated parser | **0/200**           | 196/200            |
+
+</div>
+
+BFCL’s own scorer gives 0.00 for the three zero cells and 0.96 / 0.19 for the fourth.
+**The effect cannot be apportioned because it is not additive: both main effects are
+exactly zero and all of it sits in the interaction.** Inspecting the emissions shows why. Under
+the documented template the model writes a bare call inside a `“‘json` fence; under
+the dedicated template it writes the same payload, byte for byte, inside `<tools>`
+tags. Each parser then behaves correctly for the envelope it is defined to accept, and a
+published benchmark score of 0.00 or 0.96 is decided by whether the two agree. This is the
+sharpest available statement of the paper’s thesis: **no component is defective, and
+repairing one side of the contract without the other buys exactly nothing.**
 
 One deviation from stock BFCL is required and we state it plainly. BFCL’s shipped handler
 for local Qwen models posts to `/v1/completions` and extracts `<tool_call>`
@@ -1106,7 +1127,7 @@ at 3B**: the 3B checkpoint ignores the `<tools>` few-shot entirely (zero `<tools
 100 items, 99 direct code) while still solving the task at a comparable rate (final 53).
 Adapter effectiveness is non-monotonic in scale, reinforcing §<a href="#sec:families" data-reference-type="ref" data-reference="sec:families">6.1</a>’s per-checkpoint claim.
 
-## Censoring reaches RL training
+## Zero tool execution in RL rollouts, and where it comes from at two scales
 
 <figure>
 <img src="fig3_training_causal.png" id="fig:train" alt="RL training rollouts. Under function calling the tool is never successfully called; num_turns stays pinned at its minimum of 2 and tool time is exactly zero. Prompt strength is matched across arms (both mandatory); step counts are not (10 vs 3)." /><figcaption aria-hidden="true"><strong>RL training rollouts.</strong> Under function calling the tool is never
@@ -1209,6 +1230,49 @@ signature as Llama’s failure in §<a href="#sec:llama" data-reference-type="re
 
 **Name normalisation
 cannot repair this: no call carries code to normalise.**
+
+#### At 7B the same training stack censors a call that is there.
+
+The 1.5B evidence above establishes that *at that checkpoint* the absent tool calls are
+a capability failure, not a parser one — there was nothing well-formed to censor. That
+leaves the question the RL section actually needs answered: inside the training rollout path,
+does a model that *does* emit well-formed calls have them removed? We ran the probe of
+§<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a> a second time, not against a serving endpoint but **inside verl’s own
+AgentLoop**, on Qwen2.5-Coder-7B under the documented `hermes` configuration, logging
+every generation, the parser’s verdict, tool executions and observations. No training step is
+required; one rollout batch suffices.
+
+Across 115 generations:
+
+<div class="center">
+
+<span id="tab:rolloutprobe" label="tab:rolloutprobe">\[tab:rolloutprobe\]</span>
+
+|                                                | count  |
+|:-----------------------------------------------|:-------|
+| bare JSON `run_tests` call, valid and complete | **45** |
+| names `run_tests` but payload malformed        | 12     |
+| no call attempted                              | 58     |
+| accepted by verl’s `hermes` parser             | **0**  |
+| tool executions                                | **0**  |
+| observations returned                          | **0**  |
+
+</div>
+
+**Forty-five of 115 generations carry a call that would execute if it were wrapped in
+the envelope, and none of them reaches the environment.** The mechanism is the same one
+§<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a> identifies on the serving side — the payload is well formed, the envelope
+is absent, and every parser in the stack is behaving correctly — but it is now observed
+*inside the training loop*, which is where the RL claim needs it.
+
+Two things this does and does not license. It closes
+emitted → parsed → executed → observed for a checkpoint that emits: at 7B the
+absence of tool-mediated trajectories is attributable to the interface, not to the policy. It
+does **not** retroactively change the 1.5B run of Figure 3, whose zero remains
+over-determined; we report the two scales separately and the scale dependence is itself the
+finding. We also note that this probe’s run terminated with a CUDA OOM during the actor
+update that follows rollout collection, so no gradient step completed; the rollout
+observations were all produced before that point and are unaffected.
 
 **(iii) A role-disambiguation few-shot makes it worse, not better.** Since the failure is
 semantic rather than syntactic, we targeted it directly: a system prompt containing the
