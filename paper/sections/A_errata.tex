@@ -9,7 +9,7 @@ reproduced from \texttt{runs/final/ERRATA.md} in the released repository.}
 
 The following files record \texttt{max\_tokens=2048} while the generation limit in force
 was \textbf{1024}. Cause: \texttt{gen()} in the probe carried a default of
-\texttt{max\_tokens=1024} while \texttt{gen\_fc()} used the global \texttt{MAX\_TOKENS=2048},
+\texttt{max\_\allowbreak tokens=1024} while \texttt{gen\_fc()} used the global \texttt{MAX\_TOKENS=2048},
 and the provenance written to disk recorded \texttt{MAX\_TOKENS} for both. Fixed
 2026-08-31.
 
@@ -45,8 +45,8 @@ verify tool names when that batch was collected, so \texttt{has\_action} did not
 them. \textbf{The corrected \texttt{run\_tests} initiation rate is 74/100.}
 
 A re-run restricted to exactly those 23 items under matched configuration
-(\texttt{traj\_v8\_Llama8B\_recheck.jsonl}, seed fixed) reproduced 23/23 as wrong-tool
-calls, with names such as \texttt{can\_form\_word}, \texttt{check\_password\_strength} and
+(\texttt{traj\_\allowbreak v8\_\allowbreak Llama8B\_\allowbreak recheck.jsonl}, seed fixed) reproduced 23/23 as wrong-tool
+calls, with names such as \texttt{can\_\allowbreak form\_\allowbreak word}, \texttt{check\_\allowbreak password\_\allowbreak strength} and
 \texttt{floyd\_warshall}.
 
 Of the same batch, \texttt{traj\_v3\_Qwen7B\_fc\_nosuffix.jsonl} has an initiation rate of

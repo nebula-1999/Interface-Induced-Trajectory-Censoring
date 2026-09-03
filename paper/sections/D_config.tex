@@ -29,7 +29,7 @@ Llama 3.1 / 3.2 & \texttt{-{}-tool-call-parser llama3\_json} \newline
   \texttt{strict} the wrong-tool rate is 23\% \\
 Mistral (HF format) & \texttt{-{}-tokenizer-mode hf -{}-config-format hf -{}-load-format hf}
   \newline \texttt{-{}-tool-call-parser mistral} \newline
-  \texttt{-{}-chat-template tool\_chat\_template\_mistral\_parallel.jinja} \newline
+  \texttt{-{}-chat-template\allowbreak\ tool\_\allowbreak chat\_\allowbreak template\_\allowbreak mistral\_\allowbreak parallel.jinja} \newline
   \texttt{tool\_call\_id} must be exactly 9 characters & HTTP 400; the officially
   recommended parallel template \emph{raises} the error rate from 2\% to 42\% \\
 DeepSeek-Coder & none available: the chat template never injects \texttt{tools} & n/a \\

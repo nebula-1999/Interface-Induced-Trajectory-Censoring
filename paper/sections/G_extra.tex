@@ -21,7 +21,7 @@ never successfully called in any of these runs.}
 \begin{center}
 \small
 \captionof{table}{BFCL v4, first HTTP request per case. Intent columns are measured only where the parse failed.}\label{tab:bfclfunnel}
-\begin{tabular}{@{}llllllll@{}}
+\setlength{\tabcolsep}{3.5pt}\begin{tabular}{@{}llllllll@{}}
 \toprule
 Arm & cases & HTTP err & first parsed & unparsed & tight & strong & weak \\
 \midrule
@@ -66,7 +66,7 @@ Qwen2.5-Coder 1.5B--32B (mismatched) & 0 at every size & \textbf{0 $\to$ 4 $\to$
 \begin{center}
 \small
 \captionof{table}{Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor.}\label{tab:instruct}\label{tab:turn1}
-\begin{tabular}{@{}llll|ll|lll@{}}
+\setlength{\tabcolsep}{3.5pt}\begin{tabular}{@{}llll|ll|lll@{}}
 \toprule
 & \multicolumn{3}{c|}{Instruct, emitted} & \multicolumn{2}{c|}{Coder} & \multicolumn{3}{c}{Instruct} \\
 Size & parsed & \textbf{tight} & weak & parsed & turn-1 = final & turn-1 & final & \textbf{rescued} \\
@@ -285,7 +285,7 @@ Table~\ref{tab:scale}.}
 \small
 \setlength{\tabcolsep}{4pt}
 \captionof{table}{All arms genuinely at \texttt{max\_tokens}=2048, one shared 100-item set, \texttt{temperature}=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no \emph{p}-value are computed.}\label{tab:main}
-\begin{tabular}{@{}llllllll@{}}
+\setlength{\tabcolsep}{3.5pt}\begin{tabular}{@{}llllllll@{}}
 \toprule
 Model & \multicolumn{2}{c}{ReAct} & \multicolumn{2}{c}{FC} & b/c & \emph{p} & FC arm \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}
