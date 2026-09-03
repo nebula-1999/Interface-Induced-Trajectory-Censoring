@@ -35,9 +35,8 @@ runs/**/.env
 # 变成一份不会报错的旧论文——谁拿它去编译，编出来的是过期版本。用完即弃，不入库。
 paper*.zip
 
-# LaTeX 编译产物（main.pdf 保留，方便不装 TeX 的人直接看）
+# LaTeX 编译产物（main.pdf 保留方便直接看；main.bbl 必须跟踪——arXiv 投稿包要带它）
 paper/*.aux
-paper/*.bbl
 paper/*.blg
 paper/*.out
 paper/*.toc

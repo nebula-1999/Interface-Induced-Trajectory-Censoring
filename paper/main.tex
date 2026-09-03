@@ -18,9 +18,11 @@
 \usepackage{fontspec}
 \usepackage{xeCJK}
 %% Overleaf 自带 Noto CJK；本地 macOS 可换 Songti SC
-%% Overleaf 有 Noto CJK；本地 macOS 没有，所以做存在性判断，两边都能编译
-\IfFontExistsTF{Noto Serif CJK SC}{\setCJKmainfont{Noto Serif CJK SC}}{\setCJKmainfont{Songti SC}}
-\IfFontExistsTF{Noto Sans Mono CJK SC}{\setCJKmonofont{Noto Sans Mono CJK SC}}{\setCJKmonofont{PingFang SC}}
+%% CJK 字体：正文附录含中文任务提示词（原文，不翻译）。
+%% 用 TeX Live 自带的 Fandol 并按**文件名**引用——走 kpathsea 查找，不依赖系统已装字体，
+%% 所以 arXiv / Overleaf / 本地三边都能编。改成系统字体名（Noto、Songti）会在 arXiv 上失败。
+\setCJKmainfont{FandolSong-Regular.otf}[BoldFont=FandolSong-Bold.otf]
+\setCJKmonofont{FandolFang-Regular.otf}
 \XeTeXlinebreaklocale "zh"
 \XeTeXlinebreakskip = 0pt plus 1pt
 \hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black,
