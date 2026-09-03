@@ -12,15 +12,16 @@
 \usepackage{xcolor}
 \usepackage{natbib}
 \usepackage{caption}
-\usepackage[normalem]{ulem}  % \sout：方差表里标记不可用臂
+\usepackage[normalem]{ulem}  % \sout: marks inadmissible arms in the variance table
 
-%% 本文用 XeLaTeX 编译（正文含 → × ∅ 等符号，个别数据片段与附录含中文）
+%% Compile with XeLaTeX: the body uses symbols such as -> x and the appendix quotes the
+%% original Chinese prompts verbatim (each followed by an English gloss).
 \usepackage{fontspec}
 \usepackage{xeCJK}
-%% Overleaf 自带 Noto CJK；本地 macOS 可换 Songti SC
-%% CJK 字体：正文附录含中文任务提示词（原文，不翻译）。
-%% 用 TeX Live 自带的 Fandol 并按**文件名**引用——走 kpathsea 查找，不依赖系统已装字体，
-%% 所以 arXiv / Overleaf / 本地三边都能编。改成系统字体名（Noto、Songti）会在 arXiv 上失败。
+
+%% CJK font. Appendix C reproduces the task prompts in the original Chinese, as sent.
+%% Use TeX Live's bundled Fandol and reference it BY FILENAME so kpathsea resolves it without
+%% depending on installed system fonts. A system font name (Noto, Songti) fails to build on arXiv.
 \setCJKmainfont{FandolSong-Regular.otf}[BoldFont=FandolSong-Bold.otf]
 \setCJKmonofont{FandolFang-Regular.otf}
 \XeTeXlinebreaklocale "zh"
@@ -51,7 +52,6 @@
 \newcommand{\OtherTok}[1]{#1}
 \newcommand{\ErrorTok}[1]{#1}
 \newcommand{\SpecialCharTok}[1]{#1}
-
 
 \title{\textbf{Interface-Induced Trajectory Censoring}\\[0.3em]
 \large A mismatched serving interface distorts both what a benchmark measures\\

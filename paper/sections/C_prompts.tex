@@ -91,6 +91,9 @@ terse
 \end{verbatim}
 }
 
+\noindent\emph{Gloss:} ``Hand the Python code you wrote to the test runner; it returns
+pass/fail status and errors.''
+
 \texttt{rich} is the \S\ref{sec:llama} control. Its purpose is to test whether the wrong-tool rate is
 simply an under-specified schema, so it is written to be maximally explicit: the description
 states that the tool is \emph{not} the function the user asked for, and the parameter
@@ -165,6 +168,18 @@ than syntactic. It shows the wrong call and the right call side by side.
 工具会返回测试通过情况与报错；若有失败，请修改代码并再次调用 run_tests。
 \end{verbatim}
 }
+
+\noindent\emph{Gloss:} ``You are a Python coding assistant. Implement the function the user
+describes. \textbf{You must first call the \texttt{run\_tests} tool to verify your code}; do not
+answer directly. Note a common mistake: \textbf{the function the user asks you to implement is not
+a callable tool.} The only tool you may call is \texttt{run\_tests}; it has a single parameter
+\texttt{code}, holding the complete source text you wrote. \emph{Wrong} (the user asked for
+\texttt{join\_integers}): \texttt{\{"name": "join\_integers", "arguments": \{"int\_array": [1, 2,
+3]\}\}} --- this calls the function you were supposed to write, and \texttt{run\_tests} receives no
+code at all. \emph{Right}: \texttt{\{"name": "run\_tests", "arguments": \{"code": "def
+join\_integers(...)"\}\}} --- the function name is always \texttt{run\_tests}, and your whole
+program goes into \texttt{code} as a string. The tool returns pass/fail and errors; if any fail,
+revise and call \texttt{run\_tests} again.''
 
 \textbf{It made things worse}: recoverable calls rose 52 $\to$ 64 while calls naming
 \texttt{run\_tests} stayed at \textbf{0} and final pass fell 15 $\to$ 13. The model became
