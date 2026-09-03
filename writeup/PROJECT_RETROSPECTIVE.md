@@ -1207,7 +1207,7 @@ vLLM 为四十来个家族提供了专用 parser,照**它的**表配一般是对
 | P0 | 随机 n=300,9 臂 | **已完成**。服务端解析跨 1500 题恒 0;strict 发出计数 0/4/**30**/40/81 对原来的 0/4/**21**/36/80——7B 那一级从 21 变 30,**原子集低估了那一档**,方向与单调性不变 |
 | P1 | 标准基准五层测量 | **已完成**(BFCL + τ-bench) |
 | P2 | **第二个家族**的 scale 梯子 | **仍开着**。做的是同血统 Qwen2.5-Instruct 梯子,锁的是"是否受过该格式训练",**不是家族**。Granite 试过,阴性且无信息量 |
-| **P3** | **broken-FC vs repaired-FC RL** | **可以开了**。诊断已纠正(见 12.8):不是 backend 问题,是 7B + LoRA 的算力安排。交接文档 `HANDOFF_P3_20260903.md` |
+| **P3** | **broken-FC vs repaired-FC RL** | **可以开了**。诊断已纠正(见 12.8):不是 backend 问题,是 7B + LoRA 的算力安排。交接文档 `internal/handoffs/HANDOFF_P3_20260903.md` |
 
 **P3 仍是唯一能推翻我们自己已写下主张的实验**(§5.9 的
 "a working channel is necessary, not sufficient")。两种结果都要报,

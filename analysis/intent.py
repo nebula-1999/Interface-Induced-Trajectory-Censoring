@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""调用意图的**唯一**判据。正文、表格、图片必须全部从这里取数。
+"""The **single** intent criterion used by all prose, tables, and figures.
 
-此前存在三套数字（手工 18 / 严判据 21 / 轨迹标签 23），来源是不同时期的临时脚本。
-分三档，报告中一律注明用的是哪一档：
+Three earlier counts (manual 18 / tight criterion 21 / trajectory labels 23)
+came from temporary scripts written at different stages. This module defines
+three evidence levels; every report must state which level it uses:
 
-  tight   严判据：{"name":"run_tests", ... "arguments" ... "code":"<字符串字面量含真实 Python>"}
-          排除两类污染：① 复述注入的 schema（有 parameters/description 无 arguments）
-                        ② 示意性伪代码（"code": 变量名，而非字符串字面量）
-  strong  宽松强证据：轨迹 _fc_intent 标签为 json_named_call / xml_tool_call
-  weak    弱启发：仅有 JSON 结构（json_arguments / json_code_obj），可能只是普通回答
+  tight   Strict criterion: {"name":"run_tests", ... "arguments" ...
+          "code":"<a string literal containing real Python>"}. It excludes
+          two contaminants: (1) repetition of the injected schema (with
+          parameters/description but no arguments), and (2) illustrative
+          pseudocode where "code" is a variable name rather than a string.
+  strong  Broader strong evidence: trajectory _fc_intent is labelled
+          json_named_call or xml_tool_call.
+  weak    Weak heuristic: only a JSON structure (json_arguments or
+          json_code_obj), which may be an ordinary answer.
 """
 import json, os, re
 
@@ -26,7 +31,7 @@ def is_tight_call(raw: str) -> bool:
 
 
 def classify(path):
-    """返回该臂的四个计数：parsed / tight / strong / weak（均以**首轮**为口径）。"""
+    """Return parsed/tight/strong/weak counts for an arm, all on the **first turn**."""
     R = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
     first = [(r["turns"] or [{}])[0] for r in R]
     return {
@@ -43,7 +48,7 @@ def classify(path):
 
 if __name__ == "__main__":
     D = os.path.join(os.path.dirname(__file__), "..", "runs", "final")
-    print(f"{'规模':<8}{'n':>5}{'解析出':>8}{'严判据':>8}{'宽松强':>8}{'弱启发':>8}{'最终通过':>10}")
+    print(f"{'scale':<8}{'n':>5}{'parsed':>8}{'tight':>8}{'strong':>8}{'weak':>8}{'final pass':>10}")
     print("-" * 60)
     for s in ["1.5B", "3B", "7B", "14B", "32B"]:
         c = classify(os.path.join(D, f"traj_v5_Qwen{s}_fc_intent.jsonl"))

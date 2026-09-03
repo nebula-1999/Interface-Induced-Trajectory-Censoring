@@ -10,7 +10,7 @@
 > figures in [`figures/`](figures/).
 >
 > The previous framing ("three-layer negation") was refuted by this work itself and is kept
-> in `RESULTS_v1_refuted_20260829.md` as a record.
+> in `internal/superseded/RESULTS_v1_refuted_20260829.md` as a record.
 
 ---
 

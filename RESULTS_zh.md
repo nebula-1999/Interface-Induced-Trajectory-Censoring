@@ -8,7 +8,7 @@
 > 图见 [`figures/`](figures/)。
 >
 > 上一版框架（"三层否定"）已被本工作自身推翻，保留于
-> `RESULTS_v1_refuted_20260829.md` 作为记录。
+> `internal/superseded/RESULTS_v1_refuted_20260829.md` 作为记录。
 
 ---
 

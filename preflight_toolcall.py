@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""跑任何 function-calling 评测之前，先花 5 秒确认接口是通的。
+"""Spend five seconds checking the interface before any function-calling evaluation.
 
-本文全部静默失败都会被下面两步之一抓住：
-  1. auto 模式发一条 canonical 请求 —— 断言解析出调用、name 正确、arguments 可解析
-  2. required 模式重跑一次做阳性对照 —— 区分「模型不调用」与「管线坏了」
+One of these two checks catches every silent failure reported in the paper:
+  1. Send one canonical auto request; require the right name and parseable arguments.
+  2. Repeat in required mode to separate "the model did not call" from "the pipeline is broken."
 
-用法:  python preflight_toolcall.py --port 8000 [--model <served-name>]
-退出码: 0 全通过 / 1 auto 未解析出调用（可能是模型行为，看步骤 2）/ 2 管线故障
+Usage: python preflight_toolcall.py --port 8000 [--model <served-name>]
+Exit codes: 0 pass / 1 auto produced no parsed call (inspect step 2) / 2 pipeline failure
 """
 import argparse, json, sys, urllib.request, urllib.error
 
@@ -38,8 +38,8 @@ def ask(port, model, choice):
 def check(ch, label):
     msg = ch["message"]; tcs = msg.get("tool_calls") or []
     if not tcs:
-        print(f"  [{label}] tool_calls 为空  finish={ch.get('finish_reason')}")
-        print(f"           content 前 120: {(msg.get('content') or '')[:120]!r}")
+        print(f"  [{label}] tool_calls is empty  finish={ch.get('finish_reason')}")
+        print(f"           first 120 characters of content: {(msg.get('content') or '')[:120]!r}")
         return False
     fn = tcs[0].get("function") or {}
     name, args = fn.get("name"), fn.get("arguments")
@@ -49,17 +49,16 @@ def check(ch, label):
         ok_args = isinstance(parsed, dict) and isinstance(parsed.get("code"), str) and parsed["code"].strip()
     except Exception:
         parsed, ok_args = None, False
-    print(f"  [{label}] tool_calls={len(tcs)}  name={name!r} {'✅' if ok_name else '❌ 期望 run_tests'}"
-          f"  arguments {'✅ 含字符串 code' if ok_args else '❌ 不可解析或 code 非字符串'}")
+    print(f"  [{label}] tool_calls={len(tcs)}  name={name!r} {'✅' if ok_name else '❌ expected run_tests'}"
+          f"  arguments {'✅ contains string code' if ok_args else '❌ unparseable or code is not a string'}")
     if not ok_name:
-        print("           ← 模型调用了未声明的工具；parser 通常不校验工具名，"
-              "会被记成一次有效调用")
+        print("           ← Undeclared tool: parsers may count it because they rarely validate names")
     return ok_name and ok_args
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8000)
-    ap.add_argument("--model", default=None, help="不传则从 /v1/models 取第一个")
+    ap.add_argument("--model", default=None, help="default: first model returned by /v1/models")
     a = ap.parse_args()
     model = a.model
     if not model:
@@ -67,31 +66,32 @@ def main():
             model = json.loads(urllib.request.urlopen(
                 f"http://localhost:{a.port}/v1/models", timeout=30).read())["data"][0]["id"]
         except Exception as e:
-            print(f"❌ 无法连接 /v1/models: {e}"); return 2
-    print(f"模型: {model}\n")
+            print(f"❌ Could not connect to /v1/models: {e}"); return 2
+    print(f"Model: {model}\n")
 
     ch, err = ask(a.port, model, "auto")
     if err:
-        print(f"❌ auto 请求失败: {err}")
+        print(f"❌ auto request failed: {err}")
         if "enable-auto-tool-choice" in err or "tool_choice" in err:
-            print("   → 服务端缺 --enable-auto-tool-choice 与 --tool-call-parser")
+            print("   → The server is missing --enable-auto-tool-choice and --tool-call-parser")
         return 2
     auto_ok = check(ch, "auto")
 
     ch2, err2 = ask(a.port, model, "required")
     if err2:
-        print(f"❌ required 请求失败: {err2}"); return 2
+        print(f"❌ required request failed: {err2}"); return 2
     req_ok = check(ch2, "required")
 
     print()
     if auto_ok:
-        print("✅ 通过：auto 模式下解析出合规调用，接口可用。"); return 0
+        print("✅ Passed: auto mode produced a compliant parsed call; the interface works."); return 0
     if req_ok:
-        print("⚠️  auto 为 0 但 required 正常 —— 管线可用，是模型在 auto 下不产出该格式。")
-        print("    这正是本文描述的静默错配：评测会记成『该模型不使用工具』。")
-        print("    建议：检查原始 content 里是否已有格式完好的调用（离线重解析）。")
+        print("⚠️  auto produced zero calls but required works: the pipeline is functional, but the model does not emit this format under auto.")
+        print("    This is the silent mismatch in the paper: the evaluation records that the model does not use tools.")
+        print("    Recommendation: inspect raw content for a well-formed call and re-parse it offline.")
         return 1
-    print("❌ auto 与 required 均未解析出合规调用 —— 管线故障，先修配置再跑评测。")
+    print("❌ Neither auto nor required produced a compliant parsed call. Fix the pipeline "
+          "configuration before running the evaluation.")
     return 2
 
 if __name__ == "__main__":

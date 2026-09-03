@@ -106,6 +106,20 @@ fixes/                  AUDIT.md and the run scripts for each experiment generat
 preflight_toolcall.py   the deliverable check
 ```
 
+## Where to find the paper artifacts
+
+| Claim or artifact in the paper | Repository location |
+|---|---|
+| the intent criterion | [`analysis/intent.py`](analysis/intent.py) |
+| replaying vLLM's hermes extractor | [`analysis/failure_layer.py`](analysis/failure_layer.py) |
+| the same bytes re-parsed under four rules | [`analysis/reparse_matrix.py`](analysis/reparse_matrix.py) |
+| a prediction committed before the run | [`p4/PREREGISTRATION.md`](p4/PREREGISTRATION.md) |
+| a 98-line preflight check | [`preflight_toolcall.py`](preflight_toolcall.py) |
+| data errata | [`runs/final/ERRATA.md`](runs/final/ERRATA.md) |
+| BFCL 2×2 | [`p1/`](p1/) |
+| τ-bench | [`p5/`](p5/) |
+| the rollout-path probe | [`p3/rollout_probe.py`](p3/rollout_probe.py) |
+
 ## Prior work
 
 The specific observation that Qwen2.5-Coder does not emit `hermes`-format tool calls was

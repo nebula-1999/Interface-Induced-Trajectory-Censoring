@@ -4,7 +4,7 @@
 数据源两类：
   1. runs/{step3,seed1,rloo}/step_*.jsonl —— 三个 150 步 run 的逐题评测产物（本地已有）
   2. runs/final/full*.log —— 原始训练日志（含 loss/entropy/kl/grad_norm，
-     **目前仅在服务器**，见 BOOT_CHECKLIST.md §0；缺失时自动跳过第 3 张图）
+     **目前仅在服务器**，见 internal/handoffs/BOOT_CHECKLIST.md §0；缺失时自动跳过第 3 张图）
 
 产出 figures/fig4_training_curves.png 与一份文字分析。
 """
@@ -107,6 +107,6 @@ print(f"\n=== 原始训练日志 ===")
 if logs:
     print(f"  找到 {len(logs)} 份，可分析 loss / entropy / kl / grad_norm")
 else:
-    print("  ❌ full*.log 不在本地 —— 见 BOOT_CHECKLIST.md §0，开机后 rsync 拉回")
+    print("  ❌ full*.log 不在本地 —— 见 internal/handoffs/BOOT_CHECKLIST.md §0，开机后 rsync 拉回")
     print("     缺失影响：无法回答'训练是否稳定、有无 KL 崩溃'；pass@1 数字不受影响")
 print("\n图已写入 figures/fig4_training_curves.png")
