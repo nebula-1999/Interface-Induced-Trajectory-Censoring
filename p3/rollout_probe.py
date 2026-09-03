@@ -83,6 +83,19 @@ def install() -> bool:
         print(f"[p3] ✗ import tool_parser 失败: {e!r}", file=sys.stderr, flush=True)
         return False
 
+    # Registration must happen inside every Ray actor, after verl's registry
+    # module has finished importing but before ToolAgentLoop is instantiated.
+    custom_parser_ok = False
+    try:
+        import qwen_tools_parser
+        qwen_tools_parser.register_into_verl()
+        custom_parser_ok = "qwen2_5_coder" in tp.ToolParser._registry
+    except Exception as e:
+        print(f"[p3] ✗ 注册 qwen2_5_coder parser 失败: {e!r}",
+              file=sys.stderr, flush=True)
+    _write("register_custom_parser", ok=custom_parser_ok,
+           present="qwen2_5_coder" in tp.ToolParser._registry)
+
     installed_parsers = []
     for name, cls in list(getattr(tp.ToolParser, "_registry", {}).items()):
         fn = cls.__dict__.get("extract_tool_calls")

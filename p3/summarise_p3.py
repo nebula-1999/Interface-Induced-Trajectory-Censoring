@@ -41,12 +41,15 @@ res = {
                                     for r in rows),
     "code_tool_hook_installed": any(r["kind"] == "install_code_tool" and r.get("ok")
                                     for r in rows),
+    "custom_parser_registered": any(r["kind"] == "register_custom_parser" and r.get("ok")
+                                    for r in rows),
 }
 
 dead = []
 for key, label in (("parser_hook_installed", "extract_tool_calls install"),
                    ("agentloop_hook_installed", "_call_tool install"),
-                   ("code_tool_hook_installed", "CodeTool.execute install")):
+                   ("code_tool_hook_installed", "CodeTool.execute install"),
+                   ("custom_parser_registered", "qwen2_5_coder registration")):
     if not res[key]:
         dead.append(label)
 if not ext:

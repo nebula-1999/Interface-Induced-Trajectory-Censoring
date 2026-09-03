@@ -57,6 +57,9 @@ df -h /root/autodl-tmp | tail -1
   +actor_rollout_ref.model.override_config.attn_implementation=sdpa \
   actor_rollout_ref.model.use_remove_padding=False \
   actor_rollout_ref.model.enable_gradient_checkpointing=True \
+  actor_rollout_ref.model.lora_rank=32 \
+  actor_rollout_ref.model.lora_alpha=32 \
+  actor_rollout_ref.model.target_modules=all-linear \
   actor_rollout_ref.actor.optim.lr=1e-6 \
   actor_rollout_ref.actor.ppo_mini_batch_size=16 \
   actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
