@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from analysis.failure_layer import TIERS, TIER_ZH, classify  # noqa: E402
+from analysis.failure_layer import TIERS, TIER_LABEL, classify  # noqa: E402
 from analysis.intent import STRONG_TAGS  # noqa: E402  意图判据只有这一处来源
 
 # 展示顺序：在 no_envelope 后面紧跟它的「其中有调用意图」子计数。
@@ -120,7 +120,7 @@ def main() -> None:
           + "  ".join(f"{totals.get(t, 0):>12}" for t in COLUMNS))
     print()
     for t in TIERS:
-        print(f"  {t:<14} {TIER_ZH[t]}")
+        print(f"  {t:<14} {TIER_LABEL[t]}")
     print(f"  {'└其中有意图':<14} no_envelope 中 _fc_intent 属 analysis/intent.py 的 strong 档者，"
           f"即「发了裸调用但缺包装层」；其余是压根没想调工具")
     print()
