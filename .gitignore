@@ -34,3 +34,12 @@ runs/**/.env
 # Overleaf 上传用的打包快照：内容与 paper/ 完全重复，而且一旦 paper/ 更新它就
 # 变成一份不会报错的旧论文——谁拿它去编译，编出来的是过期版本。用完即弃，不入库。
 paper*.zip
+
+# LaTeX 编译产物（main.pdf 保留，方便不装 TeX 的人直接看）
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.toc
+paper/*.fls
+paper/*.fdb_latexmk
