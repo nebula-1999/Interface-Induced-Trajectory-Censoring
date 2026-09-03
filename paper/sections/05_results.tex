@@ -68,6 +68,24 @@ scores are not comparable to the $\tau$-bench leaderboard} and only the between-
 claimed; and the arms differ in conversation length by construction, which is why every quantity
 is per task and not per request.
 
+\paragraph{The envelope layer is domain-invariant; the payload layer is not.}
+$\tau$-bench also lets us ask whether the \emph{failure layer} travels across domains, because
+its arguments are short scalars (\texttt{\{"order\_id": "W123"\}}) where our own task passes a
+whole program as a string. Replaying vLLM's extractor over the documented arm's 789
+emitted-but-unparsed assistant turns puts \textbf{789 of 789 (100\%) at the envelope layer}, with
+\textbf{0} malformed payloads, \textbf{0} recoverable by lenient decoding, and --- as everywhere
+else in this paper --- \textbf{0 genuine parser losses}. The emissions carry the same signature as
+the code task: a bare call inside a \texttt{```json} fence, never the \texttt{<tool\_call>}
+envelope. This matters in two directions. The layer that carries our headline result is
+\textbf{unchanged by the domain}, and the running total of first turns in which the server
+discarded a call its own extractor would have accepted stays at zero across code and non-code
+alike. But the \emph{other} layer moves: Qwen2.5-Instruct loses 41\% of its unparsed items to
+malformed payloads on the code task (Table~\ref{tab:layer}), almost always by leaving docstring
+quotes or raw newlines unescaped inside a \texttt{code} string --- a failure mode that short
+scalar arguments cannot produce. \textbf{We therefore expect the envelope-layer result to
+generalise and the payload-layer proportions not to}, and we state that as a prediction rather
+than a measurement, having tested one non-code domain and not a sample of them.
+
 \subsection{Censoring against scale, and the same scale under a matched interface}
 \label{sec:scale}
 

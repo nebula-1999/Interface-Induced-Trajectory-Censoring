@@ -4,11 +4,19 @@
 In the order a sceptical reader should apply them.
 
 \textbf{Scope of the evidence.}
-\emph{(1) One task family, one tool.} All arms use decontaminated KodCode items with a single
-tool taking one \texttt{code} argument; multi-tool schemas, tool selection among alternatives and
-non-code domains are untested. A single-tool schema is the \emph{easiest} case for a parser, which
-if anything makes the measured censoring a lower bound --- but that is an argument, not a
-measurement.
+\emph{(1) One task family for the scale and training results.} Our own probe uses decontaminated
+KodCode items with a single tool taking one \texttt{code} argument. The external-validity results
+are \emph{not} code-only: BFCL's \texttt{multi\_turn\_base} spans file-system, vehicle and trading
+APIs, and $\tau$-bench \texttt{retail} is a customer-service domain whose 789 unparsed turns
+decompose to 100\% envelope-layer with zero parser loss, reproducing the code result
+(\S\ref{sec:tau}). What remains code-only is the \emph{scale ladder} and the \emph{RL
+contamination} result. The former is a real gap --- the same ladder on a non-code task would test
+whether the undercount's growth with checkpoint size is a property of the interface or of
+code-shaped payloads (\S\ref{sec:future}). The latter we do not expect to close: the reward is a
+\texttt{pytest} pass ratio, so porting it changes environment, reward and task at once. Multi-tool
+schemas and tool selection among alternatives remain untested throughout; a single-tool schema is
+the \emph{easiest} case for a parser, which if anything makes the measured censoring a lower bound
+--- but that is an argument, not a measurement.
 \emph{(2) Item sampling.} The 50 full-length arms use 100 items taken as \texttt{clean[:100]},
 \textbf{not a random sample}; pairing across arms is exact, so within-study comparisons are sound.
 Generalisation rests on a replication on a random 300-item sample (seed 20260901): server-parsed
@@ -125,6 +133,12 @@ experiment most likely to overturn something we have written, which is why we na
 \emph{A second family's scale ladder}, with a working test executor: if the undercount does not
 grow with checkpoint size in another family, \S\ref{sec:scale}'s scale claim is a
 Qwen-plus-\texttt{hermes} fact rather than a scaling phenomenon.
+\emph{The same ladder on a non-code task.} The five Qwen2.5-Coder checkpoints run against
+$\tau$-bench \texttt{retail} under the documented configuration --- models and interface fixed,
+only the domain varied. If the emitted column still rises with size while the parsed column stays
+at zero, the scale result is a property of the interface; if it does not, it is a property of
+code-shaped payloads. This needs a rescue arm at the small sizes for the reason Granite did: a
+checkpoint that simply never attempts a call produces an uninformative zero, not a censored one.
 \emph{The same five-layer measurement on further standard benchmarks.} Done for BFCL~v4 and for
 $\tau$-bench \texttt{retail} (\S\ref{sec:bfcl}), so the measurement-validity concern is
 \emph{not} specific to our harness, and it now covers one interactive suite with a simulated user

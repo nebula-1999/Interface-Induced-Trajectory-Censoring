@@ -70,6 +70,12 @@ experiment most likely to overturn something we have written, which is why we na
 \emph{A second family's scale ladder}, with a working test executor: if the undercount does not
 grow with checkpoint size elsewhere, \S\ref{sec:scale}'s claim is a Qwen-plus-\texttt{hermes} fact
 rather than a scaling phenomenon.
+\emph{The same ladder on a non-code task.} The five Qwen2.5-Coder checkpoints run against
+$\tau$-bench \texttt{retail} under the documented configuration --- models and interface fixed,
+only the domain varied. If the emitted column still rises with size while the parsed column stays
+at zero, the scale result is a property of the interface; if it does not, it is a property of
+code-shaped payloads. This needs a rescue arm at the small sizes for the reason Granite did: a
+checkpoint that simply never attempts a call produces an uninformative zero, not a censored one.
 \emph{The same five-layer measurement on further benchmarks.} Done for BFCL~v4 and $\tau$-bench
 \texttt{retail}, so the concern is not specific to our harness and now covers one interactive
 suite; suites with much larger tool schemas, or whose scoring depends on argument-level matching,
