@@ -20,7 +20,8 @@ falls to \textbf{0} under one \texttt{strict: true} flag.
 The mismatch reaches inside the training loop, and its consequence is scale-dependent: in verl's
 AgentLoop at 7B, \textbf{45 of 115 generations carry a complete call; 0 are accepted, 0 execute,
 0 return an observation}, while at 1.5B the same zero is over-determined, so we report the two
-scales separately. Repair restores the mechanism and not the outcome --- parsing $0\to84$,
-rescues $0\to9$, pass rate 53$\to$62 (n.s.). We release a 98-line preflight check that catches
-every silent failure reported here. \textbf{The tool-call rate is not a property of the model; it
-is a property of the stack that measures it.}
+scales separately. \textbf{At evaluation time}, repairing the adapter restores the mechanism but
+not a significant outcome gain --- parsing $0\to84$, rescues $0\to9$, pass rate 53$\to$62 (n.s.).
+We release a 98-line preflight check that catches
+every silent failure reported here. \textbf{The observed tool-call rate is not a property of the model alone; it
+is a property of the model--interface stack that measures it.}

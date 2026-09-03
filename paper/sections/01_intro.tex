@@ -8,7 +8,7 @@ $\alpha$ = .05; the evidence is the consistent direction across two algorithms a
 any single test). But \textbf{91--94\% of newly-passing items passed on the first turn}, and items
 rescued by turn 2 or later stayed flat at \textbf{6--9 out of 540} from step 0 to step 150
 (Appendix~\ref{app:extra}). The natural reading is that a 1.5B model cannot learn multi-turn
-repair. The actual reason is that \textbf{the tool was never successfully called}. Not rarely ---
+repair. \textbf{What we found instead was that the tool was never successfully called.} Not rarely ---
 never. And nothing in the stack said so: the server returned HTTP 200, \texttt{tool\_calls} was an
 empty array, and the training loop recorded a well-formed single-turn trajectory.
 
