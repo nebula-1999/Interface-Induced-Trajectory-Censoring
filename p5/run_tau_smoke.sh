@@ -7,6 +7,15 @@
 #   user sim   → openai provider      → OPENAI_API_BASE      → vLLM :8010（跨臂固定）
 set -uo pipefail
 ARM="${1:-documented}"                     # documented | repaired
+MODE="${2:-smoke}"                          # smoke（3 题，默认） | full（全部 115 题）
+CONC="${3:-1}"                             # 并发；温度 0、任务独立，并发只影响墙钟时间
+# 用显式关键字而不是「传空串代表全量」：${2:-默认} 对 unset **和空串** 都会取默认值，
+# 传 "" 会静默退回冒烟，而日志要到很后面才看得出来。
+case "$MODE" in
+  smoke) TASKS="--task-ids 0 1 2" ;;
+  full)  TASKS="" ;;
+  *) echo "未知模式 $MODE（应为 smoke|full）"; exit 1 ;;
+esac
 TAU=/root/tau-bench; VENV=/root/tau-venv; P1=/root/autodl-tmp/p1
 AGENT=/root/autodl-tmp/models/Qwen2.5-Coder-7B-Instruct
 USERM=/root/autodl-tmp/models/Llama-3.1-8B-Instruct
@@ -56,13 +65,13 @@ curl -sf http://127.0.0.1:8001/v1/models >/dev/null || { echo "[tau] ★ 代理�
 
 export HOSTED_VLLM_API_BASE=http://127.0.0.1:8001/v1  HOSTED_VLLM_API_KEY=EMPTY
 export OPENAI_API_BASE=http://127.0.0.1:8010/v1       OPENAI_API_KEY=EMPTY
-echo "[tau] 跑 3 个 task"
+echo "[tau] 模式=$MODE  任务=${TASKS:-全部 115 题}  并发=$CONC"
 mkdir -p "$TAU/results"
 cd "$TAU" && "$VENV/bin/python" run.py \
   --agent-strategy tool-calling --env retail \
   --model "$AGENT_NAME" --model-provider hosted_vllm \
   --user-model "$USER_NAME" --user-model-provider openai --user-strategy llm \
-  --max-concurrency 1 --task-ids 0 1 2 2>&1 | tail -25
+  --max-concurrency "$CONC" $TASKS 2>&1 | tail -25
 
 echo "[tau] ===== 冒烟验收 ====="
 n=$(wc -l < "$LOGJ" 2>/dev/null || echo 0)
