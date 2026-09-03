@@ -13,16 +13,16 @@
 \citation{dehghani2021benchmarklottery}
 \citation{garware2026brokenruler}
 \citation{livekit2026servingstack}
-\@writefile{toc}{\contentsline {paragraph}{What is and is not new.}{3}{section*.3}\protected@file@percent }
-\newlabel{end:01_intro}{{1}{3}{What is and is not new}{section*.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
-\newlabel{sec:related}{{2}{3}{Related Work}{section.2}{}}
 \citation{bhat2026benchmarkingbenchmarks}
 \citation{barres2025tau2bench}
 \citation{tau2benchverified}
 \citation{raj2026modelorharness}
 \citation{soni2026toolfailbench}
 \citation{albayaydh2026beyondleaderboard}
+\@writefile{toc}{\contentsline {paragraph}{What is and is not new.}{3}{section*.3}\protected@file@percent }
+\newlabel{end:01_intro}{{1}{3}{What is and is not new}{section*.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{3}{Related Work}{section.2}{}}
 \citation{tam2024speakfreely}
 \citation{willard2023outlines}
 \citation{yao2023react}
@@ -36,79 +36,59 @@
 \citation{verl_issue_4124}
 \citation{kodcode2025}
 \citation{liu2023evalplus}
+\citation{shao2024deepseekmath}
+\citation{ahmadian2024rloo}
 \newlabel{end:02_related}{{2}{4}{Related Work}{section.2}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Setup}{4}{section.3}\protected@file@percent }
 \newlabel{sec:setup}{{3}{4}{Setup}{section.3}{}}
-\citation{shao2024deepseekmath}
-\citation{ahmadian2024rloo}
 \citation{kwon2023vllm,vllm_toolcalling_docs}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Intent criterion, and its validation}{5}{subsection.3.1}\protected@file@percent }
 \newlabel{sec:intent}{{3.1}{5}{Intent criterion, and its validation}{subsection.3.1}{}}
 \newlabel{sec:humanval}{{3.1}{5}{Intent criterion, and its validation}{subsection.3.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Validity gating}{5}{subsection.3.2}\protected@file@percent }
-\newlabel{sec:gating}{{3.2}{5}{Validity gating}{subsection.3.2}{}}
-\newlabel{end:03_setup}{{3.2}{5}{Validity gating}{subsection.3.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Positive Control: The Pipeline Works}{6}{section.4}\protected@file@percent }
-\newlabel{sec:control}{{4}{6}{Positive Control: The Pipeline Works}{section.4}{}}
-\newlabel{end:04_control}{{4}{6}{Positive Control: The Pipeline Works}{section.4}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Results}{6}{section.5}\protected@file@percent }
-\newlabel{sec:results}{{5}{6}{Results}{section.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}The same mismatch on a standard benchmark, and a $2\times 2$ that localises it}{6}{subsection.5.1}\protected@file@percent }
-\newlabel{sec:bfcl}{{5.1}{6}{The same mismatch on a standard benchmark, and a $2\times 2$ that localises it}{subsection.5.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Positive control: the pipeline works}{5}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:control}{{3.2}{5}{Positive control: the pipeline works}{subsection.3.2}{}}
+\citation{yao2025taubench}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Validity gating}{6}{subsection.3.3}\protected@file@percent }
+\newlabel{sec:gating}{{3.3}{6}{Validity gating}{subsection.3.3}{}}
+\newlabel{end:03_setup}{{3.3}{6}{Validity gating}{subsection.3.3}{}}
+\newlabel{end:04_control}{{3.3}{6}{Validity gating}{subsection.3.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Results}{6}{section.4}\protected@file@percent }
+\newlabel{sec:results}{{4}{6}{Results}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}BFCL v4: the score moves the whole span of the metric, and the effect is pure interaction}{6}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:bfcl}{{4.1}{6}{BFCL v4: the score moves the whole span of the metric, and the effect is pure interaction}{subsection.4.1}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Template $\times $ parser on BFCL, first request per case.}}{6}{table.1}\protected@file@percent }
 \newlabel{tab:bfcl2x2}{{1}{6}{Template $\times $ parser on BFCL, first request per case}{table.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces BFCL v4, first HTTP request per case. Intent columns are measured only where the parse failed.}}{6}{table.2}\protected@file@percent }
-\newlabel{tab:bfclfunnel}{{2}{6}{BFCL v4, first HTTP request per case. Intent columns are measured only where the parse failed}{table.2}{}}
-\citation{yao2025taubench}
-\@writefile{toc}{\contentsline {paragraph}{A second external benchmark, interactive and multi-turn.}{7}{section*.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces $\tau $-bench \texttt  {retail}, all 115 tasks paired across arms (none dropped).}}{7}{table.3}\protected@file@percent }
-\newlabel{tab:tau}{{3}{7}{$\tau $-bench \texttt {retail}, all 115 tasks paired across arms (none dropped)}{table.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Censoring against scale, and the same scale under a matched interface}{8}{subsection.5.2}\protected@file@percent }
-\newlabel{sec:scale}{{5.2}{8}{Censoring against scale, and the same scale under a matched interface}{subsection.5.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Qwen2.5-Coder under the documented \texttt  {hermes} configuration, n=100 per size.}}{8}{table.4}\protected@file@percent }
-\newlabel{tab:scale}{{4}{8}{Qwen2.5-Coder under the documented \texttt {hermes} configuration, n=100 per size}{table.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{A counterfactual ladder: scale under a \emph  {matched} interface.}{8}{section*.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Same probe, items and criterion under a \emph  {matched} envelope.}}{8}{table.5}\protected@file@percent }
-\newlabel{tab:counterfactual}{{5}{8}{Same probe, items and criterion under a \emph {matched} envelope}{table.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Within-lineage control: the same ladder in Qwen2.5-Instruct}{9}{subsection.5.3}\protected@file@percent }
-\newlabel{sec:instruct}{{5.3}{9}{Within-lineage control: the same ladder in Qwen2.5-Instruct}{subsection.5.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor.}}{9}{table.6}\protected@file@percent }
-\newlabel{tab:instruct}{{6}{9}{Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor}{table.6}{}}
-\newlabel{tab:turn1}{{6}{9}{Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor}{table.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}A 23\% failure that survived three controls and fell to the fourth}{10}{subsection.5.4}\protected@file@percent }
-\newlabel{sec:llama}{{5.4}{10}{A 23\% failure that survived three controls and fell to the fourth}{subsection.5.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Llama-3.1-8B arms, paired on the same 100 items.}}{10}{table.7}\protected@file@percent }
-\newlabel{tab:llama_arms}{{7}{10}{Llama-3.1-8B arms, paired on the same 100 items}{table.7}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Decomposing the ReAct--FC gap on Llama, paired McNemar.}}{10}{table.8}\protected@file@percent }
-\newlabel{tab:decomposition}{{8}{10}{Decomposing the ReAct--FC gap on Llama, paired McNemar}{table.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Four layers, and what a pre-flight check can see}{11}{subsection.5.5}\protected@file@percent }
-\newlabel{sec:taxonomy}{{5.5}{11}{Four layers, and what a pre-flight check can see}{subsection.5.5}{}}
-\newlabel{sec:families}{{5.5}{11}{Four layers, and what a pre-flight check can see}{subsection.5.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}Repair loop: how much comes back}{11}{subsection.5.6}\protected@file@percent }
-\newlabel{sec:repair}{{5.6}{11}{Repair loop: how much comes back}{subsection.5.6}{}}
-\newlabel{sec:maintable}{{5.6}{11}{Repair loop: how much comes back}{subsection.5.6}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Repair loop on Qwen2.5-Coder-7B, \texttt  {tool\_choice: auto} fixed, changing only the adapter.}}{11}{table.9}\protected@file@percent }
-\newlabel{tab:repair}{{9}{11}{Repair loop on Qwen2.5-Coder-7B, \texttt {tool\_choice: auto} fixed, changing only the adapter}{table.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.7}Zero tool execution in RL rollouts, and where it comes from at two scales}{12}{subsection.5.7}\protected@file@percent }
-\newlabel{sec:rl}{{5.7}{12}{Zero tool execution in RL rollouts, and where it comes from at two scales}{subsection.5.7}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength.}}{12}{table.10}\protected@file@percent }
-\newlabel{tab:training}{{10}{12}{RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength}{table.10}{}}
-\@writefile{toc}{\contentsline {paragraph}{At 7B, the training stack censors a call that is there.}{12}{section*.6}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Rollout-path probe inside verl, Qwen2.5-Coder-7B, documented \texttt  {hermes} configuration, 115 generations.}}{12}{table.11}\protected@file@percent }
-\newlabel{tab:rolloutprobe}{{11}{12}{Rollout-path probe inside verl, Qwen2.5-Coder-7B, documented \texttt {hermes} configuration, 115 generations}{table.11}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.7.1}Why no repaired-FC training arm exists yet}{13}{subsubsection.5.7.1}\protected@file@percent }
-\newlabel{sec:norepair}{{5.7.1}{13}{Why no repaired-FC training arm exists yet}{subsubsection.5.7.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.7.2}Opening the channel does not, by itself, unlock multi-turn learning}{14}{subsubsection.5.7.2}\protected@file@percent }
-\newlabel{sec:sufficiency}{{5.7.2}{14}{Opening the channel does not, by itself, unlock multi-turn learning}{subsubsection.5.7.2}{}}
-\newlabel{end:05_results}{{5.7.2}{14}{Opening the channel does not, by itself, unlock multi-turn learning}{subsubsection.5.7.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Discussion}{14}{section.6}\protected@file@percent }
-\newlabel{sec:discussion}{{6}{14}{Discussion}{section.6}{}}
-\newlabel{end:06_discussion}{{6}{15}{Discussion}{section.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Limitations}{15}{section.7}\protected@file@percent }
-\newlabel{sec:limitations}{{7}{15}{Limitations}{section.7}{}}
-\newlabel{sec:future}{{7}{17}{What would change our conclusions}{section*.7}{}}
-\newlabel{end:07_limitations}{{7}{17}{What would change our conclusions}{section*.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{17}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}$\tau $-bench: the mechanism survives a simulated user and a stateful environment}{7}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:tau}{{4.2}{7}{$\tau $-bench: the mechanism survives a simulated user and a stateful environment}{subsection.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Censoring against scale, and the same scale under a matched interface}{7}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:scale}{{4.3}{7}{Censoring against scale, and the same scale under a matched interface}{subsection.4.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Qwen2.5-Coder under the documented \texttt  {hermes} configuration, n=100 per size.}}{7}{table.2}\protected@file@percent }
+\newlabel{tab:scale}{{2}{7}{Qwen2.5-Coder under the documented \texttt {hermes} configuration, n=100 per size}{table.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{The counterfactual.}{8}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Within-lineage control, and the ceiling it puts on multi-turn rescue}{8}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:instruct}{{4.4}{8}{Within-lineage control, and the ceiling it puts on multi-turn rescue}{subsection.4.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}A 23\% failure that survived three controls and fell to the fourth}{8}{subsection.4.5}\protected@file@percent }
+\newlabel{sec:llama}{{4.5}{8}{A 23\% failure that survived three controls and fell to the fourth}{subsection.4.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Four layers, and what a pre-flight check can see}{9}{subsection.4.6}\protected@file@percent }
+\newlabel{sec:taxonomy}{{4.6}{9}{Four layers, and what a pre-flight check can see}{subsection.4.6}{}}
+\newlabel{sec:families}{{4.6}{9}{Four layers, and what a pre-flight check can see}{subsection.4.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Repair loop: how much comes back}{9}{subsection.4.7}\protected@file@percent }
+\newlabel{sec:repair}{{4.7}{9}{Repair loop: how much comes back}{subsection.4.7}{}}
+\newlabel{sec:maintable}{{4.7}{9}{Repair loop: how much comes back}{subsection.4.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Zero tool execution in RL rollouts, and where it comes from at two scales}{10}{subsection.4.8}\protected@file@percent }
+\newlabel{sec:rl}{{4.8}{10}{Zero tool execution in RL rollouts, and where it comes from at two scales}{subsection.4.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Rollout-path probe inside verl, Qwen2.5-Coder-7B, documented \texttt  {hermes} configuration, 115 generations.}}{10}{table.3}\protected@file@percent }
+\newlabel{tab:rolloutprobe}{{3}{10}{Rollout-path probe inside verl, Qwen2.5-Coder-7B, documented \texttt {hermes} configuration, 115 generations}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.9}Why no repaired-FC arm exists yet, and what a working channel did not buy}{11}{subsection.4.9}\protected@file@percent }
+\newlabel{sec:norepair}{{4.9}{11}{Why no repaired-FC arm exists yet, and what a working channel did not buy}{subsection.4.9}{}}
+\newlabel{sec:sufficiency}{{4.9}{11}{Why no repaired-FC arm exists yet, and what a working channel did not buy}{subsection.4.9}{}}
+\newlabel{end:05_results}{{4.9}{11}{Why no repaired-FC arm exists yet, and what a working channel did not buy}{subsection.4.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{12}{section.5}\protected@file@percent }
+\newlabel{sec:discussion}{{5}{12}{Discussion}{section.5}{}}
+\newlabel{end:06_discussion}{{5}{12}{Discussion}{section.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Limitations}{12}{section.6}\protected@file@percent }
+\newlabel{sec:limitations}{{6}{12}{Limitations}{section.6}{}}
+\newlabel{sec:future}{{6}{13}{What would change our conclusions}{section*.5}{}}
 \bibstyle{plainnat}
 \bibdata{refs}
 \bibcite{kodcode2025}{{1}{2025}{{kod}}{{}}}
@@ -117,12 +97,14 @@
 \bibcite{ahmadian2024rloo}{{4}{2024}{{Ahmadian et~al.}}{{Ahmadian, Cremer, Gall{\'e}, Fadaee, Kreutzer, Pietquin, {\"U}st{\"u}n, and Hooker}}}
 \bibcite{albayaydh2026beyondleaderboard}{{5}{2026}{{Albayaydh et~al.}}{{Albayaydh, Zhao, and Flechais}}}
 \bibcite{tau2benchverified}{{6}{2025}{{Amazon AGI}}{{}}}
+\newlabel{end:07_limitations}{{6}{14}{What would change our conclusions}{section*.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{14}{section.7}\protected@file@percent }
+\newlabel{end:08_conclusion}{{7}{14}{Conclusion}{section.7}{}}
+\newlabel{endofbody}{{7}{14}{Conclusion}{section.7}{}}
 \bibcite{barres2025tau2bench}{{7}{2025}{{Barres et~al.}}{{Barres, Dong, Ray, Si, and Narasimhan}}}
 \bibcite{bhat2026benchmarkingbenchmarks}{{8}{2026}{{Bhat et~al.}}{{Bhat, Vaghasiya, Mohsin, and Aali}}}
 \bibcite{dehghani2021benchmarklottery}{{9}{2021}{{Dehghani et~al.}}{{Dehghani, Tay, Gritsenko, Zhao, Houlsby, Diaz, Metzler, and Vinyals}}}
 \bibcite{garware2026brokenruler}{{10}{2026}{{Garware and Zisad}}{{}}}
-\newlabel{end:08_conclusion}{{8}{18}{Conclusion}{section.8}{}}
-\newlabel{endofbody}{{8}{18}{Conclusion}{section.8}{}}
 \bibcite{vllm_issue_32926}{{11}{2026}{{hanXen}}{{}}}
 \bibcite{kwon2023vllm}{{12}{2023}{{Kwon et~al.}}{{Kwon, Li, Zhuang, Sheng, Zheng, Yu, Gonzalez, Zhang, and Stoica}}}
 \bibcite{li2023apibank}{{13}{2023}{{Li et~al.}}{{Li, Zhao, Yu, Song, Li, Yu, Li, Huang, and Li}}}
@@ -141,43 +123,45 @@
 \bibcite{willard2023outlines}{{26}{2023}{{Willard and Louf}}{{}}}
 \bibcite{yao2023react}{{27}{2023}{{Yao et~al.}}{{Yao, Zhao, Yu, Du, Shafran, Narasimhan, and Cao}}}
 \bibcite{yao2025taubench}{{28}{2025}{{Yao et~al.}}{{Yao, Shinn, Razavi, and Narasimhan}}}
-\@writefile{toc}{\contentsline {section}{\numberline {A}Data Errata}{20}{appendix.A}\protected@file@percent }
-\newlabel{app:errata}{{A}{20}{Data Errata}{appendix.A}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Seven ReAct arms record the wrong \texttt  {max\_tokens}}{20}{subsection.A.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Llama-3.1-8B initiation rate required manual correction}{21}{subsection.A.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Arms inadmissible for pass-rate comparison}{21}{subsection.A.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Provenance schema drift}{21}{subsection.A.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}Verified correct}{21}{subsection.A.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Third-party component versions}{21}{subsection.A.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {B}Reproducibility}{22}{appendix.B}\protected@file@percent }
-\newlabel{app:repro}{{B}{22}{Reproducibility}{appendix.B}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {C}Prompts and tool schemas, verbatim}{22}{appendix.C}\protected@file@percent }
-\newlabel{app:prompts}{{C}{22}{Prompts and tool schemas, verbatim}{appendix.C}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}ReAct}{22}{subsection.C.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}Function calling}{23}{subsection.C.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.3}Tool schemas: terse, rich, strict}{23}{subsection.C.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.4}The Thought-scaffold control (\S  \ref {sec:llama})}{24}{subsection.C.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.5}The role-disambiguation few-shot (\S  \ref {sec:rl})}{24}{subsection.C.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.6}The intent criterion}{25}{subsection.C.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {D}Serving and training configuration}{25}{appendix.D}\protected@file@percent }
-\newlabel{app:config}{{D}{25}{Serving and training configuration}{appendix.D}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.1}Per-family serving flags}{25}{subsection.D.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}Data Errata}{16}{appendix.A}\protected@file@percent }
+\newlabel{app:errata}{{A}{16}{Data Errata}{appendix.A}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Seven ReAct arms record the wrong \texttt  {max\_tokens}}{16}{subsection.A.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Llama-3.1-8B initiation rate required manual correction}{17}{subsection.A.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Arms inadmissible for pass-rate comparison}{17}{subsection.A.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Provenance schema drift}{17}{subsection.A.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}Verified correct}{18}{subsection.A.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Third-party component versions}{18}{subsection.A.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Reproducibility}{18}{appendix.B}\protected@file@percent }
+\newlabel{app:repro}{{B}{18}{Reproducibility}{appendix.B}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Prompts and tool schemas, verbatim}{19}{appendix.C}\protected@file@percent }
+\newlabel{app:prompts}{{C}{19}{Prompts and tool schemas, verbatim}{appendix.C}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}ReAct}{19}{subsection.C.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}Function calling}{19}{subsection.C.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.3}Tool schemas: terse, rich, strict}{20}{subsection.C.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.4}The Thought-scaffold control (\S  \ref {sec:llama})}{20}{subsection.C.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.5}The role-disambiguation few-shot (\S  \ref {sec:rl})}{21}{subsection.C.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.6}The intent criterion}{21}{subsection.C.6}\protected@file@percent }
 \gdef \LT@i {\LT@entry 
     {1}{79.97733pt}\LT@entry 
     {1}{222.55022pt}\LT@entry 
     {1}{125.50148pt}}
+\@writefile{toc}{\contentsline {section}{\numberline {D}Serving and training configuration}{22}{appendix.D}\protected@file@percent }
+\newlabel{app:config}{{D}{22}{Serving and training configuration}{appendix.D}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.1}Per-family serving flags}{22}{subsection.D.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Serving configuration per family (vLLM 0.27.1) and the symptom of omission.}}{22}{table.4}\protected@file@percent }
+\newlabel{tab:serving}{{4}{22}{Serving configuration per family (vLLM 0.27.1) and the symptom of omission}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.2}Training configuration}{22}{subsection.D.2}\protected@file@percent }
 \gdef \LT@ii {\LT@entry 
     {3}{96.19002pt}\LT@entry 
     {3}{363.66002pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Serving configuration per family (vLLM 0.27.1) and the symptom of omission.}}{26}{table.12}\protected@file@percent }
-\newlabel{tab:serving}{{12}{26}{Serving configuration per family (vLLM 0.27.1) and the symptom of omission}{table.12}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.2}Training configuration}{26}{subsection.D.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Training configuration. All arms share every value below; arms differ only in the protocol and, for the historical runs, the algorithm and seed.}}{26}{table.13}\protected@file@percent }
-\newlabel{tab:trainconfig}{{13}{26}{Training configuration. All arms share every value below; arms differ only in the protocol and, for the historical runs, the algorithm and seed}{table.13}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.3}Tool-call instrumentation}{27}{subsection.D.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.4}Why no repaired-FC training arm exists}{27}{subsection.D.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.5}The four obstacles to a repaired-FC training arm}{27}{subsection.D.5}\protected@file@percent }
-\newlabel{app:norepair}{{D.5}{27}{The four obstacles to a repaired-FC training arm}{subsection.D.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Training configuration. All arms share every value below; arms differ only in the protocol and, for the historical runs, the algorithm and seed.}}{23}{table.5}\protected@file@percent }
+\newlabel{tab:trainconfig}{{5}{23}{Training configuration. All arms share every value below; arms differ only in the protocol and, for the historical runs, the algorithm and seed}{table.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.3}Tool-call instrumentation}{23}{subsection.D.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.4}Why no repaired-FC training arm exists}{23}{subsection.D.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.5}The four obstacles to a repaired-FC training arm}{24}{subsection.D.5}\protected@file@percent }
+\newlabel{app:norepair}{{D.5}{24}{The four obstacles to a repaired-FC training arm}{subsection.D.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {E}Arm inventory}{24}{appendix.E}\protected@file@percent }
+\newlabel{app:arms}{{E}{24}{Arm inventory}{appendix.E}{}}
 \gdef \LT@iii {\LT@entry 
     {3}{160.51802pt}\LT@entry 
     {3}{95.76602pt}\LT@entry 
@@ -188,73 +172,92 @@
     {3}{24.50401pt}\LT@entry 
     {1}{26.55602pt}\LT@entry 
     {1}{20.01001pt}}
-\@writefile{toc}{\contentsline {section}{\numberline {E}Arm inventory}{28}{appendix.E}\protected@file@percent }
-\newlabel{app:arms}{{E}{28}{Arm inventory}{appendix.E}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces All 50 full-length arms and their recorded configuration.}}{28}{table.14}\protected@file@percent }
-\newlabel{tab:arms}{{14}{28}{All 50 full-length arms and their recorded configuration}{table.14}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {F}Human validation of the intent criterion, in full}{29}{appendix.F}\protected@file@percent }
-\newlabel{app:humanval}{{F}{29}{Human validation of the intent criterion, in full}{appendix.F}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Human validation of the intent criterion, round 1 and its adjudication. The classifier is used only to count what the server discarded, so its recall matters more than its precision.}}{29}{table.15}\protected@file@percent }
-\newlabel{tab:validation}{{15}{29}{Human validation of the intent criterion, round 1 and its adjudication. The classifier is used only to count what the server discarded, so its recall matters more than its precision}{table.15}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Inter-annotator reliability. Restricting to items where both annotators read identical bytes is not a convenience: 11 of the 12 raw disagreements are items the first pack truncated, where A1 answered ``no call'' because the call had been cut from their copy.}}{30}{table.16}\protected@file@percent }
-\newlabel{tab:interannotator}{{16}{30}{Inter-annotator reliability. Restricting to items where both annotators read identical bytes is not a convenience: 11 of the 12 raw disagreements are items the first pack truncated, where A1 answered ``no call'' because the call had been cut from their copy}{table.16}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Validation against the adjudicated gold standard. The inter-annotator column is restricted to items where both annotators read identical bytes; the classifier and the gold standard are unaffected by that truncation and are scored on the full sample.}}{30}{table.17}\protected@file@percent }
-\newlabel{tab:validation2}{{17}{30}{Validation against the adjudicated gold standard. The inter-annotator column is restricted to items where both annotators read identical bytes; the classifier and the gold standard are unaffected by that truncation and are scored on the full sample}{table.17}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {G}Supplementary results}{31}{appendix.G}\protected@file@percent }
-\newlabel{app:extra}{{G}{31}{Supplementary results}{appendix.G}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.1}The anomaly that motivated the study}{31}{subsection.G.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Left: pass@1 rises over 150 steps on all three runs, driven by first drafts (dashed) rather than final answers. \textbf  {Centre: the count of items rescued by turn 2 or later never moves} --- 6--9 out of 540 from step 0 to step 150, across two algorithms and two seeds. Right: the seeded-bug repair channel does improve, confirming the model is learning something about fixing code; it simply never does so \emph  {across turns}. \S  \ref {sec:rl} shows the tool was never successfully called in any of these runs.}}{31}{figure.caption.10}\protected@file@percent }
-\newlabel{fig:training_curves}{{2}{31}{Left: pass@1 rises over 150 steps on all three runs, driven by first drafts (dashed) rather than final answers. \textbf {Centre: the count of items rescued by turn 2 or later never moves} --- 6--9 out of 540 from step 0 to step 150, across two algorithms and two seeds. Right: the seeded-bug repair channel does improve, confirming the model is learning something about fixing code; it simply never does so \emph {across turns}. \S \ref {sec:rl} shows the tool was never successfully called in any of these runs}{figure.caption.10}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.2}Offline re-parse matrix and failure-layer decomposition}{31}{subsection.G.2}\protected@file@percent }
-\newlabel{app:reparse}{{G.2}{31}{Offline re-parse matrix and failure-layer decomposition}{subsection.G.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces The same bytes, re-parsed offline under four rules. Where the server already parsed a call, \texttt  {content} is empty and offline replay has nothing to read; those cells are N/A rather than zero. The gap is a parser mismatch, not a claim that no parser could have read the output.}}{31}{table.18}\protected@file@percent }
-\newlabel{tab:reparse}{{18}{32}{The same bytes, re-parsed offline under four rules. Where the server already parsed a call, \texttt {content} is empty and offline replay has nothing to read; those cells are N/A rather than zero. The gap is a parser mismatch, not a claim that no parser could have read the output}{table.18}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Where the unparsed items are lost. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf  {Genuine parser loss is zero in every arm} --- and across all 4254 de-duplicated first turns in the archive.}}{32}{table.19}\protected@file@percent }
-\newlabel{tab:layer}{{19}{32}{Where the unparsed items are lost. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf {Genuine parser loss is zero in every arm} --- and across all 4254 de-duplicated first turns in the archive}{table.19}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.3}BFCL: gating and the full reproduction record}{32}{subsection.G.3}\protected@file@percent }
-\newlabel{app:bfcl}{{G.3}{32}{BFCL: gating and the full reproduction record}{subsection.G.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces BFCL \texttt  {multi\_turn\_base}, n = 100, joined to the HTTP trace by case id.}}{33}{table.20}\protected@file@percent }
-\newlabel{tab:bfcl5}{{20}{33}{BFCL \texttt {multi\_turn\_base}, n = 100, joined to the HTTP trace by case id}{table.20}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Two quantified failure layers; the full four-family table is Table~\ref {tab:taxonomy_full}.}}{33}{table.21}\protected@file@percent }
-\newlabel{tab:taxonomy}{{21}{33}{Two quantified failure layers; the full four-family table is Table~\ref {tab:taxonomy_full}}{table.21}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.4}The full four-family taxonomy}{33}{subsection.G.4}\protected@file@percent }
-\newlabel{app:taxonomy}{{G.4}{33}{The full four-family taxonomy}{subsection.G.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Four families, four layers. Only Mistral's failure announces itself.}}{33}{table.22}\protected@file@percent }
-\newlabel{tab:taxonomy_full}{{22}{33}{Four families, four layers. Only Mistral's failure announces itself}{table.22}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.5}Main table under unified configuration}{33}{subsection.G.5}\protected@file@percent }
-\newlabel{sec:maintable_full}{{G.5}{33}{Main table under unified configuration}{subsection.G.5}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces All arms genuinely at \texttt  {max\_tokens}=2048, one shared 100-item set, \texttt  {temperature}=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no \emph  {p}-value are computed.}}{33}{table.23}\protected@file@percent }
-\newlabel{tab:main}{{23}{33}{All arms genuinely at \texttt {max\_tokens}=2048, one shared 100-item set, \texttt {temperature}=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no \emph {p}-value are computed}{table.23}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces The same four failures, quantified. Grey is the configuration a reader arrives at by following the documentation; green is the best configuration we found. Mistral never produces an error-free run under any of four configurations, so its bars are not comparable with the others and are drawn in orange.}}{34}{figure.caption.11}\protected@file@percent }
-\newlabel{fig:taxonomy}{{3}{34}{The same four failures, quantified. Grey is the configuration a reader arrives at by following the documentation; green is the best configuration we found. Mistral never produces an error-free run under any of four configurations, so its bars are not comparable with the others and are drawn in orange}{figure.caption.11}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {The undercount grows with scale.} Across a 21$\times $ range the server parses zero calls at every size, while well-formed calls the model actually emits rise to 80/100 at 32B (72 after the correction factor of 0.900, Appendix~\ref {app:humanval}). Same data as Table~\ref {tab:scale}.}}{34}{figure.caption.12}\protected@file@percent }
-\newlabel{fig:gap}{{4}{34}{\textbf {The undercount grows with scale.} Across a 21$\times $ range the server parses zero calls at every size, while well-formed calls the model actually emits rise to 80/100 at 32B (72 after the correction factor of 0.900, Appendix~\ref {app:humanval}). Same data as Table~\ref {tab:scale}}{figure.caption.12}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.6}The four Llama controls, tabulated}{35}{subsection.G.6}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion.}}{35}{table.24}\protected@file@percent }
-\newlabel{tab:controls}{{24}{35}{Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion}{table.24}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.7}Conditioning on a successful parse, and access vs.\ use of feedback}{35}{subsection.G.7}\protected@file@percent }
-\newlabel{app:conditioned}{{G.7}{35}{Conditioning on a successful parse, and access vs.\ use of feedback}{subsection.G.7}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {25}{\ignorespaces Conditioning on items where both protocols parsed successfully. The residual protocol gap holds on Llama and does not reach significance on Qwen --- the honest reading is one family out of two, not a general law.}}{35}{table.25}\protected@file@percent }
-\newlabel{tab:conditioned}{{25}{35}{Conditioning on items where both protocols parsed successfully. The residual protocol gap holds on Llama and does not reach significance on Qwen --- the honest reading is one family out of two, not a general law}{table.25}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {26}{\ignorespaces Repair success given that feedback was actually received. Conditioned this way the two protocols are much closer, which locates the gap in \emph  {how often feedback arrives} rather than in what the model does with it. On Qwen this difference is within the non-significant band above, so we state it as an observation, not a result.}}{35}{table.26}\protected@file@percent }
-\newlabel{tab:given_feedback}{{26}{35}{Repair success given that feedback was actually received. Conditioned this way the two protocols are much closer, which locates the gap in \emph {how often feedback arrives} rather than in what the model does with it. On Qwen this difference is within the non-significant band above, so we state it as an observation, not a result}{table.26}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.8}Pressure on a broken interface makes things worse}{35}{subsection.G.8}\protected@file@percent }
-\newlabel{sec:pressure}{{G.8}{35}{Pressure on a broken interface makes things worse}{subsection.G.8}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {27}{\ignorespaces Probe replication on the 1.5B model actually being trained, same mandatory prompt (n=100). Not one output names \texttt  {run\_tests}, so at this scale the missing calls are not a parser mismatch --- there was nothing well-formed to censor.}}{36}{table.27}\protected@file@percent }
-\newlabel{tab:probe_categories}{{27}{36}{Probe replication on the 1.5B model actually being trained, same mandatory prompt (n=100). Not one output names \texttt {run\_tests}, so at this scale the missing calls are not a parser mismatch --- there was nothing well-formed to censor}{table.27}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {28}{\ignorespaces Increasing pressure on the 1.5B model. Stronger instruction and few-shot examples raise the number of recoverable code payloads but never produce a call that names the tool.}}{36}{table.28}\protected@file@percent }
-\newlabel{tab:pressure}{{28}{36}{Increasing pressure on the 1.5B model. Stronger instruction and few-shot examples raise the number of recoverable code payloads but never produce a call that names the tool}{table.28}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.9}The sufficiency arm, tabulated}{36}{subsection.G.9}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {RL training rollouts.} Under function calling the tool is never successfully called; \texttt  {num\_turns} stays pinned at its minimum of 2 and tool time is exactly zero. Prompt strength is matched across arms (both mandatory); step counts are not (10 vs 3).}}{36}{figure.caption.13}\protected@file@percent }
-\newlabel{fig:train}{{5}{36}{\textbf {RL training rollouts.} Under function calling the tool is never successfully called; \texttt {num\_turns} stays pinned at its minimum of 2 and tool time is exactly zero. Prompt strength is matched across arms (both mandatory); step counts are not (10 vs 3)}{figure.caption.13}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {29}{\ignorespaces ReAct training with a working tool channel, 23{,}676 executed calls. Rescues by turn $\geq $2 do not move. The three historical FC runs, in which \textbf  {zero} tool calls executed, give rescue sequences $[7,9,6,6,7,6,10,8,9,8,6]$, $[8,7,6,7,7,7,7,5,6,6,8]$ and $[7,5,7,5,7,8,9,9,8,9]$ --- the two conditions are indistinguishable on this metric.}}{36}{table.29}\protected@file@percent }
-\newlabel{tab:sufficiency}{{29}{36}{ReAct training with a working tool channel, 23{,}676 executed calls. Rescues by turn $\geq $2 do not move. The three historical FC runs, in which \textbf {zero} tool calls executed, give rescue sequences $[7,9,6,6,7,6,10,8,9,8,6]$, $[8,7,6,7,7,7,7,5,6,6,8]$ and $[7,5,7,5,7,8,9,9,8,9]$ --- the two conditions are indistinguishable on this metric}{table.29}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.10}Sampling variance, and an inverted noise structure}{37}{subsection.G.10}\protected@file@percent }
-\newlabel{sec:variance}{{G.10}{37}{Sampling variance, and an inverted noise structure}{subsection.G.10}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {30}{\ignorespaces Sampling variance. FC seed 3 is inadmissible (a parallel tool call vLLM rejects), leaving two arms --- too few for a standard deviation, so only the interval is reported.}}{37}{table.30}\protected@file@percent }
-\newlabel{tab:variance}{{30}{37}{Sampling variance. FC seed 3 is inadmissible (a parallel tool call vLLM rejects), leaving two arms --- too few for a standard deviation, so only the interval is reported}{table.30}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.11}Multi-turn repair stabilises the total while its composition keeps moving}{37}{subsection.G.11}\protected@file@percent }
-\newlabel{sec:composition}{{G.11}{37}{Multi-turn repair stabilises the total while its composition keeps moving}{subsection.G.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.12}The training verifier: seams, audit, and planned fixes}{38}{subsection.G.12}\protected@file@percent }
-\newlabel{app:verifier}{{G.12}{38}{The training verifier: seams, audit, and planned fixes}{subsection.G.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces All 50 full-length arms and their recorded configuration.}}{25}{table.6}\protected@file@percent }
+\newlabel{tab:arms}{{6}{25}{All 50 full-length arms and their recorded configuration}{table.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {F}Human validation of the intent criterion, in full}{26}{appendix.F}\protected@file@percent }
+\newlabel{app:humanval}{{F}{26}{Human validation of the intent criterion, in full}{appendix.F}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Human validation of the intent criterion, round 1 and its adjudication. The classifier is used only to count what the server discarded, so its recall matters more than its precision.}}{26}{table.7}\protected@file@percent }
+\newlabel{tab:validation}{{7}{26}{Human validation of the intent criterion, round 1 and its adjudication. The classifier is used only to count what the server discarded, so its recall matters more than its precision}{table.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Inter-annotator reliability. Restricting to items where both annotators read identical bytes is not a convenience: 11 of the 12 raw disagreements are items the first pack truncated, where A1 answered ``no call'' because the call had been cut from their copy.}}{26}{table.8}\protected@file@percent }
+\newlabel{tab:interannotator}{{8}{26}{Inter-annotator reliability. Restricting to items where both annotators read identical bytes is not a convenience: 11 of the 12 raw disagreements are items the first pack truncated, where A1 answered ``no call'' because the call had been cut from their copy}{table.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Validation against the adjudicated gold standard. The inter-annotator column is restricted to items where both annotators read identical bytes; the classifier and the gold standard are unaffected by that truncation and are scored on the full sample.}}{27}{table.9}\protected@file@percent }
+\newlabel{tab:validation2}{{9}{27}{Validation against the adjudicated gold standard. The inter-annotator column is restricted to items where both annotators read identical bytes; the classifier and the gold standard are unaffected by that truncation and are scored on the full sample}{table.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {G}Supplementary results}{27}{appendix.G}\protected@file@percent }
+\newlabel{app:extra}{{G}{27}{Supplementary results}{appendix.G}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.1}The anomaly that motivated the study}{27}{subsection.G.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.2}Result tables referenced from \S  \ref {sec:results}}{27}{subsection.G.2}\protected@file@percent }
+\newlabel{app:tables}{{G.2}{27}{Result tables referenced from \S \ref {sec:results}}{subsection.G.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces BFCL v4, first HTTP request per case. Intent columns are measured only where the parse failed.}}{27}{table.10}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Left: pass@1 rises over 150 steps on all three runs, driven by first drafts (dashed) rather than final answers. \textbf  {Centre: the count of items rescued by turn 2 or later never moves} --- 6--9 out of 540 from step 0 to step 150, across two algorithms and two seeds. Right: the seeded-bug repair channel does improve, confirming the model is learning something about fixing code; it simply never does so \emph  {across turns}. \S  \ref {sec:rl} shows the tool was never successfully called in any of these runs.}}{28}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:training_curves}{{2}{28}{Left: pass@1 rises over 150 steps on all three runs, driven by first drafts (dashed) rather than final answers. \textbf {Centre: the count of items rescued by turn 2 or later never moves} --- 6--9 out of 540 from step 0 to step 150, across two algorithms and two seeds. Right: the seeded-bug repair channel does improve, confirming the model is learning something about fixing code; it simply never does so \emph {across turns}. \S \ref {sec:rl} shows the tool was never successfully called in any of these runs}{figure.caption.8}{}}
+\newlabel{tab:bfclfunnel}{{10}{28}{BFCL v4, first HTTP request per case. Intent columns are measured only where the parse failed}{table.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces $\tau $-bench \texttt  {retail}, all 115 tasks paired across arms (none dropped).}}{28}{table.11}\protected@file@percent }
+\newlabel{tab:tau}{{11}{28}{$\tau $-bench \texttt {retail}, all 115 tasks paired across arms (none dropped)}{table.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Same probe, items and criterion under a \emph  {matched} envelope.}}{28}{table.12}\protected@file@percent }
+\newlabel{tab:counterfactual}{{12}{28}{Same probe, items and criterion under a \emph {matched} envelope}{table.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor.}}{28}{table.13}\protected@file@percent }
+\newlabel{tab:instruct}{{13}{28}{Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor}{table.13}{}}
+\newlabel{tab:turn1}{{13}{28}{Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor}{table.13}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Llama-3.1-8B arms, paired on the same 100 items.}}{29}{table.14}\protected@file@percent }
+\newlabel{tab:llama_arms}{{14}{29}{Llama-3.1-8B arms, paired on the same 100 items}{table.14}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Decomposing the ReAct--FC gap on Llama, paired McNemar.}}{29}{table.15}\protected@file@percent }
+\newlabel{tab:decomposition}{{15}{29}{Decomposing the ReAct--FC gap on Llama, paired McNemar}{table.15}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Repair loop on Qwen2.5-Coder-7B, \texttt  {tool\_choice: auto} fixed, changing only the adapter.}}{29}{table.16}\protected@file@percent }
+\newlabel{tab:repair}{{16}{29}{Repair loop on Qwen2.5-Coder-7B, \texttt {tool\_choice: auto} fixed, changing only the adapter}{table.16}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength.}}{29}{table.17}\protected@file@percent }
+\newlabel{tab:training}{{17}{29}{RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength}{table.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.3}Offline re-parse matrix and failure-layer decomposition}{29}{subsection.G.3}\protected@file@percent }
+\newlabel{app:reparse}{{G.3}{29}{Offline re-parse matrix and failure-layer decomposition}{subsection.G.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces The same bytes, re-parsed offline under four rules. Where the server already parsed a call, \texttt  {content} is empty and offline replay has nothing to read; those cells are N/A rather than zero. The gap is a parser mismatch, not a claim that no parser could have read the output.}}{29}{table.18}\protected@file@percent }
+\newlabel{tab:reparse}{{18}{29}{The same bytes, re-parsed offline under four rules. Where the server already parsed a call, \texttt {content} is empty and offline replay has nothing to read; those cells are N/A rather than zero. The gap is a parser mismatch, not a claim that no parser could have read the output}{table.18}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Where the unparsed items are lost. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf  {Genuine parser loss is zero in every arm} --- and across all 4254 de-duplicated first turns in the archive.}}{30}{table.19}\protected@file@percent }
+\newlabel{tab:layer}{{19}{30}{Where the unparsed items are lost. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf {Genuine parser loss is zero in every arm} --- and across all 4254 de-duplicated first turns in the archive}{table.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.4}BFCL: gating and the full reproduction record}{30}{subsection.G.4}\protected@file@percent }
+\newlabel{app:bfcl}{{G.4}{30}{BFCL: gating and the full reproduction record}{subsection.G.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces BFCL \texttt  {multi\_turn\_base}, n = 100, joined to the HTTP trace by case id.}}{31}{table.20}\protected@file@percent }
+\newlabel{tab:bfcl5}{{20}{31}{BFCL \texttt {multi\_turn\_base}, n = 100, joined to the HTTP trace by case id}{table.20}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Two quantified failure layers; the full four-family table is Table~\ref {tab:taxonomy_full}.}}{31}{table.21}\protected@file@percent }
+\newlabel{tab:taxonomy}{{21}{31}{Two quantified failure layers; the full four-family table is Table~\ref {tab:taxonomy_full}}{table.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.5}The full four-family taxonomy}{31}{subsection.G.5}\protected@file@percent }
+\newlabel{app:taxonomy}{{G.5}{31}{The full four-family taxonomy}{subsection.G.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Four families, four layers. Only Mistral's failure announces itself.}}{31}{table.22}\protected@file@percent }
+\newlabel{tab:taxonomy_full}{{22}{31}{Four families, four layers. Only Mistral's failure announces itself}{table.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.6}Main table under unified configuration}{31}{subsection.G.6}\protected@file@percent }
+\newlabel{sec:maintable_full}{{G.6}{31}{Main table under unified configuration}{subsection.G.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces All arms genuinely at \texttt  {max\_tokens}=2048, one shared 100-item set, \texttt  {temperature}=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no \emph  {p}-value are computed.}}{31}{table.23}\protected@file@percent }
+\newlabel{tab:main}{{23}{31}{All arms genuinely at \texttt {max\_tokens}=2048, one shared 100-item set, \texttt {temperature}=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no \emph {p}-value are computed}{table.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.7}The four Llama controls, tabulated}{31}{subsection.G.7}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion.}}{31}{table.24}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces The same four failures, quantified. Grey is the configuration a reader arrives at by following the documentation; green is the best configuration we found. Mistral never produces an error-free run under any of four configurations, so its bars are not comparable with the others and are drawn in orange.}}{32}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:taxonomy}{{3}{32}{The same four failures, quantified. Grey is the configuration a reader arrives at by following the documentation; green is the best configuration we found. Mistral never produces an error-free run under any of four configurations, so its bars are not comparable with the others and are drawn in orange}{figure.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {The undercount grows with scale.} Across a 21$\times $ range the server parses zero calls at every size, while well-formed calls the model actually emits rise to 80/100 at 32B (72 after the correction factor of 0.900, Appendix~\ref {app:humanval}). Same data as Table~\ref {tab:scale}.}}{32}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:gap}{{4}{32}{\textbf {The undercount grows with scale.} Across a 21$\times $ range the server parses zero calls at every size, while well-formed calls the model actually emits rise to 80/100 at 32B (72 after the correction factor of 0.900, Appendix~\ref {app:humanval}). Same data as Table~\ref {tab:scale}}{figure.caption.10}{}}
+\newlabel{tab:controls}{{24}{33}{Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion}{table.24}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.8}Conditioning on a successful parse, and access vs.\ use of feedback}{33}{subsection.G.8}\protected@file@percent }
+\newlabel{app:conditioned}{{G.8}{33}{Conditioning on a successful parse, and access vs.\ use of feedback}{subsection.G.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {25}{\ignorespaces Conditioning on items where both protocols parsed successfully. The residual protocol gap holds on Llama and does not reach significance on Qwen --- the honest reading is one family out of two, not a general law.}}{33}{table.25}\protected@file@percent }
+\newlabel{tab:conditioned}{{25}{33}{Conditioning on items where both protocols parsed successfully. The residual protocol gap holds on Llama and does not reach significance on Qwen --- the honest reading is one family out of two, not a general law}{table.25}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {26}{\ignorespaces Repair success given that feedback was actually received. Conditioned this way the two protocols are much closer, which locates the gap in \emph  {how often feedback arrives} rather than in what the model does with it. On Qwen this difference is within the non-significant band above, so we state it as an observation, not a result.}}{33}{table.26}\protected@file@percent }
+\newlabel{tab:given_feedback}{{26}{33}{Repair success given that feedback was actually received. Conditioned this way the two protocols are much closer, which locates the gap in \emph {how often feedback arrives} rather than in what the model does with it. On Qwen this difference is within the non-significant band above, so we state it as an observation, not a result}{table.26}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.9}Pressure on a broken interface makes things worse}{33}{subsection.G.9}\protected@file@percent }
+\newlabel{sec:pressure}{{G.9}{33}{Pressure on a broken interface makes things worse}{subsection.G.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {27}{\ignorespaces Probe replication on the 1.5B model actually being trained, same mandatory prompt (n=100). Not one output names \texttt  {run\_tests}, so at this scale the missing calls are not a parser mismatch --- there was nothing well-formed to censor.}}{34}{table.27}\protected@file@percent }
+\newlabel{tab:probe_categories}{{27}{34}{Probe replication on the 1.5B model actually being trained, same mandatory prompt (n=100). Not one output names \texttt {run\_tests}, so at this scale the missing calls are not a parser mismatch --- there was nothing well-formed to censor}{table.27}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {28}{\ignorespaces Increasing pressure on the 1.5B model. Stronger instruction and few-shot examples raise the number of recoverable code payloads but never produce a call that names the tool.}}{34}{table.28}\protected@file@percent }
+\newlabel{tab:pressure}{{28}{34}{Increasing pressure on the 1.5B model. Stronger instruction and few-shot examples raise the number of recoverable code payloads but never produce a call that names the tool}{table.28}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.10}The sufficiency arm, tabulated}{34}{subsection.G.10}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {RL training rollouts.} Under function calling the tool is never successfully called; \texttt  {num\_turns} stays pinned at its minimum of 2 and tool time is exactly zero. Prompt strength is matched across arms (both mandatory); step counts are not (10 vs 3).}}{34}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:train}{{5}{34}{\textbf {RL training rollouts.} Under function calling the tool is never successfully called; \texttt {num\_turns} stays pinned at its minimum of 2 and tool time is exactly zero. Prompt strength is matched across arms (both mandatory); step counts are not (10 vs 3)}{figure.caption.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {29}{\ignorespaces ReAct training with a working tool channel, 23{,}676 executed calls. Rescues by turn $\geq $2 do not move. The three historical FC runs, in which \textbf  {zero} tool calls executed, give rescue sequences $[7,9,6,6,7,6,10,8,9,8,6]$, $[8,7,6,7,7,7,7,5,6,6,8]$ and $[7,5,7,5,7,8,9,9,8,9]$ --- the two conditions are indistinguishable on this metric.}}{34}{table.29}\protected@file@percent }
+\newlabel{tab:sufficiency}{{29}{34}{ReAct training with a working tool channel, 23{,}676 executed calls. Rescues by turn $\geq $2 do not move. The three historical FC runs, in which \textbf {zero} tool calls executed, give rescue sequences $[7,9,6,6,7,6,10,8,9,8,6]$, $[8,7,6,7,7,7,7,5,6,6,8]$ and $[7,5,7,5,7,8,9,9,8,9]$ --- the two conditions are indistinguishable on this metric}{table.29}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.11}Sampling variance, and an inverted noise structure}{35}{subsection.G.11}\protected@file@percent }
+\newlabel{sec:variance}{{G.11}{35}{Sampling variance, and an inverted noise structure}{subsection.G.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {30}{\ignorespaces Sampling variance. FC seed 3 is inadmissible (a parallel tool call vLLM rejects), leaving two arms --- too few for a standard deviation, so only the interval is reported.}}{35}{table.30}\protected@file@percent }
+\newlabel{tab:variance}{{30}{35}{Sampling variance. FC seed 3 is inadmissible (a parallel tool call vLLM rejects), leaving two arms --- too few for a standard deviation, so only the interval is reported}{table.30}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.12}Multi-turn repair stabilises the total while its composition keeps moving}{35}{subsection.G.12}\protected@file@percent }
+\newlabel{sec:composition}{{G.12}{35}{Multi-turn repair stabilises the total while its composition keeps moving}{subsection.G.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.13}The training verifier: seams, audit, and planned fixes}{36}{subsection.G.13}\protected@file@percent }
+\newlabel{app:verifier}{{G.13}{36}{The training verifier: seams, audit, and planned fixes}{subsection.G.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {H}Limitations, in full}{36}{appendix.H}\protected@file@percent }
+\newlabel{app:limitations}{{H}{36}{Limitations, in full}{appendix.H}{}}
 \gdef \@abspage@last{38}

@@ -28,27 +28,19 @@ An agent evaluation does not measure a model. It measures a composition
 and the failure of most stages is indistinguishable at the output from model incapability: when a
 parser does not recognise the format a model emits, the serving layer reports zero tool calls ---
 exactly what a model that refuses to use tools would produce. We call this
-\textbf{interface-induced trajectory censoring}.\footnote{\emph{Censoring} is borrowed by analogy.
-In survival analysis it is a threshold on a continuous variable; a parser is a deterministic
-filter on output \emph{format}. What carries over is the structure of the inference error: the
-observation is not missing at random, it is systematically unobservable on one side of a boundary,
-and the boundary correlates with the quantity being measured --- positively with checkpoint size,
-within this family.} It acts in two opposite directions, and our results contain a clean instance
-of each: \textbf{masking}, where a valid call is not recognised and the action never reaches the
-environment (Qwen2.5-Coder, \S\ref{sec:scale}), and \textbf{suppression}, where an invalid call is
-removed from the sampleable support before it becomes an action (Llama-3.1-8B,
-\S\ref{sec:llama}). The correct general statement is therefore neither ``the failure is in the
-model'' nor ``the failure is in the interface'':
-
-\begin{quote}
-\textbf{The serving interface is simultaneously part of the measurement function and part of the
-agent's effective action space.}
-\end{quote}
-
-Under RL this is literal. The interface sits between the policy and the environment: whatever the
-policy emits must survive serialisation and parsing before it becomes an action that earns a
-reward. When nothing tool-intended survives that passage, the experience distribution contains no
-tool-mediated trajectory at all.
+\textbf{interface-induced trajectory censoring}.\footnote{Borrowed by analogy: in survival analysis
+censoring is a threshold on a continuous variable, whereas a parser is a deterministic filter on
+output \emph{format}. What carries over is the structure of the inference error --- the observation
+is not missing at random but systematically unobservable on one side of a boundary, and the
+boundary correlates with the quantity being measured.} It acts in two opposite directions, and our
+results contain a clean instance of each: \textbf{masking}, where a valid call is not recognised
+and the action never reaches the environment (\S\ref{sec:scale}), and \textbf{suppression}, where
+an invalid call is removed from the sampleable support before it becomes an action
+(\S\ref{sec:llama}). \textbf{The serving interface is therefore simultaneously part of the
+measurement function and part of the agent's effective action space} --- literally so under RL,
+where whatever the policy emits must survive serialisation and parsing before it becomes an action
+that earns a reward. When nothing tool-intended survives that passage, the experience distribution
+contains no tool-mediated trajectory at all.
 
 \paragraph{Why this is not a parser bug.}
 The term invites a reading we refuse at the outset. Replaying vLLM's own \texttt{hermes} extractor

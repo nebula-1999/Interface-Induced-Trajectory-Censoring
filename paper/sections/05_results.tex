@@ -1,17 +1,19 @@
 \section{Results}
 \label{sec:results}
 
-\subsection{The same mismatch on a standard benchmark, and a $2\times2$ that localises it}
+Nine measurements, in the order the argument needs them. Each is stated here with its numbers;
+the tables, the funnel columns behind them and the reproduction records are in
+Appendix~\ref{app:extra}, and every scope condition is collected in \S\ref{sec:limitations}.
+
+\subsection{BFCL v4: the score moves the whole span of the metric, and the effect is pure interaction}
 \label{sec:bfcl}
 
-We begin on someone else's instrument. BFCL~v4 supplies official data, a multi-turn executor and a
-scorer at pinned Gorilla commit \texttt{6ea57973c7a6097fd7c5915698c54c17c5b1b6c8}. Both arms serve
-Qwen2.5-Coder-7B-Instruct on vLLM~0.27.1 at \texttt{temperature = 0}, seed 0, on 100
-\texttt{simple\_python} and 100 \texttt{multi\_turn\_base} cases identical in both arms
-(Appendix~\ref{app:bfcl}); weights, cases, decoding, seeds, executor and scorer are fixed and
-\emph{only the serving adapter configuration} changes. We say \emph{adapter configuration}, not
-\emph{parser}: the repaired arm substitutes the community parser together with its paired chat
-template, so the intervention is the pair, and we ran the $2\times2$ that separates them.
+BFCL~v4 supplies official data, a multi-turn executor and a scorer at pinned Gorilla commit
+\texttt{6ea57973c7a6097fd7c5915698c54c17c5b1b6c8}. Holding weights, cases, decoding, seeds,
+executor and scorer fixed on 200 cases and changing \emph{only the serving adapter
+configuration}, BFCL's own scorer reports \textbf{0.00} or \textbf{0.96 / 0.19}
+(\texttt{simple\_python} / \texttt{multi\_turn\_base}) for the same model. The intervention is a
+pair --- parser \emph{and} its chat template --- so we ran the $2\times2$ that separates them.
 
 \begin{center}
 \small
@@ -26,93 +28,51 @@ dedicated parser & \textbf{0/200} & 196/200 \\
 \end{tabular}
 \end{center}
 
-BFCL's own scorer gives 0.00 for the three zero cells and 0.96 / 0.19 for the fourth.
-\textbf{The effect cannot be apportioned because it is not additive: both main effects are exactly
-zero and all of it sits in the interaction.} Under the documented template the model writes a bare
-call inside a \texttt{```json} fence; under the dedicated template it writes the same payload,
-byte for byte, inside \texttt{<tools>} tags. Each parser behaves correctly for the envelope it is
-defined to accept, so no component is defective and repairing one side of the contract buys
-exactly nothing.
+\textbf{Both main effects are exactly zero and all of the effect sits in the interaction}, so it
+cannot be apportioned. Under the documented template the model writes a bare call inside a
+\texttt{```json} fence; under the dedicated template it writes the same payload, byte for byte,
+inside \texttt{<tools>} tags. Each parser behaves correctly for the envelope it is defined to
+accept, so no component is defective and repairing one side of the contract buys exactly nothing.
+The funnel behind those scores: the documented arm parses \textbf{0 of 200} first requests with
+zero HTTP errors, while \textbf{166} of those same responses carry a call meeting the strict
+criterion; the repaired arm parses 196, executes 98 of 100 \texttt{multi\_turn\_base} cases and
+succeeds on \textbf{19}, against 0 executed and 0 succeeded for \texttt{hermes}, whose zero is
+therefore \emph{by construction rather than by capability}
+(Tables~\ref{tab:bfclfunnel}--\ref{tab:bfcl5}). \textbf{A published benchmark number for this
+model can differ by the entire span of the metric depending on a serving flag the model card does
+not mention.} We claim only that 0.00 is not a measurement of the model; and since the repaired
+arm uses the community adapter, not a verified-optimal one, and still fails 4 of 200,
+$0\to19$ is a \textbf{lower bound} on what the interface was removing.
 
-\begin{center}
-\small
-\captionof{table}{BFCL v4, first HTTP request per case. Intent columns are measured only where the parse failed.}\label{tab:bfclfunnel}
-\begin{tabular}{@{}llllllll@{}}
-\toprule
-Arm & cases & HTTP err & first parsed & unparsed & tight & strong & weak \\
-\midrule
-\texttt{hermes} (documented) & 200 & 0 & \textbf{0} & 200 & 166 & 169 & 187 \\
-\texttt{qwen2\_5\_coder} (repaired) & 200 & 0 & \textbf{196} & 4 & 0 & 1 & 2 \\
-\bottomrule
-\end{tabular}
-\end{center}
+BFCL's shipped handler for local Qwen models bypasses the serving parser entirely, so we route
+BFCL's own OpenAI handler through \texttt{/v1/chat/completions}, adding only
+\texttt{tool\_choice: auto} and trace headers; dataset loading, execution and scoring remain
+BFCL's code and \texttt{bfcl\_eval}'s files are byte-identical (Appendix~\ref{app:bfcl}).
 
-Under the configuration a practitioner reaches by following the documentation the server parses
-zero of 200 cases while 166 of those same first responses contain a call meeting the strict
-criterion. The consequence propagates to every downstream layer, because BFCL executes the calls
-it parses and scores the resulting state: on \texttt{multi\_turn\_base} the repaired arm parses
-97 first calls, executes 98 and succeeds on 19, against 0/0/0 for \texttt{hermes}
-(Table~\ref{tab:bfcl5}), whose success count is therefore zero \emph{by construction rather than
-by capability}. \textbf{A published benchmark
-number for this model can differ by the entire span of the metric depending on a serving flag the
-model card does not mention.} We make no claim that 0.19 is a good score --- only that 0.00 is not
-a measurement of the model. The repaired arm uses the community adapter, not a verified-optimal
-one, and 4 of its 200 first requests still fail to parse, so $0\to19$ is a \textbf{lower bound} on
-what the interface was removing.
+\subsection{$\tau$-bench: the mechanism survives a simulated user and a stateful environment}
+\label{sec:tau}
 
-One deviation from stock BFCL is required and we state it plainly: its shipped handler for local
-Qwen models posts to \texttt{/v1/completions} and extracts \texttt{<tool\_call>} blocks with a
-regular expression \emph{inside the benchmark process}, so the serving parser is never invoked and
-the quantity under study cannot appear. We instead route BFCL's own OpenAI handler through
-\texttt{/v1/chat/completions}, adding only \texttt{tool\_choice: auto} and trace headers; dataset
-loading, execution and scoring remain BFCL's code, and \texttt{bfcl\_eval}'s files are left
-byte-identical. Running the pair twice reproduces the \texttt{hermes} arm exactly and moves the
-repaired arm by one case with success 19 in both, so we report that arm's intermediate columns as
-$\pm1$ (Appendix~\ref{app:bfcl}).
-
-\paragraph{A second external benchmark, interactive and multi-turn.}
 BFCL scores a single trajectory against a final state. $\tau$-bench \citep{yao2025taubench} adds a
 simulated user and a stateful environment, so a censored call costs not one action but the rest of
-the conversation. We ran its 115 \texttt{retail} tasks under both arms, holding weights, tasks,
-seeds, user simulator and concurrency fixed and changing only the serving adapter.
-
-\begin{center}
-\small
-\captionof{table}{$\tau$-bench \texttt{retail}, all 115 tasks paired across arms (none dropped).}\label{tab:tau}
-\begin{tabular}{@{}lrr@{}}
-\toprule
- & documented & repaired \\
-\midrule
-assistant turns & 1389 & 1971 \\
-server-parsed calls & \textbf{0} & \textbf{636} \\
-emitted but unparsed & \textbf{789} & 6 \\
-tool executions / observations returned & \textbf{0} & \textbf{636} \\
-\midrule
-tasks entering the tool loop at all & \textbf{0} & \textbf{103} \\
-tasks solved & 7 & 10 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-The mechanism transfers intact: every one of 1389 requests carried \texttt{tools}, not one was
-parsed, and 789 assistant turns carried a call-shaped payload that the server discarded. Under the
-repaired adapter 103 of 115 tasks reach a tool execution, against \textbf{zero} before.
+the conversation. Across all 115 \texttt{retail} tasks, paired across arms with none dropped and
+changing only the serving adapter: server-parsed calls \textbf{0 versus 636}, tool executions
+\textbf{0 versus 636}, and tasks reaching \emph{any} tool execution \textbf{0 versus 103}. Every
+one of the documented arm's 1389 requests carried \texttt{tools}, not one was parsed, and 789
+assistant turns carried a call-shaped payload the server discarded (Table~\ref{tab:tau}).
 \textbf{The task-outcome difference does not reach significance and we do not claim it}: 7 versus
-10 solved, three discordant pairs, all in the repaired direction, exact McNemar \emph{p}=0.25, and
-the documented arm's solved set is a strict subset of the repaired arm's. Two scope conditions
-belong with these numbers rather than in a footnote. The user simulator is a locally served
+10 solved, three discordant pairs all in the repaired direction, exact McNemar \emph{p}=0.25, with
+the documented arm's solved set a strict subset of the repaired arm's. Two scope conditions belong
+with these numbers rather than in a footnote: the user simulator is a locally served
 Llama-3.1-8B rather than the \texttt{gpt-4o} of the original harness, so \textbf{the absolute
-scores are not comparable to the $\tau$-bench leaderboard} and this experiment claims only the
-between-arm difference; and the arms differ in conversation length by construction, which is why
-every quantity above is reported per task and not per request.
+scores are not comparable to the $\tau$-bench leaderboard} and only the between-arm difference is
+claimed; and the arms differ in conversation length by construction, which is why every quantity
+is per task and not per request.
 
 \subsection{Censoring against scale, and the same scale under a matched interface}
 \label{sec:scale}
 
-The same funnel on our own probe, across the Qwen2.5-Coder ladder under \texttt{tool\_choice:
-auto} and \texttt{hermes} --- the documented recommendation for Qwen2.5. At 32B,
-\texttt{strong = 100} and \texttt{tight = 80} means every item contained a named call and 80
-carried a usable payload.
+Our own probe, across the Qwen2.5-Coder ladder under \texttt{tool\_choice: auto} and
+\texttt{hermes} --- the documented recommendation for Qwen2.5 --- n=100 per size.
 
 \begin{center}
 \small
@@ -131,295 +91,171 @@ Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjo
 \end{center}
 
 Across a 21$\times$ range the server reports a flat zero while well-formed emitted calls rise to
-80/100. \textbf{Within this family, the larger the checkpoint, the larger the absolute undercount
-under the same mismatched interface.} This is a within-family observation across five
-checkpoints, not a law relating capability to censoring: parameter count is not capability, and
-we have one family's ladder. Raw-tag counts reproduce vLLM issue \#32926's baseline exactly:
-across all sizes \texttt{<tool\_call>} and \texttt{<tools>} appear zero times.
+80/100 ($\approx$72 after the 0.900 correction factor of \S\ref{sec:humanval}).
+\textbf{Within this family, the larger the checkpoint, the larger the absolute undercount under
+the same mismatched interface} --- a within-family observation across five checkpoints, not a law
+relating capability to censoring. Raw-tag counts reproduce vLLM issue \#32926's baseline exactly:
+\texttt{<tool\_call>} and \texttt{<tools>} appear zero times at every size. Two offline analyses
+close the obvious objections (Appendix~\ref{app:reparse}). Re-parsing the \emph{same stored bytes}
+under four rules excludes ``your extractor is simply better than \texttt{hermes}'': the hermes
+column is zero at every scale because the model never produces that format, while the bare-JSON
+and tight columns are not. Replaying vLLM's extractor line for line to locate the layer at which
+each item is lost shows \textbf{genuine parser loss is zero in every arm}, and across all 4254
+de-duplicated first turns in the archive; the one place strictness alone costs anything is
+Instruct-3B, where 26 payloads are valid JSON followed by trailing text.\footnote{The 1.5B row uses
+the \emph{optional} tool instruction. Under the \emph{mandatory} prompt used for training
+(\S\ref{sec:rl}) the same checkpoint gives weak = 66 and unparsable = 46: coercion produces more
+JSON-shaped debris, not more valid calls. The two numbers describe different prompts, not a
+discrepancy.}
 
-Two supporting analyses are in Appendix~\ref{app:reparse}. Re-parsing the \emph{same stored
-bytes} under four rules excludes ``your extractor is simply better than \texttt{hermes}'': the
-\texttt{hermes} column is zero at every scale because the model never produces that format, while
-the bare-JSON and tight columns are not. Replaying vLLM's extractor line for line to separate the
-layer at which each item is lost shows that \textbf{genuine parser loss is zero in every arm}, and
-across all 4254 de-duplicated first turns in the archive; the single place where parser strictness
-alone costs anything is Instruct-3B, where 26 payloads are valid JSON followed by trailing text
-that a lenient \texttt{raw\_decode} would recover.\footnote{The 1.5B row uses the \emph{optional}
-tool instruction. Under the \emph{mandatory} prompt used for training (\S\ref{sec:rl}) the same
-checkpoint gives weak = 66 and unparsable = 46: coercion produces more JSON-shaped debris, not
-more valid calls. The two numbers describe different prompts, not a discrepancy.}
-
-\paragraph{A counterfactual ladder: scale under a \emph{matched} interface.}
-The server column is flat zero, so the growth above comes entirely from the emitted column ---
-and larger checkpoints emit more well-formed JSON for reasons unrelated to tool calling. The
-clean test is a ladder under an interface that \emph{matches}: if the undercount is a property of
-scale it should grow there too. Qwen3 supplies one --- its template injects tools and requires
-\texttt{<tool\_call>}, the envelope \texttt{hermes} accepts, and it ships a dense size ladder. We
-committed the prediction (``parsed $>0$ at every size'') to the repository before running
-(\texttt{p4/PREREGISTRATION.md}).
-
-\begin{center}
-\small
-\captionof{table}{Same probe, items and criterion under a \emph{matched} envelope.}\label{tab:counterfactual}
-\begin{tabular}{@{}lll@{}}
-\toprule
-Size & server-parsed & \textbf{silent fraction (tight, unparsed)} \\
-\midrule
-Qwen3-0.6B & 86 & \textbf{1} \\
-Qwen3-1.7B & 44 & \textbf{1} \\
-Qwen3-4B & 70 & \textbf{2} \\
-Qwen3-8B & 97 & \textbf{0} \\
-\midrule
-Qwen2.5-Coder 1.5B--32B (mismatched) & 0 at every size & \textbf{0 $\to$ 4 $\to$ 21 $\to$ 36 $\to$ 80} \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\textbf{Across a comparable span of scale under a matched envelope, the silent fraction does not
-grow.} This rules out capability growth as a \emph{sufficient} cause; it does not isolate the
-envelope, since the ladder changes family and envelope together. Two further caveats we state
-rather than bury: the parsed column is \textbf{not monotone} (86, 44, 70, 97), so this ladder
-shows presence, not a trend; and Qwen3 was served with \texttt{enable\_thinking=false}, because
-with thinking on the model spends its entire token budget in a \texttt{<think>} block and is
-truncated before it emits a call --- a confound unrelated to the envelope, recorded as a protocol
-deviation before the run.
+\paragraph{The counterfactual.} The server column is flat zero, so the growth above comes entirely
+from the emitted column --- and larger checkpoints emit more well-formed JSON for reasons
+unrelated to tool calling. Qwen3 supplies a ladder whose template injects tools and requires the
+\texttt{<tool\_call>} envelope \texttt{hermes} accepts; we committed the prediction (``parsed $>0$
+at every size'') to the repository before running (\texttt{p4/PREREGISTRATION.md}). Server-parsed
+counts are 86 / 44 / 70 / 97 at 0.6B--8B, and the silent fraction is \textbf{1, 1, 2, 0} against
+the mismatched ladder's 0, 4, 21, 36, 80 (Table~\ref{tab:counterfactual}). \textbf{Across a
+comparable span of scale under a matched envelope, the silent fraction does not grow.} This rules
+out capability growth as a \emph{sufficient} cause; it does not isolate the envelope, since the
+ladder changes family and envelope together. Two caveats we state rather than bury: the parsed
+column is \textbf{not monotone}, so this ladder shows presence, not a trend; and Qwen3 was served
+with \texttt{enable\_thinking=false}, because with thinking on the model spends its whole token
+budget in a \texttt{<think>} block and is truncated before emitting a call --- a confound unrelated
+to the envelope, recorded as a protocol deviation before the run.
 
 A second family exhibiting the \emph{same} undercount would be stronger still, and we did not get
-one. Of nine families surveyed beforehand, six do not inject OpenAI-style tools at all --- they
-cannot exhibit envelope-layer censoring, though template omission is itself a failure layer ---
-and of the remaining three, Granite-3.1-8B turned out not to attempt tool calls on this task at
-all. Under \texttt{hermes} and under its own \texttt{granite} parser both give 0, and
-\textbf{the rescue arm is what tells us the arm is uninformative rather than confirmatory}. We
-claim nothing from it.
+one. Of nine families surveyed beforehand, six do not inject OpenAI-style tools at all, and of the
+remaining three Granite-3.1-8B turned out not to attempt tool calls on this task: under
+\texttt{hermes} and under its own \texttt{granite} parser both give 0, and \textbf{the rescue arm
+is what tells us the arm is uninformative rather than confirmatory}. We claim nothing from it.
 
-\subsection{Within-lineage control: the same ladder in Qwen2.5-Instruct}
+\subsection{Within-lineage control, and the ceiling it puts on multi-turn rescue}
 \label{sec:instruct}
 
-The ladder above is within-family, leaving open whether it reflects scale or simply that this
-lineage is mismatched. Changing family cannot settle it: Llama parses correctly, Mistral returns
-400, and DeepSeek never injects the template, so none can exhibit censoring at all. The
-informative control is inside the lineage. Qwen2.5-\textbf{Instruct} shares one chat template
-with Coder --- Coder inherits it, which is what produces the false-positive template check of
-\S\ref{sec:families} --- and differs in whether the checkpoint was trained on tool-call tokens.
-Same 100 items, parser, \texttt{tool\_choice}, \texttt{temperature = 0}, seed 0 and criterion.
+Changing family cannot test the scale result --- Llama parses correctly, Mistral returns 400,
+DeepSeek never injects the template, so none can exhibit censoring at all.
+Qwen2.5-\textbf{Instruct} can: it shares Coder's chat template, which is what produces the
+false-positive template check of \S\ref{sec:families}, and differs in whether the checkpoint was
+trained on tool-call tokens. On the same items, parser, \texttt{tool\_choice}, temperature and
+seed, its server-parsed rate runs \textbf{1, 11, 63, 77, 88} against Coder's flat zero
+(Table~\ref{tab:turn1}). \textbf{The contrast localises the mismatch to checkpoint-specific
+training rather than to the shared family and template, or to parameter count alone.} We stop
+short of naming tool-call-format training as \emph{the} cause: the two differ in their whole
+post-training mixture, and this varies the bundle, not one element. It also answers the objection
+that Instruct emits better-shaped calls around worse contents --- it solves 13--42\% of items on
+turn~1 and 13--65\% by the end, nowhere near the zero that would require.
 
-\begin{center}
-\small
-\captionof{table}{Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor.}\label{tab:instruct}\label{tab:turn1}
-\begin{tabular}{@{}llll|ll|lll@{}}
-\toprule
-& \multicolumn{3}{c|}{Instruct, emitted} & \multicolumn{2}{c|}{Coder} & \multicolumn{3}{c}{Instruct} \\
-Size & parsed & \textbf{tight} & weak & parsed & turn-1 = final & turn-1 & final & \textbf{rescued} \\
-\midrule
-1.5B & 1 & 0 & 7 & 0 & 31 & 13 & 13 & \textbf{0} \\
-3B & 11 & 56 & 2 & 0 & 37 & 14 & 17 & \textbf{+3} \\
-7B & 63 & 21 & 0 & 0 & 53 & 34 & 40 & \textbf{+6} \\
-14B & 77 & 19 & 0 & 0 & 53 & 38 & 52 & \textbf{+14} \\
-\textbf{32B} & \textbf{88} & 8 & 0 & 0 & 68 & 42 & 65 & \textbf{+23} \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Against the flat zero of Table~\ref{tab:scale}, the Instruct ladder runs 1, 11, 63, 77, 88.
-\textbf{The contrast localises the mismatch to checkpoint-specific training rather than to the
-shared family and template, or to parameter count alone.} We stop short of naming
-tool-call-format training as \emph{the} cause: Coder and Instruct differ in their whole
-post-training mixture, and this experiment varies that bundle, not one element of it. What it does
-rule out is that \texttt{hermes} is inoperative for the Qwen2.5 template, which the flat zero
-would otherwise leave open --- and the objection that Instruct emits better-shaped calls around
-worse contents, since it solves 13--42\% of items on turn~1 and 13--65\% by the end, weaker than
-the code-specialised Coder as expected but nowhere near the zero that would require.
-
-This ladder's multi-turn layer was initially void --- the host lacked \texttt{pytest} --- and we
-re-ran all five arms with the executor working, changing nothing else and not touching the probe
-binary; the parsed column reproduces value for value, confirming the repair did not disturb the
-upstream measurement. The recovered column is the informative one: \textbf{rescues rise with the
-parsed column} --- 0, +3, +6, +14, +23 against 1, 11, 63, 77, 88, monotone together. Coder's
-first-turn and final passes are identical at every size (31/31, 37/37, 53/53, 53/53, 68/68), which
-it would be natural to read as multi-turn repair being useless at this scale; the Instruct ladder,
-on the same items and criterion, shows it is not. We therefore state the repair result as a
-ceiling rather than an absence: \textbf{how much multi-turn recovers is bounded by how much of the
-tool channel the interface leaves open.}
+The multi-turn layer was initially void, because that host lacked \texttt{pytest}; we re-ran all
+five arms with the executor working, changing nothing else and not touching the probe binary, and
+the parsed column reproduced value for value. \textbf{Rescues then rise with the parsed column} ---
+0, +3, +6, +14, +23 against 1, 11, 63, 77, 88, monotone together. Coder's first-turn and final
+passes are identical at every size (31/31, 37/37, 53/53, 53/53, 68/68), which it would be natural
+to read as multi-turn repair being useless at this scale; the Instruct ladder, on the same items
+and criterion, shows it is not. We therefore state the repair result as a ceiling rather than an
+absence: \textbf{how much multi-turn recovers is bounded by how much of the tool channel the
+interface leaves open.}
 
 \subsection{A 23\% failure that survived three controls and fell to the fourth}
 \label{sec:llama}
 
-Llama-3.1-8B under FC issues a tool call on 97/100 items, but on 23 of them the call names
-\emph{the function the task asks it to implement} --- \texttt{can\_form\_word},
-\texttt{check\_password\_strength}, \texttt{floyd\_warshall} --- with that function's own
-parameters as arguments. A re-run restricted to those 23 items under matched configuration
-reproduced 23/23. \emph{This also corrects a measurement of our own}: because the probe did not
-originally verify the tool name, these 23 were counted as initiations, so \textbf{Llama's true
-\texttt{run\_tests} initiation rate is 74/100, not 97/100} (Appendix~\ref{app:errata}).
-
-Four single-variable paired controls (tabulated in Appendix~\ref{app:extra}). A richer schema
-that explicitly warned \emph{``this tool is not the function you are asked to implement''} left
-the confusion at 22/100 (\emph{p}=1.000). A ReAct-style Thought scaffold before the call raised it
-from 23 to 59 (\emph{p}\textless0.001, \emph{worse}): asked to reason about the task function's
-signature first, the model then supplied exactly those parameters. Adding the official chat
-template moved nothing (23 $\to$ 22, \emph{p}=0.125). Enabling \texttt{strict: true} took it to 0
+Llama-3.1-8B under FC issues a tool call on 97/100 items, but on 23 the call names \emph{the
+function the task asks it to implement}, with that function's own parameters as arguments; a re-run
+restricted to those 23 reproduced 23/23. \emph{This also corrects a measurement of our own}:
+because the probe did not verify the tool name, these 23 were counted as initiations, so
+\textbf{Llama's true \texttt{run\_tests} initiation rate is 74/100, not 97/100}
+(Appendix~\ref{app:errata}). Four single-variable paired controls: a richer schema explicitly
+warning that the tool is not the task function left it at 22/100 (\emph{p}=1.000); a Thought
+scaffold before the call raised it to \textbf{59} (\emph{p}\textless0.001, \emph{worse}), the model
+supplying exactly the parameters it had just reasoned about; the official chat template moved
+nothing (23$\to$22, \emph{p}=0.125); \texttt{strict: true} took it to \textbf{0}
 (\emph{p}=0.0001). The first three rejected their alternative explanations and pointed at the
 model; the fourth found the cause and withdrew that conclusion.
 
-\begin{center}
-\small
-\captionof{table}{Llama-3.1-8B arms, paired on the same 100 items.}\label{tab:llama_arms}
-\begin{tabular}{@{}llllll@{}}
-\toprule
-Arm & Calls issued & Wrong-tool & Executed & Turn-1 & Final \\
-\midrule
-terse (parser only) & 97 & 23 & 74 & 34 & 49 \\
-+ official template & 95 & 22 & 73 & 33 & 44 \\
-+ official template \textbf{+ \texttt{strict}} & 98 & \textbf{0} & \textbf{97} & \textbf{46} & \textbf{61} \\
-ReAct (reference) & 98 & 0 & 97 & \textbf{61} & 80 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\texttt{strict} alone drives the chain constraint $\to$ valid execution (73$\to$97) $\to$ task
-performance (33$\to$46 turn-1, 44$\to$61 final). This is not a formatting fix: 23 items that
-previously produced no executable code now execute and become repairable, and all 98 calls under
-\texttt{strict} carry code containing \texttt{def}/\texttt{class}/\texttt{import}.
-
-\begin{center}
-\small
-\captionof{table}{Decomposing the ReAct--FC gap on Llama, paired McNemar.}\label{tab:decomposition}
-\begin{tabular}{@{}llll@{}}
-\toprule
-Comparison & b/c & \emph{p} & Attributable to \\
-\midrule
-terse-FC $\to$ strict-FC (49 $\to$ 61) & 15/3 & \textbf{0.0075} & \textbf{interface repair, +12} \\
-strict-FC $\to$ ReAct (61 $\to$ 80) & 27/8 & \textbf{0.0019} & \textbf{protocol, +19} \\
-terse-FC $\to$ ReAct (49 $\to$ 80) & 38/7 & 3.1e-06 & both, +31 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Roughly \textbf{two fifths of what looked like a protocol effect was an interface effect}, and
-each rung is separately significant. With \texttt{strict} enabled the two protocols have
-identical execution mechanics --- 98 calls, 0 wrong-tool, 97 executed on both sides --- yet
-turn-1 pass differs 46 vs 61, so once the interface is equalised what remains is first-draft code
-quality under the protocol, not tool-use mechanics. The defensible statement is narrower than
-either ``model defect'' or ``configuration bug'': \textbf{the model exhibits role confusion under
-unconstrained function calling, and the interface constraint determines whether that confusion
-can be expressed as an environment action.} We cannot show that the tendency disappears once
-constrained, only that it stops reaching the action space. vLLM's \texttt{auto} mode is
-unconstrained by default.\footnote{One \texttt{strict} call is syntactically valid but yields no
-test result: item 53 imports \texttt{seaborn}, unavailable in the sandbox, so zero tests were
-collected. It is counted as a failure, not silently dropped.}
+\texttt{strict} drives the chain constraint $\to$ valid execution (73$\to$97) $\to$ task
+performance (33$\to$46 turn-1, 44$\to$61 final): 23 items that produced no executable code now
+execute and become repairable (Table~\ref{tab:llama_arms}). Paired McNemar decomposes the
+ReAct--FC gap into \textbf{interface repair, +12} (\emph{p}=0.0075) and \textbf{protocol, +19}
+(\emph{p}=0.0019), against +31 for both (Table~\ref{tab:decomposition}) --- \textbf{roughly two
+fifths of what looked like a protocol effect was an interface effect}. With \texttt{strict} the two
+protocols have identical execution mechanics (98 calls, 0 wrong-tool, 97 executed on both sides)
+yet turn-1 differs 46 vs 61, so what remains is first-draft code quality under the protocol, not
+tool-use mechanics. The defensible statement is narrower than either ``model defect'' or
+``configuration bug'': \textbf{the model exhibits role confusion under unconstrained function
+calling, and the interface constraint determines whether that confusion can be expressed as an
+environment action.} We cannot show the tendency disappears once constrained, only that it stops
+reaching the action space.
 
 \subsection{Four layers, and what a pre-flight check can see}
 \label{sec:taxonomy}
 \label{sec:families}
 
-The two families above fail at different layers and admit different remedies: Qwen2.5-Coder at the
-\emph{parser} layer, repaired by a dedicated adapter, and Llama-3.1-8B at the \emph{schema}
-layer, repaired by \texttt{strict: true}. Neither is detectable in advance by the obvious check
-(Table~\ref{tab:taxonomy}). Two further families extend the taxonomy without supporting a quantitative comparison, and we
-report them as such. \textbf{DeepSeek-Coder} fails at the \emph{template} layer --- its chat
-template never injects tools, which a template check correctly catches, and we found no remedy.
-\textbf{Mistral-7B-v0.3} fails at the \emph{token} layer, repeating a \texttt{[TOOL\_CALLS]}
-marker that produces HTTP 400, and has no admissible 100-item FC run at all: all four
-configurations produce request errors (parser only 2; official template 42; parser + strict 3;
-official template + strict 39), so vLLM's own recommended configuration \emph{raises} the error
-rate from 2\% to 42\% and \texttt{strict}, which fixes Llama, does not help. The correct statement
-is not ``the two protocols do not differ on Mistral'' but that no such comparison exists.
+The two families above fail at different layers with different remedies --- Qwen2.5-Coder at the
+\emph{parser} layer, repaired by a dedicated adapter; Llama at the \emph{schema} layer, repaired by
+\texttt{strict: true} --- and neither is caught by the obvious pre-flight test. Two further
+families extend the taxonomy without supporting a quantitative comparison, and we report them as
+such. \textbf{DeepSeek-Coder} fails at the \emph{template} layer: its chat template never injects
+tools, which a template check does catch, and we found no remedy. \textbf{Mistral-7B-v0.3} fails at
+the \emph{token} layer, repeating a \texttt{[TOOL\_CALLS]} marker that produces HTTP 400, and has
+\textbf{no admissible 100-item FC run at all} --- all four configurations produce request errors
+(parser only 2; official template 42; parser + strict 3; official template + strict 39), so vLLM's
+own recommended configuration \emph{raises} the error rate from 2\% to 42\% and \texttt{strict},
+which fixes Llama, does not help (Table~\ref{tab:taxonomy}).
 
 Mistral is the one family whose failure announces itself; the other three return HTTP 200 with
 \texttt{tool\_calls: []}, byte-identical to a model that declined to call the tool. \textbf{The
-claim is not that all failures are silent; it is that the silent ones dominate and are the
-hardest to attribute.} The natural pre-flight test --- does \texttt{apply\_chat\_template(tools=...)}
-render the schema? --- correctly rejects DeepSeek-Coder but \emph{passes} Qwen2.5-Coder, whose
-\texttt{tokenizer\_config.json} inherits Hermes scaffolding from Qwen2.5-Instruct while the
-checkpoint was never trained on it: protocol support is a per-checkpoint property and is not
-inferable from the chat template.
+claim is not that all failures are silent; it is that the silent ones dominate and are the hardest
+to attribute.} The natural pre-flight test --- does \texttt{apply\_chat\_template(tools=...)}
+render the schema? --- correctly rejects DeepSeek-Coder but \emph{passes} Qwen2.5-Coder, which
+inherits Hermes scaffolding from Qwen2.5-Instruct while never having been trained on it:
+\textbf{protocol support is a per-checkpoint property and is not inferable from the chat
+template.}
 
 \subsection{Repair loop: how much comes back}
 \label{sec:repair}
 \label{sec:maintable}
 
-\begin{center}
-\small
-\captionof{table}{Repair loop on Qwen2.5-Coder-7B, \texttt{tool\_choice: auto} fixed, changing only the adapter.}\label{tab:repair}
-\begin{tabular}{@{}lllllll@{}}
-\toprule
-Arm & Parsed & Mean turns & $\geq$2 turns & Turn-1 & Final & Rescued \\
-\midrule
-ReAct & 95 & 1.92 & 40 & 57 & \textbf{74} & 17 \\
-FC + hermes & \textbf{0} & 0.96 & \textbf{0} & 53 & 53 & \textbf{0} \\
-FC + dedicated adapter & \textbf{84} & 1.82 & \textbf{37} & 53 & \textbf{62} & \textbf{9} \\
-\bottomrule
-\end{tabular}
-\end{center}
+On Qwen2.5-Coder-7B with \texttt{tool\_choice: auto} held fixed and only the adapter changed,
+parse goes \textbf{0$\to$84}, items reaching a second turn \textbf{0$\to$37} and multi-turn rescues
+\textbf{0$\to$9}: the mechanism is restored from literal zero (Table~\ref{tab:repair}). The two FC
+arms have \emph{identical} turn-1 pass, 53 vs 53 --- the internal-validity check, since an adapter
+can only affect what happens after the first turn. That Llama's turn-1 \emph{does} move (34$\to$46)
+while Qwen's does not is the taxonomy making a prediction: Qwen's failure is downstream of
+generation, so the first turn is produced and then discarded; Llama's is inside generation, so the
+first turn is itself destroyed and repairing the constraint restores it. \textbf{Different failure
+layers leave different downstream signatures, and the direction of the turn-1 effect identifies the
+layer.}
 
-Parse 0$\to$84, items reaching a second turn 0$\to$37, multi-turn rescues 0$\to$9: \textbf{the
-mechanism is restored from literal zero}. The two FC arms have identical turn-1 pass (53 vs 53),
-which is the internal-validity check --- an adapter can only affect what happens \emph{after} the
-first turn. That Llama's turn-1 \emph{does} move (34$\to$46) while Qwen's does not is the taxonomy
-making a prediction: Qwen's failure sits at the parser layer, downstream of generation, so the
-first-turn completion is produced and then discarded; Llama's sits at the schema layer, inside
-generation, so the first-turn output is itself destroyed and repairing the constraint restores it.
-Different failure layers leave different downstream signatures, and the direction of the turn-1
-effect identifies the layer.
-
-The pass-rate gain is \emph{not} significant (53$\to$62, \emph{p}=0.093). A pre-planned
-replication on a random 300-item sample reproduces the direction with three times the data
-(160/300 $\to$ 178/300, 43 discordant against 25, \emph{p}=0.0385), nominally below 0.05 --- but
-this paper runs roughly a dozen McNemar tests and the Bonferroni threshold at that family size is
-$\approx$0.0042. \textbf{The repair gain therefore still does not survive correction, and we rest
-no claim on it.} What the larger sample establishes is that the direction is stable and not an
-artefact of the non-random subset. The protocol gap on the same 300 items (178/300 $\to$ 219/300,
-\emph{p}=3.1$\times$10$^{-6}$) clears the corrected threshold by three orders of magnitude.
-
-Two bounds. Restricting to items both arms parsed, the residual protocol gap holds on Llama
-(\emph{p}=0.0021) and is not detected on Qwen: $+8.4$\,pp, 95\% CI $[-0.5, +17.4]$,
-\emph{p}=0.118. \textbf{We do not read $p>0.05$ as evidence of no effect} --- that interval admits
-a residual larger than the effect we detect on Llama --- so the residual protocol effect is
-established on one family and undetermined on the other (Appendix~\ref{app:conditioned}). And the
-dedicated solution changes parser, chat template and few-shot simultaneously, so at this
-granularity it can only be called an \emph{adapter combination}; the $2\times2$ of
-\S\ref{sec:bfcl} is what separates the components.
+The pass-rate gain is \emph{not} significant (53$\to$62, \emph{p}=0.093). A pre-planned replication
+on a random 300-item sample reproduces the direction (160/300$\to$178/300, 43 discordant against
+25, \emph{p}=0.0385) --- nominally below 0.05, but this paper runs roughly a dozen McNemar tests
+and the Bonferroni threshold is $\approx$0.0042, so \textbf{the repair gain still does not survive
+correction and we rest no claim on it.} The protocol gap on the same 300 items
+(178/300$\to$219/300, \emph{p}=3.1$\times$10$^{-6}$) clears it by three orders of magnitude.
+Restricting to items both arms parsed, the residual protocol gap holds on Llama (\emph{p}=0.0021)
+and is not detected on Qwen: $+8.4$\,pp, 95\% CI $[-0.5,+17.4]$, \emph{p}=0.118. \textbf{We do not
+read $p>0.05$ as evidence of no effect} --- that interval admits a residual larger than the effect
+we detect on Llama --- so the residual is established on one family and undetermined on the other
+(Appendix~\ref{app:conditioned}).
 
 \subsection{Zero tool execution in RL rollouts, and where it comes from at two scales}
 \label{sec:rl}
 
-Same model, data, hyper-parameters and seed; prompt strength matched --- the FC arm uses a
-mandatory instruction (\emph{``you must call \texttt{run\_tests} to verify your code; do not
-answer directly''}).
+With model, data, hyper-parameters, seed and prompt strength matched, the FC arm's
+\texttt{num\_turns} is pinned at its minimum of \textbf{2.000}, tool time is \textbf{0.00\,s} and a
+dedicated counter reads \textbf{0.000} calls per rollout, against 5.883 / 12.21\,s / 2.052 for
+ReAct (Table~\ref{tab:training}). Instrumentation sits at the two agent-side call sites and
+\emph{not} at the sandbox entry point, because the reward function evaluates final code through the
+same function and would merge reward evaluation into the tool-call count. \textbf{Wording bound.}
+What is measured is \textbf{parser-accepted and executed calls = 0}, \emph{not} ``the model never
+attempted to call'': FC rollouts were not saved.
 
-\begin{center}
-\small
-\captionof{table}{RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength.}\label{tab:training}
-\begin{tabular}{@{}lllll@{}}
-\toprule
-Arm & Steps & \texttt{num\_turns/mean} & Tool time & Tool calls / rollout \\
-\midrule
-FC (\texttt{tool\_agent} + hermes) & 10 & \textbf{2.000} (constant) & \textbf{0.00 s} & \textbf{0.000} \\
-ReAct (\texttt{react\_agent}) & 3 & 5.883 & 12.21 s & \textbf{2.052} \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Instrumentation is at the two agent-side call sites (\texttt{CodeTool.execute},
-\texttt{ReActAgentLoop.\_run\_tests}); it must not be placed in the sandbox entry point, because
-the reward function evaluates final code through the same function, which would merge reward
-evaluation into the tool-call count. The FC counter file is empty; the ReAct file has 788 lines.
-\textbf{Wording bound.} What is measured is \textbf{parser-accepted and executed calls = 0},
-\emph{not} ``the model never attempted to call'': FC rollouts were not saved, so direct answers,
-malformed calls and dropped intent cannot be separated from the training logs.
-
-\paragraph{At 7B, the training stack censors a call that is there.}
-The 1.5B checkpoint's zero is over-determined. A probe replication under the identical mandatory
-prompt (n=100) gives \textbf{0 well-formed calls, 54 direct answers, 46 unparsable outputs, and 66
-items containing JSON fragments but not one naming \texttt{run\_tests}} --- at that scale the
-missing calls are a capability failure, not a parser one, and there was nothing well-formed to
-censor. (The mandatory instruction also \emph{degraded} the model: final pass 31 $\to$ 15 versus
-the optional prompt.) That leaves the question the RL claim needs: inside the training rollout
-path, does a model that \emph{does} emit well-formed calls have them removed? We ran the probe of
-\S\ref{sec:scale} a second time, not against a serving endpoint but inside verl's own AgentLoop,
-on Qwen2.5-Coder-7B under the documented configuration, logging every generation, the parser's
-verdict, tool executions and observations. One rollout batch suffices; no training step is
-required.
+At 1.5B that zero is \textbf{over-determined}. A probe replication under the identical mandatory
+prompt gives 0 well-formed calls, 54 direct answers, 46 unparsable outputs and 66 items containing
+JSON fragments but \emph{not one naming \texttt{run\_tests}} --- a capability failure, not a parser
+one, with nothing well-formed to censor. The mandatory instruction also \emph{degraded} the model,
+final pass 31$\to$15. So we ran the probe again inside verl's own AgentLoop at 7B, under the
+documented configuration, logging every generation, the parser's verdict, executions and
+observations.
 
 \begin{center}
 \small
@@ -440,78 +276,61 @@ observations returned & \textbf{0} \\
 \end{center}
 
 \textbf{Forty-five of 115 generations carry a call that would execute if it were wrapped in the
-envelope, and none reaches the environment.} The mechanism is the one \S\ref{sec:scale} identifies
-on the serving side, now observed \emph{inside the training loop}, which is where the RL claim
-needs it: at 7B the absence of tool-mediated trajectories is attributable to the interface, not to
-the policy. It does not retroactively change the 1.5B run, whose zero remains over-determined; we
-report the two scales separately and the scale dependence is itself the finding. This probe's run
-terminated with a \textbf{CUDA OOM} during the actor update that follows rollout collection, so no
-gradient step completed; the rollout observations were all produced before that point and are
-unaffected.
+envelope, and none reaches the environment.} This is the serving-side mechanism of
+\S\ref{sec:scale} observed \emph{inside the training loop}, which is where the RL claim needs it:
+at 7B the absence of tool-mediated trajectories is attributable to the interface, not the policy.
+It does not retroactively change the 1.5B run, whose zero remains over-determined; we report the
+two scales separately and the scale dependence is itself the finding. This probe's run terminated
+with a \textbf{CUDA OOM} during the actor update following rollout collection, so no gradient step
+completed; the rollout observations all precede that point.
 
-Valid calls are zero from step 1, and the reward admits direct answers (FC
-\texttt{critic/rewards/mean} rose 0.233$\to$0.281), so the policy gradient contains no signal
-pushing toward tool use: the tool branch has a zero-sample return while direct answering is
-continuously reinforced. The model cannot discover the tool path by exploration, because every
-attempt is discarded at the protocol layer and no positively-rewarded tool trajectory ever exists
-to be reinforced. \textbf{The tool-using branch receives no direct on-policy gradient signal under
-the observed rollout distribution, and is effectively inaccessible to policy-gradient learning in
-this cold-start regime.} This holds for Qwen2.5-Coder + \texttt{hermes} and does not generalise to
-``FC training never receives tool feedback''; at 10 and 3 steps it is a \emph{mechanism} result,
-not an outcome comparison.
+Valid calls are zero \textbf{from step 1} and the reward admits direct answers (FC
+\texttt{critic/rewards/mean} rose 0.233$\to$0.281), so the tool branch has a zero-sample return
+while direct answering is continuously reinforced. The model cannot discover the tool path by
+exploration, because every attempt is discarded at the protocol layer and no positively-rewarded
+tool trajectory ever exists. \textbf{The tool-using branch receives no direct on-policy gradient
+signal under the observed rollout distribution, and is effectively inaccessible to policy-gradient
+learning in this cold-start regime.} At 10 and 3 steps this is a \emph{mechanism} result, not an
+outcome comparison, and it does not generalise to ``FC training never receives tool feedback''.
 
-\subsubsection{Why no repaired-FC training arm exists yet}
+\subsection{Why no repaired-FC arm exists yet, and what a working channel did not buy}
 \label{sec:norepair}
+\label{sec:sufficiency}
 
 The natural control is \emph{repaired} FC rather than ReAct, and we did not have it at the time of
-writing. Four obstacles were met and three dissolved on inspection; the full account, with the two
-negative interventions it produced, is in Appendix~\ref{app:norepair}. In summary: a vLLM parser
-plugin does not reach the training loop at all, because verl's AgentLoop parses for itself; a
-parser registered inside \emph{verl's} registry does reach it and lifts recoverable calls from
-0/100 to 52/100 at 1.5B, but zero of those 52 name \texttt{run\_tests}, every one targeting the
-function the task asks the model to write --- the same signature as Llama's failure at a 5$\times$
-smaller model, which name normalisation cannot repair because no call carries code to normalise. A
-role-disambiguation few-shot aimed at that confusion made the model \emph{more fluent at emitting
-the wrong call} (52 $\to$ 64 recoverable, still 0 naming the tool) and slightly worse at the task
-(15 $\to$ 13).
+writing. Four obstacles were met and three dissolved on inspection (Appendix~\ref{app:norepair}). A
+vLLM parser plugin does not reach the training loop at all, because verl's AgentLoop parses for
+itself. A parser registered inside \emph{verl's} registry does reach it and lifts recoverable calls
+from 0/100 to \textbf{52/100} at 1.5B --- but \textbf{zero of those 52 name \texttt{run\_tests}},
+every one targeting the function the task asks the model to write, the same signature as Llama's
+failure at a 5$\times$ smaller model, which name normalisation cannot repair because no call
+carries code to normalise. A role-disambiguation few-shot aimed at that confusion made the model
+\emph{more fluent at emitting the wrong call} (52$\to$64 recoverable, still 0 naming the tool) and
+slightly worse at the task (15$\to$13).
 
 \textbf{Correcting our own prescription.} We previously named the missing capability as guided
 decoding. That was the wrong diagnosis: guided decoding \emph{forces} a format, whereas the repair
-this paper argues for everywhere else is the opposite --- accept what the model already emits.
-What a repaired-FC arm needs is a parser in verl's own registry accepting the bare-JSON call
-Qwen2.5-Coder emits, and we have since demonstrated that code can be installed there and intercept
-every generation. \textbf{What actually blocks the arm is scale.} At 1.5B a repaired parser would
-have nothing to accept, and the arm would be void for the same reason we reject the Granite arm;
-the checkpoint that does emit well-formed calls is 7B, and 7B full-parameter RL exhausted memory
-on our single 80\,GB card. The control is a 7B experiment under parameter-efficient tuning, not a
-stack-replacement project, and we scope it that way in \S\ref{sec:future}. Accordingly ReAct serves
-as a positive-control interaction channel, not as a parser-repair control, and that comparison
-changes protocol and interface together.
+argued for everywhere else here is the opposite --- accept what the model already emits.
+\textbf{What actually blocks the arm is scale}: at 1.5B a repaired parser would have nothing to
+accept, and the checkpoint that does emit well-formed calls is 7B, whose full-parameter RL
+exhausted memory on our single 80\,GB card. The control is a 7B experiment under
+parameter-efficient tuning, not a stack-replacement project (\S\ref{sec:future}). Accordingly
+\textbf{ReAct serves as a positive-control interaction channel, not a parser-repair control}.
 
-\subsubsection{Opening the channel does not, by itself, unlock multi-turn learning}
-\label{sec:sufficiency}
-
-The censoring result says a broken interface removes the tool-using branch from the experience
-distribution. It does \emph{not} say that restoring the channel is \emph{sufficient} for the
-policy to learn multi-turn repair. We tested that with the one configuration that delivers tool
-feedback at this scale: ReAct, 75 GRPO steps, same model, data, hyper-parameters, seed and
-evaluation hook as the three historical runs, executing 23{,}676 tool calls. Rescues by turn
-$\geq$2 over steps 0/15/30/45/60 were 8, 6, 6, 8, 6 --- net change zero, and inside the range of
-the zero-execution runs, whose rescue sequences are $[7,9,6,6,7,6,10,8,9,8,6]$,
-$[8,7,6,7,7,7,7,5,6,6,8]$ and $[7,5,7,5,7,8,9,9,8,9]$. Whether tool feedback arrived made no
-measurable difference on this metric. Composition barely moved either: adjacent checkpoints have
-solved-set Jaccard 0.974--0.983, while 85 of 542 first-turn completions changed verbatim between
-steps 15 and 30 --- the policy moves, the solved set does not (Appendix~\ref{sec:composition}).
-
-It does not license ``interface repair unlocks multi-turn capability''; we tested the closest
-available version of that claim and it failed. It licenses the narrower statement we defend:
-\textbf{the interface determines whether tool-mediated trajectories exist at all, and their
-absence is sufficient to explain why no multi-turn signal was available --- but their presence is
-not sufficient to produce multi-turn learning at this scale and budget.} \textbf{This is a ReAct
-arm, not a repaired-FC arm}: it changes protocol and interface together, so it cannot separate ``a
-working channel is insufficient'' from ``ReAct in particular is insufficient''. It is 75 steps on
-one seed at 1.5B against 150-step historical baselines, and the step-75 evaluation was lost when
-the checkpoint write exhausted the disk (4.86\,GB required, 4.6\,GB free) after training had
-completed. The trend over 0--60 is flat enough that the missing point would not change the
-reading, but we note the loss rather than presenting an unexplained gap. The experiment that would
-separate the two readings is named in \S\ref{sec:future}.
+That leaves the sufficiency question, which we tested with the one configuration delivering tool
+feedback at this scale: ReAct, 75 GRPO steps, everything else matched to the historical runs,
+executing \textbf{23{,}676 tool calls}. Rescues by turn $\geq$2 over steps 0/15/30/45/60 were
+\textbf{8, 6, 6, 8, 6} --- net change zero, inside the range of the zero-execution runs
+($[7,9,6,6,7,6,10,8,9,8,6]$, $[8,7,6,7,7,7,7,5,6,6,8]$, $[7,5,7,5,7,8,9,9,8,9]$). Whether tool
+feedback arrived made no measurable difference on this metric, and composition barely moved either:
+adjacent checkpoints have solved-set Jaccard 0.974--0.983 while 85 of 542 first-turn completions
+changed verbatim between steps 15 and 30 --- \textbf{the policy moves, the solved set does not}
+(Appendix~\ref{sec:composition}). This does not license ``interface repair unlocks multi-turn
+capability''; we tested the closest available version and it failed. It licenses the narrower
+statement: \textbf{the interface determines whether tool-mediated trajectories exist at all, and
+their absence is sufficient to explain why no multi-turn signal was available --- but their
+presence is not sufficient to produce multi-turn learning at this scale and budget.} \textbf{This
+is a ReAct arm, not a repaired-FC arm}: it changes protocol and interface together, so it cannot
+separate ``a working channel is insufficient'' from ``ReAct in particular is insufficient''. It is
+75 steps on one seed at 1.5B against 150-step baselines, and the step-75 evaluation was lost when
+the checkpoint write exhausted the disk after training completed.

@@ -29,13 +29,11 @@ piece of configuration that can silently zero a capability measurement is docume
 party at the point of use.}
 
 \textbf{Interface repair precedes protocol comparison.} On Llama the ReAct-vs-FC gap was 31 points
-before the \texttt{strict} fix and 19 after, both components separately significant
-(\emph{p}=0.0075 and \emph{p}=0.0019). On Qwen, conditioning on items the server parsed, we do not
-detect a significant residual (\emph{p}=0.118; $+8.4$\,pp, 95\% CI $[-0.5, +17.4]$) --- an interval
+before the \texttt{strict} fix and 19 after, both components separately significant. On Qwen,
+conditioning on parsed items, we do not detect a residual (\emph{p}=0.118) --- but that interval is
 wide enough to contain effects as large as the unconditioned gap, so it is evidence of
-\emph{insufficient resolution}, not of equivalence, and conditioning on a successful parse is
-post-treatment conditioning on a variable the interface itself determines. Comparisons of agent
-protocols that do not first exhaust the serving configuration matrix are not measuring protocols.
+\emph{insufficient resolution}, not equivalence. \textbf{Comparisons of agent protocols that do not
+first exhaust the serving configuration matrix are not measuring protocols.}
 
 \textbf{A cold-start hazard for agentic RL.} \S\ref{sec:rl}'s mechanism generalises beyond this
 stack: whenever (a) tool trajectories are censored at rate ${\sim}1$ and (b) the reward admits a

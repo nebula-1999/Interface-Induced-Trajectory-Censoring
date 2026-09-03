@@ -25,27 +25,26 @@ originate in serving infrastructure is already practitioner folklore
 \citep{livekit2026servingstack}, qualitatively and without measurements.
 
 \textbf{Audits and failure taxonomies of tool use.} A cluster of concurrent 2026 work asks whether
-reported tool-use scores mean what they appear to mean, and stops one layer above us.
-\citet{bhat2026benchmarkingbenchmarks} audit BFCL~v4, $\tau^2$-bench \citep{barres2025tau2bench},
-LiveMCPBench and MCP-Atlas over 496 expert-reviewed tasks and report an 18.5\% evaluator--human
-misalignment rate from benchmark-design artifacts; $\tau^2$-Bench-Verified
-\citep{tau2benchverified} is its industrial counterpart, documenting four categories of
-ground-truth defect in a benchmark used to rank frontier agents. \citet{raj2026modelorharness}
-organise 41 failure modes by interaction edge and by whether the repair belongs to model or
-harness; \citet{soni2026toolfailbench} label traces across 1{,}000 tasks as Tool-Skip, Result-Ignore,
-Output-Fabrication or Unnecessary-Tool-Use; \citet{albayaydh2026beyondleaderboard} synthesise 27
-such papers into six clusters, one being measurement validity. In two cases our result is a
+reported tool-use scores mean what they appear to mean, and stops one layer above us:
+\citet{bhat2026benchmarkingbenchmarks} report an 18.5\% evaluator--human misalignment rate across
+BFCL~v4, $\tau^2$-bench \citep{barres2025tau2bench}, LiveMCPBench and MCP-Atlas;
+$\tau^2$-Bench-Verified \citep{tau2benchverified} documents four categories of ground-truth defect
+in a benchmark used to rank frontier agents; \citet{raj2026modelorharness} organise 41 failure
+modes by interaction edge and by whether the repair belongs to model or harness;
+\citet{soni2026toolfailbench} label traces across 1{,}000 tasks as Tool-Skip, Result-Ignore,
+Output-Fabrication or Unnecessary-Tool-Use; and \citet{albayaydh2026beyondleaderboard} synthesise
+27 such papers into six clusters, one being measurement validity. In two cases our result is a
 precondition for theirs: \emph{Model or Harness?} supplies the vocabulary but no measurement, and
-\emph{ToolFailBench}'s Tool-Skip label is read as a model behaviour when it is also precisely what
-an unparsed emission produces, so the category is confounded by the interface unless the stack is
-verified first --- which the preflight check of \S\ref{sec:discussion} does in seconds.
+\emph{ToolFailBench}'s Tool-Skip label is read as a model behaviour when it is also exactly what an
+unparsed emission produces --- the category is confounded by the interface unless the stack is
+verified first, which the preflight check of \S\ref{sec:discussion} does in seconds.
 \textbf{Every audit above varies something above the API boundary; the distortion we report occurs
 below it, and is invisible to all of them.}
 
 \textbf{Constrained decoding, protocols, stacks.} \citet{tam2024speakfreely} report that format
-restrictions can degrade reasoning; \S\ref{sec:llama} is a counter-instance on this task, where
-\texttt{strict: true} eliminates a 23\% role-confusion failure and \emph{improves} pass rate, and
-we report the CoT control where added reasoning made matters worse. Guided-decoding machinery
+restrictions can degrade reasoning; \S\ref{sec:llama} is a counter-instance, where
+\texttt{strict: true} eliminates a 23\% role-confusion failure and \emph{improves} pass rate, though
+we also report the CoT control where added reasoning made matters worse. Guided-decoding machinery
 \citep{willard2023outlines} underlies both \texttt{strict} and vLLM's \texttt{required} mode.
 ReAct \citep{yao2023react} is the text protocol we compare against, and BFCL
 \citep{bfcl2025}, $\tau$-bench \citep{yao2025taubench}, ToolLLM \citep{qin2024toolllm}, API-Bank

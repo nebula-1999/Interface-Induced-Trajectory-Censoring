@@ -15,6 +15,123 @@ never successfully called in any of these runs.}
 \label{fig:training_curves}
 \end{figure}
 
+\subsection{Result tables referenced from \S\ref{sec:results}}
+\label{app:tables}
+
+\begin{center}
+\small
+\captionof{table}{BFCL v4, first HTTP request per case. Intent columns are measured only where the parse failed.}\label{tab:bfclfunnel}
+\begin{tabular}{@{}llllllll@{}}
+\toprule
+Arm & cases & HTTP err & first parsed & unparsed & tight & strong & weak \\
+\midrule
+\texttt{hermes} (documented) & 200 & 0 & \textbf{0} & 200 & 166 & 169 & 187 \\
+\texttt{qwen2\_5\_coder} (repaired) & 200 & 0 & \textbf{196} & 4 & 0 & 1 & 2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{center}
+\small
+\captionof{table}{$\tau$-bench \texttt{retail}, all 115 tasks paired across arms (none dropped).}\label{tab:tau}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+ & documented & repaired \\
+\midrule
+assistant turns & 1389 & 1971 \\
+server-parsed calls & \textbf{0} & \textbf{636} \\
+emitted but unparsed & \textbf{789} & 6 \\
+tool executions / observations returned & \textbf{0} & \textbf{636} \\
+\midrule
+tasks entering the tool loop at all & \textbf{0} & \textbf{103} \\
+tasks solved & 7 & 10 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{center}
+\small
+\captionof{table}{Same probe, items and criterion under a \emph{matched} envelope.}\label{tab:counterfactual}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Size & server-parsed & \textbf{silent fraction (tight, unparsed)} \\
+\midrule
+Qwen3-0.6B & 86 & \textbf{1} \\
+Qwen3-1.7B & 44 & \textbf{1} \\
+Qwen3-4B & 70 & \textbf{2} \\
+Qwen3-8B & 97 & \textbf{0} \\
+\midrule
+Qwen2.5-Coder 1.5B--32B (mismatched) & 0 at every size & \textbf{0 $\to$ 4 $\to$ 21 $\to$ 36 $\to$ 80} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{center}
+\small
+\captionof{table}{Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor.}\label{tab:instruct}\label{tab:turn1}
+\begin{tabular}{@{}llll|ll|lll@{}}
+\toprule
+& \multicolumn{3}{c|}{Instruct, emitted} & \multicolumn{2}{c|}{Coder} & \multicolumn{3}{c}{Instruct} \\
+Size & parsed & \textbf{tight} & weak & parsed & turn-1 = final & turn-1 & final & \textbf{rescued} \\
+\midrule
+1.5B & 1 & 0 & 7 & 0 & 31 & 13 & 13 & \textbf{0} \\
+3B & 11 & 56 & 2 & 0 & 37 & 14 & 17 & \textbf{+3} \\
+7B & 63 & 21 & 0 & 0 & 53 & 34 & 40 & \textbf{+6} \\
+14B & 77 & 19 & 0 & 0 & 53 & 38 & 52 & \textbf{+14} \\
+\textbf{32B} & \textbf{88} & 8 & 0 & 0 & 68 & 42 & 65 & \textbf{+23} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{center}
+\small
+\captionof{table}{Llama-3.1-8B arms, paired on the same 100 items.}\label{tab:llama_arms}
+\begin{tabular}{@{}llllll@{}}
+\toprule
+Arm & Calls issued & Wrong-tool & Executed & Turn-1 & Final \\
+\midrule
+terse (parser only) & 97 & 23 & 74 & 34 & 49 \\
++ official template & 95 & 22 & 73 & 33 & 44 \\
++ official template \textbf{+ \texttt{strict}} & 98 & \textbf{0} & \textbf{97} & \textbf{46} & \textbf{61} \\
+ReAct (reference) & 98 & 0 & 97 & \textbf{61} & 80 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{center}
+\small
+\captionof{table}{Decomposing the ReAct--FC gap on Llama, paired McNemar.}\label{tab:decomposition}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Comparison & b/c & \emph{p} & Attributable to \\
+\midrule
+terse-FC $\to$ strict-FC (49 $\to$ 61) & 15/3 & \textbf{0.0075} & \textbf{interface repair, +12} \\
+strict-FC $\to$ ReAct (61 $\to$ 80) & 27/8 & \textbf{0.0019} & \textbf{protocol, +19} \\
+terse-FC $\to$ ReAct (49 $\to$ 80) & 38/7 & 3.1e-06 & both, +31 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{center}
+\small
+\captionof{table}{Repair loop on Qwen2.5-Coder-7B, \texttt{tool\_choice: auto} fixed, changing only the adapter.}\label{tab:repair}
+\begin{tabular}{@{}lllllll@{}}
+\toprule
+Arm & Parsed & Mean turns & $\geq$2 turns & Turn-1 & Final & Rescued \\
+\midrule
+ReAct & 95 & 1.92 & 40 & 57 & \textbf{74} & 17 \\
+FC + hermes & \textbf{0} & 0.96 & \textbf{0} & 53 & 53 & \textbf{0} \\
+FC + dedicated adapter & \textbf{84} & 1.82 & \textbf{37} & 53 & \textbf{62} & \textbf{9} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{center}
+\small
+\captionof{table}{RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength.}\label{tab:training}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Arm & Steps & \texttt{num\_turns/mean} & Tool time & Tool calls / rollout \\
+\midrule
+FC (\texttt{tool\_agent} + hermes) & 10 & \textbf{2.000} (constant) & \textbf{0.00 s} & \textbf{0.000} \\
+ReAct (\texttt{react\_agent}) & 3 & 5.883 & 12.21 s & \textbf{2.052} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
 \subsection{Offline re-parse matrix and failure-layer decomposition}
 \label{app:reparse}
 
