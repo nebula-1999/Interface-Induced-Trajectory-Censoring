@@ -152,8 +152,9 @@ consequence:
   rollouts, not from the support of the policy: \emph{zero observed samples is not zero
   probability}. We report it as mechanism evidence observed inside rollout collection, not
   as a clean causal RL result --- the comparison arm changes protocol and interface
-  together, and the parser-repair control that would separate them is not constructible in
-  this stack (\S\ref{sec:rl}). We further show that opening the channel was not by itself
+  together. The parser-repair control that would separate them is not available through this
+  stack's \emph{configuration}; what actually blocks it is scale, and we say so precisely in
+  \S\ref{sec:rl}. We further show that opening the channel was not by itself
   sufficient \emph{at this model scale and training budget} (\S\ref{sec:sufficiency}): in a
   75-step ReAct run the bottleneck was not singular. That is an observation about one arm,
   not a general sufficiency theorem.

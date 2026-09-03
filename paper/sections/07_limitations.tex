@@ -35,10 +35,12 @@ present study.
   parser and decoding fixed and varies only whether the checkpoint was trained on the
   tool-call format, and the server-parsed rate then rises with size instead of staying flat.
   That attributes the mismatch to format training rather than to the family --- but it is a
-  control on the \emph{mechanism}, not a second ladder of undercount, and its execution layer
-  is void (the P2 host lacked \texttt{pytest}, \S\ref{sec:scale}). A second \emph{family}'s
-  ladder, on a host with a working executor, remains the cheapest test that would promote or
-  refute the scale claim itself.
+  control on the \emph{mechanism}, not a second ladder of undercount. Its execution layer was
+  initially void --- the host lacked \texttt{pytest} --- and has since been re-run with a
+  working executor (\S\ref{sec:scale}); the parse layer reproduced value for value, and the
+  recovered rescue counts turn out to rise with the parsed column. A second \emph{family}'s
+  ladder remains the test that would promote or refute the scale claim itself, and
+  \S\ref{sec:scale} reports why we could not obtain one.
 \item
   \textbf{The taxonomy is four instances, not an enumeration.} The evidence behind the four
   layers is deliberately asymmetric: Qwen has a scale ladder, an offline replay matrix and a

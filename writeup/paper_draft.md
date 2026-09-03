@@ -188,8 +188,9 @@ consequence:
     rollouts, not from the support of the policy: *zero observed samples is not zero
     probability*. We report it as mechanism evidence observed inside rollout collection, not
     as a clean causal RL result — the comparison arm changes protocol and interface
-    together, and the parser-repair control that would separate them is not constructible in
-    this stack (§<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>). We further show that opening the channel was not by itself
+    together. The parser-repair control that would separate them is not available through this
+    stack’s *configuration*; what actually blocks it is scale, and we say so precisely in
+    §<a href="#sec:rl" data-reference-type="ref" data-reference="sec:rl">6.7</a>. We further show that opening the channel was not by itself
     sufficient *at this model scale and training budget* (§<a href="#sec:sufficiency" data-reference-type="ref" data-reference="sec:sufficiency">6.7.2</a>): in a
     75-step ReAct run the bottleneck was not singular. That is an observation about one arm,
     not a general sufficiency theorem.
@@ -1620,10 +1621,12 @@ present study.
     parser and decoding fixed and varies only whether the checkpoint was trained on the
     tool-call format, and the server-parsed rate then rises with size instead of staying flat.
     That attributes the mismatch to format training rather than to the family — but it is a
-    control on the *mechanism*, not a second ladder of undercount, and its execution layer
-    is void (the P2 host lacked `pytest`, §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>). A second *family*’s
-    ladder, on a host with a working executor, remains the cheapest test that would promote or
-    refute the scale claim itself.
+    control on the *mechanism*, not a second ladder of undercount. Its execution layer was
+    initially void — the host lacked `pytest` — and has since been re-run with a
+    working executor (§<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a>); the parse layer reproduced value for value, and the
+    recovered rescue counts turn out to rise with the parsed column. A second *family*’s
+    ladder remains the test that would promote or refute the scale claim itself, and
+    §<a href="#sec:scale" data-reference-type="ref" data-reference="sec:scale">6.2</a> reports why we could not obtain one.
 
 4.  **The taxonomy is four instances, not an enumeration.** The evidence behind the four
     layers is deliberately asymmetric: Qwen has a scale ladder, an offline replay matrix and a
@@ -1795,44 +1798,14 @@ gradient signal under the observed rollout distribution. Repairing the interface
 mechanism but recovers only part of the outcome gap, and a genuine protocol difference
 remains underneath on one of the two families that admit a comparison.
 
-The most uncomfortable finding is methodological. We ran three single-variable paired
-controls on a 23% failure and concluded it was a model deficiency; a fourth control, taken
-from a sentence in the serving documentation, reduced it to zero. sectionConclusion
-
-Tool-call interfaces censor agent trajectories, and the censoring is silent and
-checkpoint-specific; within Qwen2.5-Coder the absolute undercount increases monotonically with
-checkpoint size, which we report as a within-family observation rather than a general law. In
-reinforcement learning the same mismatch leaves the sampled experience distribution with no
-tool-mediated trajectories at all, so the tool-using branch receives no direct on-policy
-gradient signal under the observed rollout distribution. Repairing the interface restores the
-mechanism but recovers only part of the outcome gap, and a genuine protocol difference
-remains underneath on one of the two families that admit a comparison.
-
-The most uncomfortable finding is methodological. We ran three single-variable paired
-controls on a 23% failure and concluded it was a model deficiency; a fourth control, taken
-from a sentence in the serving documentation, reduced it to zero. sectionConclusion
-
-Tool-call interfaces censor agent trajectories, and the censoring is silent and
-checkpoint-specific; within Qwen2.5-Coder the absolute undercount increases monotonically with
-checkpoint size, which we report as a within-family observation rather than a general law. In
-reinforcement learning the same mismatch leaves the sampled experience distribution with no
-tool-mediated trajectories at all, so the tool-using branch receives no direct on-policy
-gradient signal under the observed rollout distribution. Repairing the interface restores the
-mechanism but recovers only part of the outcome gap, and a genuine protocol difference
-remains underneath on one of the two families that admit a comparison.
-
-The most uncomfortable finding is methodological. We ran three single-variable paired
-controls on a 23% failure and concluded it was a model deficiency; a fourth control, taken
-from a sentence in the serving documentation, reduced it to zero. sectionConclusion
-
-Tool-call interfaces censor agent trajectories, and the censoring is silent and
-checkpoint-specific; within Qwen2.5-Coder the absolute undercount increases monotonically with
-checkpoint size, which we report as a within-family observation rather than a general law. In
-reinforcement learning the same mismatch leaves the sampled experience distribution with no
-tool-mediated trajectories at all, so the tool-using branch receives no direct on-policy
-gradient signal under the observed rollout distribution. Repairing the interface restores the
-mechanism but recovers only part of the outcome gap, and a genuine protocol difference
-remains underneath on one of the two families that admit a comparison.
+Two controls fix what the effect is a property of. A 2 × 2 over chat template and parser
+on a public benchmark finds **both main effects exactly zero**, with the entire
+0.00-to-0.96 swing in their interaction: no component is defective, and repairing one side of
+the contract buys nothing. And a ladder run under a *matched* interface shows the silent
+fraction staying at 0–2 across a comparable span of scale, where the mismatched interface
+takes it to 80 — capability growth alone does not manufacture an undercount. What the
+serving layer removes is not a property of the model, nor of the parser, but of the contract
+between them.
 
 The most uncomfortable finding is methodological. We ran three single-variable paired
 controls on a 23% failure and concluded it was a model deficiency; a fourth control, taken
@@ -1840,9 +1813,8 @@ from a sentence in the serving documentation, reduced it to zero. Our own human 
 reproduced the same mechanism a second time: twelve of ninety-eight annotations missed a
 tool call because it sat after a fenced code block, and the annotator—like the
 parser—concluded from the same bytes that no call had been made.
-**The mechanism this paper describes claimed us as one of its instances, twice**,
-which is the strongest argument we can offer that reporting server-parsed tool-call rates
-as model capability is not a safe default.
+We were, twice, an instance of the mechanism we describe. Reporting server-parsed tool-call
+rates as model capability is not a safe default.
 
 # Appendix A — Data Errata
 
