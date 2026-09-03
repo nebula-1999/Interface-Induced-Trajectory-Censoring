@@ -65,6 +65,8 @@ df -h /root/autodl-tmp | tail -1
   data.val_files="$DATA/val_fc3.parquet" \
   data.train_batch_size="$P3_BATCH" \
   data.dataloader_num_workers=1 \
+  data.max_prompt_length=2048 \
+  data.max_response_length=6144 \
   actor_rollout_ref.model.path="$MODEL" \
   +actor_rollout_ref.model.override_config.attn_implementation=sdpa \
   actor_rollout_ref.model.use_remove_padding=False \
