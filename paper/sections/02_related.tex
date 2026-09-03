@@ -1,110 +1,71 @@
 \section{Related Work}
 \label{sec:related}
 
-\textbf{Evaluation validity under nuisance factors.} A line of work shows that reported LLM
-capability is sensitive to factors that ought to be irrelevant. \citet{sclar2024formatspread}~(\emph{FormatSpread})
-quantify how prompt-formatting choices alone move benchmark scores by margins comparable to
-model differences; \citet{mizrahi2024stateofwhatart}~(\emph{State of What Art?}) show single-prompt evaluation is
-unreliable and argue for multi-prompt protocols; \citet{dehghani2021benchmarklottery}~(\emph{The Benchmark Lottery})
-document how benchmark and configuration choices determine which method appears to win.
-Our contribution is adjacent but distinct: those works vary an input the evaluator controls
-and observe score movement. \textbf{We identify a component of the measurement apparatus --- the
-serving stack's tool-call parser --- that can zero out a capability signal entirely, without
-any error, and whose distortion grows with model scale.}
+\textbf{Evaluation validity under nuisance factors.} Reported LLM capability is sensitive to
+factors that ought to be irrelevant: prompt formatting alone moves benchmark scores by margins
+comparable to model differences \citep{sclar2024formatspread}, single-prompt evaluation is
+unreliable \citep{mizrahi2024stateofwhatart}, and benchmark and configuration choices determine
+which method appears to win \citep{dehghani2021benchmarklottery}. Those works vary an input the
+evaluator controls and observe score movement. \textbf{We identify a component of the measurement
+apparatus --- the serving stack's tool-call parser --- that can zero out a capability signal
+entirely, without any error, and whose distortion grows with model scale.}
 
-\textbf{Parsing-induced measurement error.} The mechanism we study --- a parser, not a model,
-producing the observed failure --- has been isolated once before, in a different domain.
-\citet{garware2026brokenruler}~(\emph{When the Ruler is Broken}) show that in LLM-based
-security-log classification a strict regular-expression parser reports 0\% threat accuracy
-while a corrected fuzzy parser recovers 76\% on \emph{identical} model outputs, with an
-unaffected severity metric serving as an internal control. We regard that work as the closest
-antecedent to ours and adopt the same standard of proof: one fixed set of bytes, re-parsed
-under different rules (\S\ref{sec:scale}). Three things separate the contributions. Their gap is a single
-mechanism in a single domain and they explicitly decline to generalise it, whereas we separate
-\emph{four} layers at which the failure occurs --- template, parser, schema, token --- across
-four model families (\S\ref{sec:families}). Their gap is a fixed quantity; ours is a function of scale, and it
-grows (\S\ref{sec:scale}). And their distortion terminates at the reported number, whereas we follow it
-into an RL rollout and identify which branch of the policy the gradient can no longer reach
-(\S\ref{sec:rl}). Outside the literature, the claim that tool-call failures originate in serving
-infrastructure rather than in models is already practitioner folklore
-\citep{livekit2026servingstack}; that account is qualitative and reports no measurements.
-\textbf{Our claim is not that the interface can fail silently, which is known; it is that the
-silent fraction is measurable, that within Qwen2.5-Coder it grows with checkpoint size under
-the same mismatched interface, and that it propagates into
-training.}
+\textbf{Parsing-induced measurement error.} The mechanism has been isolated once before, in
+another domain: \citet{garware2026brokenruler} show that in LLM-based security-log classification
+a strict regular-expression parser reports 0\% threat accuracy while a corrected fuzzy parser
+recovers 76\% on \emph{identical} model outputs, with an unaffected severity metric as an internal
+control. We regard it as the closest antecedent and adopt the same standard of proof: one fixed
+set of bytes, re-parsed under different rules (\S\ref{sec:scale}). Three things separate the
+contributions --- their gap is a single mechanism in a single domain, which they explicitly
+decline to generalise, whereas we separate four layers across four families; their gap is a fixed
+quantity, ours is a function of scale; and their distortion terminates at the reported number,
+whereas we follow it into an RL rollout and identify which branch of the policy the gradient can
+no longer reach (\S\ref{sec:rl}). Outside the literature the claim that tool-call failures
+originate in serving infrastructure is already practitioner folklore
+\citep{livekit2026servingstack}, qualitatively and without measurements.
 
-\textbf{Constrained decoding and its costs.} \citet{tam2024speakfreely}~(\emph{Let Me Speak Freely?}) report that
-format restrictions and structured-output constraints can degrade reasoning. This bears
-directly on \S\ref{sec:llama}, where enabling \texttt{strict:\ true} eliminates a 23\% role-confusion failure and
-\emph{improves} pass rate (49 $\to$ 61). We do not claim constraints are free: our result is that on
-this task the constraint's benefit --- admitting 23 previously-discarded items into execution
---- outweighs any reasoning cost, and we report the CoT control (\S\ref{sec:llama}) where added reasoning
-made matters worse. Whether constraints hurt elsewhere in the same stack is untested here.
-Guided-decoding machinery \citep{willard2023outlines} underlies both \texttt{strict} and vLLM's
-\texttt{required} mode.
+\textbf{Audits and failure taxonomies of tool use.} A cluster of concurrent 2026 work asks whether
+reported tool-use scores mean what they appear to mean, and stops one layer above us.
+\citet{bhat2026benchmarkingbenchmarks} audit BFCL~v4, $\tau^2$-bench \citep{barres2025tau2bench},
+LiveMCPBench and MCP-Atlas over 496 expert-reviewed tasks and report an 18.5\% evaluator--human
+misalignment rate from benchmark-design artifacts; $\tau^2$-Bench-Verified
+\citep{tau2benchverified} is its industrial counterpart, documenting four categories of
+ground-truth defect in a benchmark used to rank frontier agents. \citet{raj2026modelorharness}
+organise 41 failure modes by interaction edge and by whether the repair belongs to model or
+harness; \citet{soni2026toolfailbench} label traces across 1{,}000 tasks as Tool-Skip, Result-Ignore,
+Output-Fabrication or Unnecessary-Tool-Use; \citet{albayaydh2026beyondleaderboard} synthesise 27
+such papers into six clusters, one being measurement validity. In two cases our result is a
+precondition for theirs: \emph{Model or Harness?} supplies the vocabulary but no measurement, and
+\emph{ToolFailBench}'s Tool-Skip label is read as a model behaviour when it is also precisely what
+an unparsed emission produces, so the category is confounded by the interface unless the stack is
+verified first --- which the preflight check of \S\ref{sec:discussion} does in seconds.
+\textbf{Every audit above varies something above the API boundary; the distortion we report occurs
+below it, and is invisible to all of them.}
 
-\textbf{Tool-use benchmarks.} BFCL~\citep{bfcl2025}, $\tau$-bench \citep{yao2025taubench}, ToolLLM~\citep{qin2024toolllm},
-API-Bank~\citep{li2023apibank} and Toolformer~\citep{schick2023toolformer} evaluate or train tool use. To our
-knowledge these report tool-call rates as parsed by the serving layer. \S\ref{sec:scale} shows that
-number can be zero while 80/100 well-formed calls are emitted, which --- if the pattern
-replicates on their stacks --- would affect any absolute tool-use rate they report.
+\textbf{Constrained decoding, protocols, stacks.} \citet{tam2024speakfreely} report that format
+restrictions can degrade reasoning; \S\ref{sec:llama} is a counter-instance on this task, where
+\texttt{strict: true} eliminates a 23\% role-confusion failure and \emph{improves} pass rate, and
+we report the CoT control where added reasoning made matters worse. Guided-decoding machinery
+\citep{willard2023outlines} underlies both \texttt{strict} and vLLM's \texttt{required} mode.
+ReAct \citep{yao2023react} is the text protocol we compare against, and BFCL
+\citep{bfcl2025}, $\tau$-bench \citep{yao2025taubench}, ToolLLM \citep{qin2024toolllm}, API-Bank
+\citep{li2023apibank} and Toolformer \citep{schick2023toolformer} evaluate or train tool use,
+reporting tool-call rates as parsed by the serving layer. verl \citep{sheng2025hybridflow}
+provides the RL stack, and importantly its AgentLoop performs \textbf{its own} tool-call parsing
+(\texttt{verl/experimental/agent\_loop/tool\_parser.py}, adapted from vLLM v0.9.1), so a vLLM-side
+parser plugin does not affect training rollouts --- a distinction that cost us one wasted
+experiment design (\S\ref{sec:norepair}).
 
-\textbf{Audits and failure taxonomies of tool use.} A cluster of concurrent 2026 work asks
-whether reported tool-use scores mean what they appear to mean, and stops one layer above us.
-\citet{bhat2026benchmarkingbenchmarks}~(\emph{Benchmarking the Benchmarks}) audit BFCL~v4,
-$\tau^2$-bench~\citep{barres2025tau2bench},\footnote{$\tau^2$-bench is a distinct,
-later benchmark from the $\tau$-bench of \citet{yao2025taubench} cited above --- a
-dual-control environment in which the simulated user also acts on the shared state.}
-LiveMCPBench and MCP-Atlas over 496 expert-reviewed tasks and report an 18.5\%
-evaluator--human misalignment rate, attributing it to benchmark-design artifacts: brittle state
-matching, trajectory lock-in, rubric drift, judge variance. That audit has an industrial
-counterpart: $\tau^2$-Bench-Verified~\citep{tau2benchverified}, a release of the same benchmark
-re-checked against its own stated policies, documents four categories of defect in the original
-ground truth --- expected actions that violate the domain policy, wrong database references,
-logically impossible tasks, and instructions too vague to evaluate consistently. A benchmark in
-active use for ranking frontier agents needed a third-party correction pass before its labels
-agreed with its own rules.
-\citet{raj2026modelorharness}~(\emph{Model or Harness?}) organise 41 failure modes by the
-interaction edge on which each arises and by whether the repair belongs to the model or to the
-harness. \citet{soni2026toolfailbench}~(\emph{ToolFailBench}) labels traces across 1{,}000
-tasks as Tool-Skip, Result-Ignore, Output-Fabrication or Unnecessary-Tool-Use.
-\citet{albayaydh2026beyondleaderboard} synthesise 27 taxonomy and audit papers from 2023--2026
-into six failure clusters, one of which is measurement validity.
-
-These are complementary rather than competing, and in two cases our result is a precondition
-for theirs. \emph{Model or Harness?} supplies the vocabulary but no measurement; the four
-layers of \S\ref{sec:families} are a quantified instance of a single harness-side edge in its schema.
-\emph{ToolFailBench}'s Tool-Skip label is read as a model behaviour --- a model that never
-calls a needed tool --- but it is also precisely what an unparsed emission produces, so the
-category is confounded by the interface unless the stack is verified first, which is what the
-preflight check of \S\ref{sec:limitations} does in seconds. And the most recent synthesis of the field's failure
-modes \citep{albayaydh2026beyondleaderboard} places measurement validity among its six clusters
-without localising any part of it to the serving stack. \textbf{Every audit above varies
-something above the API boundary; the distortion we report occurs below it, and is invisible to
-all of them.}
-
-\textbf{Protocols and agent loops.} ReAct~\citep{yao2023react} is the text protocol we compare against.
-vLLM~\citep{kwon2023vllm} is the serving stack; its tool-calling documentation specifies distinct
-per-family configuration, which \S\ref{sec:families} shows is not optional. verl~\citep{sheng2025hybridflow} provides the RL training stack; importantly its AgentLoop performs \textbf{its own}
-tool-call parsing (\texttt{verl/experimental/agent\_loop/tool\_parser.py}, adapted from vLLM v0.9.1),
-so a vLLM-side parser plugin does not affect training rollouts --- a distinction that cost us
-one wasted experiment design (\S\ref{sec:rl}).
-
-\textbf{Prior report of the Qwen case.} vLLM issue \#32926~\citep{vllm_issue_32926},
-opened 2026-01-23, documents that Qwen2.5-Coder was not trained on tool-call tokens, that it
-emits \texttt{json} fenced blocks or bare JSON absent format instructions, and that a
-\texttt{<tools>} few-shot template plus a dedicated parser reaches 98--100\% compliance. The
-issue was closed as \emph{not planned} and labelled \emph{stale}. Section~\ref{sec:scale}
-reproduces this baseline exactly---zero \texttt{<tool\_call>} and \texttt{<tools>} tags at
-every scale---and extends it to scale quantification, to three further families, and to
-training. A related verl issue~\citep{verl_issue_4124} reports the same role-confusion
-signature we characterise in Section~\ref{sec:llama}: the model calls the task function
-(\texttt{solve\_equation}) and the agent loop raises \texttt{KeyError}.
-
-\textbf{RL with tool feedback.} GRPO~\citep{shao2024deepseekmath} and RLOO~\citep{ahmadian2024rloo} are the estimators
-we train with; EvalPlus~\citep{liu2023evalplus} and KodCode~\citep{kodcode2025} supply held-out evaluation and training
-problems respectively. We are not aware of prior work measuring interface-layer censoring
-of tool trajectories inside an RL rollout, nor connecting it to which capability the policy
-gradient can reach. A literature search conducted 2026-09-01 across the audits and taxonomies
-above returned nothing that follows the distortion below the API boundary into training; we
+\textbf{Prior report of the Qwen case.} vLLM issue \#32926 \citep{vllm_issue_32926}, opened
+2026-01-23, documents that Qwen2.5-Coder was not trained on tool-call tokens, that it emits
+\texttt{json} fenced blocks or bare JSON absent format instructions, and that a \texttt{<tools>}
+few-shot template plus a dedicated parser reaches 98--100\% compliance. It was closed as \emph{not
+planned} and labelled \emph{stale}. \S\ref{sec:scale} reproduces this baseline exactly --- zero
+\texttt{<tool\_call>} and \texttt{<tools>} tags at every scale --- and extends it to scale
+quantification, three further families and training; a related verl issue
+\citep{verl_issue_4124} reports the same role-confusion signature we characterise in
+\S\ref{sec:llama}. \textbf{Our claim is not that the interface can fail silently, which is known;
+it is that the silent fraction is measurable, that it grows with checkpoint size under the same
+mismatched interface, and that it propagates into training.} A literature search conducted
+2026-09-01 returned nothing that follows the distortion below the API boundary into training; we
 state this as the scope of our search rather than as a claim of novelty.

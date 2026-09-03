@@ -126,3 +126,41 @@ is irreparable in principle. We previously named the missing capability as guide
 registry that accepts the model's actual output format --- a code change rather than a
 different backend --- and must be run at 7B under parameter-efficient tuning, for the reasons
 given there.
+
+\subsection{The four obstacles to a repaired-FC training arm}
+\label{app:norepair}
+
+We attempted to construct a repaired-FC RL condition and failed at four successive layers. Each
+attempt is a measurement, so we report them; three of the four dissolved on inspection and the
+corrected account is in \S\ref{sec:norepair}.
+
+\textbf{(i) A vLLM parser plugin does not reach the training loop.} verl's AgentLoop performs its
+own tool-call parsing (\texttt{verl/experimental/agent\_loop/tool\_parser.py}, registered as
+\texttt{hermes}, adapted from vLLM v0.9.1). \texttt{multi\_turn.format=hermes} selects \emph{that}
+parser, not the server's, so attaching a plugin to the vLLM rollout server changes nothing in
+training --- a distinction worth stating because the two look identical from the outside.
+
+\textbf{(ii) A verl-side parser recovers calls, but none of them are the tool.} We implemented a
+\texttt{qwen2\_5\_coder} parser inside verl's registry accepting \texttt{<tools>} tags,
+\texttt{json} fenced blocks and bare JSON. On the exact training condition (1.5B, mandatory
+prompt, $n{=}100$) it lifts recoverable calls from \textbf{0/100 (hermes) to 52/100}. Of those 52,
+\textbf{zero name} \texttt{run\_tests} (Table~\ref{tab:probe_categories}). Every call targets the
+function the task asks the model to \emph{write} --- \texttt{can\_form\_word(\{"tiles", "word"\})},
+\texttt{check\_password\_strength(\{"password"\})} --- the same signature as Llama's failure in
+\S\ref{sec:llama}, now at a 5$\times$ smaller model. \textbf{Name normalisation cannot repair
+this: no call carries code to normalise.}
+
+\textbf{(iii) A role-disambiguation few-shot makes it worse, not better.} Since the failure is
+semantic rather than syntactic, we targeted it directly: a system prompt containing the wrong call
+and the right call side by side, with an explicit warning that the task function is not a tool.
+Same model, same 100 items, same server; only the system prompt changes. The intervention made the
+model \emph{more fluent at emitting the wrong call} (52 $\to$ 64 recoverable) and slightly worse at
+the task (15 $\to$ 13), with the count that matters staying at zero
+(Table~\ref{tab:pressure}). This is the third independent instance of the pattern in
+\S\ref{sec:pressure}.
+
+\textbf{(iv) Constrained decoding is unavailable in this stack.} Forcing the tool choice, or
+schema-constrained decoding, is not exposed by verl 0.9.0's vLLM rollout path (its only
+\texttt{strict} key belongs to the profiler). \textbf{This obstacle is real but was the wrong
+diagnosis of what a repaired-FC arm needs}: guided decoding \emph{forces} a format, whereas the
+repair this paper argues for is to accept what the model already emits. See \S\ref{sec:norepair}.

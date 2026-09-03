@@ -1,0 +1,110 @@
+\section{Human validation of the intent criterion, in full}
+\label{app:humanval}
+
+The scale trend in \S\ref{sec:scale} rests on an automated classifier, so we validated it
+against human judgement. 98 outputs were sampled \textbf{stratified by classifier verdict}
+(40 \texttt{tight}, 28 \texttt{strong}-but-not-\texttt{tight}, 30 neither) --- deliberately
+over-sampling the decision boundary so both false positives and false negatives are estimable.
+Sampling is seeded and the annotator saw only the raw output, never the classifier's label.
+We report \textbf{two rounds}, because the first is itself a finding.
+
+\begin{center}
+\small
+\captionof{table}{Human validation of the intent criterion, round 1 and its adjudication. The classifier is used only to count what the server discarded, so its recall matters more than its precision.}\label{tab:validation}
+\begin{tabular}{@{}lllllll@{}}
+\toprule
+& agreement & Cohen's $\kappa$ & precision & recall & FP & FN \\
+\midrule
+Round 1 (raw output only) & 86.7\% & 0.713 & 70.0\% & 96.6\% & 12 & 1 \\
+After adjudication & \textbf{96.9\%} & \textbf{0.936} & \textbf{95.0\%} & 97.4\% & 2 & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The 12 round-1 false positives split into two causes, and the second is ours, not the
+annotator's. \textbf{Eleven are reading-order failures}: the tool call sits mid-document, after
+a fenced \verb|```python| block (match positions 1209--2585 in outputs of median length
+${\sim}2000$); the annotator read the code block, concluded ``this is a direct answer, not a
+call'', and stopped. \textbf{One is an instrument failure}: for a 32B item the matched span
+begins at character 2585 and the annotation pack truncated every output at 2400, so the
+evidence was \emph{not in the pack at all} and that item could not have been labelled
+correctly. Re-shown the matched span alone, 10 of 13 disputed items were reversed. The
+corrected pack carries every output in full.
+
+\textbf{The first adjudication was one-sided, and we do not treat its $\kappa$ as a reliability
+estimate.} Auditing the procedure after the fact: the 13 adjudicated items were selected
+\emph{exactly} as the items where the annotator disagreed with the classifier (13/13 overlap),
+and all 10 reversals moved \emph{toward} the classifier, none away. Under that selection rule
+agreement can only rise, so $0.713 \to 0.936$ is a property of which items were re-examined,
+not evidence of reliability. We report the second annotator instead.
+
+\subsection*{A second independent annotator}
+
+A second annotator, blind to the classifier, to the first annotator's labels and to the first
+pack's item order, labelled the identical 98 items under a verbatim-identical rubric. Two
+changes were made to the instrument: outputs are carried \textbf{in full}, and the adjudication
+rule was fixed in advance to review \emph{all} three-way disagreements rather than only those
+disagreeing with the classifier.
+
+\begin{center}
+\small
+\captionof{table}{Inter-annotator reliability. Restricting to items where both annotators read identical bytes is not a convenience: 11 of the 12 raw disagreements are items the first pack truncated, where A1 answered ``no call'' because the call had been cut from their copy.}\label{tab:interannotator}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Cohen's $\kappa$ (95\% CI, bootstrap) & all items ($n$=97) & \textbf{identical bytes ($n$=62)} \\
+\midrule
+A1 vs.\ A2 (inter-annotator) & 0.736 [0.590, 0.863] & \textbf{0.967 [0.897, 1.000]} \\
+A2 vs.\ classifier           & 0.936 [0.855, 1.000] & \textbf{0.967 [0.897, 1.000]} \\
+A1 vs.\ classifier           & 0.712 [0.559, 0.847] & 0.934 [0.834, 1.000] \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{The apparent unreliability was the instrument, not the raters.} Of the 12 items where
+the two annotators disagree, \textbf{11 have full text exceeding 2400 characters}, and in every
+one A1 answered \texttt{N} while A2 answered \texttt{Y}. On the 62 items where both read
+identical bytes the two agree on 61, and \textbf{inter-annotator $\kappa$ = 0.967}.
+
+\textbf{Third-party adjudication, and the final labels.} Fifteen items were not unanimous across
+A1, A2 and the classifier. All fifteen went to a third adjudicator under the pre-registered rule
+--- selected by \emph{any} three-way disagreement, never by disagreement with the classifier ---
+who saw full text and no one else's labels. The adjudicator sided with A2 on 11, with the
+classifier on 9, and with A1 on 6, and \textbf{moved away from the classifier on 6 of 15}. That
+last number is the check that matters: the first round's adjudication moved away from the
+classifier zero times out of thirteen, which is what an outcome looks like when the selection
+rule has already decided it. Combining the 83 unanimous items with the 15 adjudicated ones gives
+a gold standard that at no point consulted the classifier.
+
+\begin{center}
+\small
+\captionof{table}{Validation against the adjudicated gold standard. The inter-annotator column is restricted to items where both annotators read identical bytes; the classifier and the gold standard are unaffected by that truncation and are scored on the full sample.}\label{tab:validation2}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Cohen's $\kappa$ (95\% CI, bootstrap) & full sample ($n$=97) & identical bytes ($n$=62) \\
+\midrule
+A1 vs.\ A2 (inter-annotator) & 0.736 [0.595, 0.866] & \textbf{0.967 [0.893, 1.000]} \\
+Classifier vs.\ gold standard & \textbf{0.871 [0.756, 0.958]} & 0.934 [0.829, 1.000] \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Correction factor.} Against the gold standard the \texttt{tight} stratum's precision is
+36/40 = \textbf{0.900}, so \S\ref{sec:scale}'s headline 80/100 at 32B corrects to
+\textbf{$\approx$72}. The criterion errs in both directions --- 4 over-counts against 2 calls it
+misses entirely, a net over-count of 2 --- so the correction is smaller than the precision figure
+alone suggests. \textbf{The trend is unaffected}: applying 0.900 uniformly gives
+$0, 3.6, 18.9, 32.4, 72$ against a server-side zero at every size. We report uncorrected
+classifier counts in all tables with this factor stated, rather than rescaling silently.
+
+For the record, this number moved twice as the validation improved, and we report the trajectory
+rather than only its endpoint: \textbf{0.950} under the first, one-sided adjudication;
+\textbf{0.975} under A2's labels alone; \textbf{0.900} against the adjudicated gold standard. The
+first was inflated by its selection rule, the second rested on a single rater, and only the third
+is built from a rule fixed before the labels were seen.
+
+\textbf{A bound on the measurement itself.} The probe stores at most 4000 characters of raw
+output per item; 10 of the 98 sampled outputs reach that ceiling, and one grey-zone item is a
+call truncated by it. The classifier and both annotators read identical bytes, which is what
+agreement requires, but a call emitted beyond character 4000 is invisible to all three.
+Emitted-call counts are accordingly a \textbf{lower bound} --- conservative for our claim, since
+it can only understate the censoring we report.

@@ -1,35 +1,26 @@
-Agent evaluations report tool-call rates read off the serving stack. We show this number can
-be zero while the model emits well-formed calls: \textbf{the interface censors the trajectory
-before anything downstream sees it}.
+Agent evaluations report a tool-call rate read off the serving stack. That number can be zero
+while the model is emitting well-formed calls: \textbf{the interface censors the trajectory before
+anything downstream sees it}.
 
-Configuring four model families for function calling on vLLM \emph{following official
-documentation}, each fails at a different layer --- template, parser, schema, token --- all but one
-returning HTTP 200 with an empty \texttt{tool\_calls} array. Within
-Qwen2.5-Coder the undercount grows with checkpoint size: the server parses \textbf{0/100} at
-every scale while well-formed emitted calls rise to \textbf{80/100} at 32B ($\kappa=0.967$
-between two blind annotators on the 62 identically-presented items;
-\textbf{$\approx$72} after calibration against a third-party adjudicated gold standard).
-Llama-3.1-8B's 23\% rate of calling \emph{the task function itself} as a tool falls to
-\textbf{0} under one \texttt{strict: true} flag.
+On BFCL~v4's own data, executor and scorer, holding weights, cases, decoding and seeds fixed and
+changing only the serving adapter configuration, the same model scores \textbf{0.00} or
+\textbf{0.96} / \textbf{0.19} (\texttt{simple\_python} / \texttt{multi\_turn\_base}). A $2\times2$
+over chat template and parser locates the effect exactly: \textbf{both main effects are exactly
+zero and all of it sits in the interaction} --- no component is defective, and repairing one side
+of the contract buys precisely nothing. On $\tau$-bench's 115 interactive \texttt{retail} tasks
+the same swap moves server-parsed calls from \textbf{0 to 636} and tasks reaching any tool
+execution from \textbf{0 to 103}. Our own probe reproduces the funnel across a 21$\times$
+scale range of Qwen2.5-Coder: the server parses \textbf{0/100} at every size while well-formed
+emitted calls rise to \textbf{80/100} at 32B ($\approx$72 after calibration against a third-party
+adjudicated gold standard). Under a \emph{matched} envelope, across a comparable span of scale,
+the silent fraction instead stays at \textbf{0--2} --- a prediction committed to the repository
+before the run. Llama-3.1-8B's 23\% rate of calling \emph{the task function itself} as a tool
+falls to \textbf{0} under one \texttt{strict: true} flag.
 
-\textbf{This is not an artefact of our harness.} On BFCL~v4's own data, executor and scorer,
-the same weights score \textbf{0.00} under the documented configuration and \textbf{0.96} /
-\textbf{0.19} (\texttt{simple\_python} / \texttt{multi\_turn\_base}) under a dedicated serving
-adapter: a published number spanning nearly the whole metric range on an undocumented
-serving flag. A $2\times2$ ablation locates the effect precisely: swapping the parser alone
-does nothing, swapping the chat template alone does nothing, and \textbf{both main effects are
-exactly zero with the entire effect in their interaction} --- no component is defective, and
-repairing one side of the contract buys nothing.
-
-\textbf{The mismatch reaches RL training.} A 10-step GRPO run executes \textbf{zero} tool
-calls while \texttt{critic/rewards/mean} climbs 0.233$\to$0.281: a healthy dashboard over an
-experience distribution containing no tool-mediated trajectory, so that branch receives no
-direct on-policy gradient.
-
-\textbf{Repair recovers the mechanism but not the outcome.} An adapter restores parsing
-$0\to84$ and multi-turn rescues $0\to9$, yet pass rate moves 53$\to$62 (n.s.); a 75-step
-\emph{ReAct} run executing 23{,}676 tool calls leaves rescues flat at 6--8/540 ---
-\textbf{at this model scale and training budget, a working channel was not sufficient}. We
-release a 98-line preflight check that catches every silent failure reported here.
-\textbf{The tool-call rate is not a property of the model; it is a property of the stack that
-measures it.}
+The mismatch reaches inside the training loop, and its consequence is scale-dependent: in verl's
+AgentLoop at 7B, \textbf{45 of 115 generations carry a complete call; 0 are accepted, 0 execute,
+0 return an observation}, while at 1.5B the same zero is over-determined, so we report the two
+scales separately. Repair restores the mechanism and not the outcome --- parsing $0\to84$,
+rescues $0\to9$, pass rate 53$\to$62 (n.s.). We release a 98-line preflight check that catches
+every silent failure reported here. \textbf{The tool-call rate is not a property of the model; it
+is a property of the stack that measures it.}

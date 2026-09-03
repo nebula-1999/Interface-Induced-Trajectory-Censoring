@@ -1,171 +1,88 @@
 \section{Introduction}
 \label{sec:intro}
 
-We set out to train a multi-turn code agent with RL and ended up unable to explain our own
-training curve. Over 150 GRPO steps on Qwen2.5-Coder-1.5B, pass@1 on a held-out EvalPlus
-split rose 2.6--2.8 points, consistently across three independent runs
-(\emph{p} = 0.064 / 0.078 / 0.077 --- \textbf{none significant at $\alpha$ = .05}; the evidence is the
-consistent direction and magnitude across two algorithms and two seeds, not any single test). But the gain
-decomposed strangely: \textbf{91--94\% of newly-passing items passed on the first turn}, and the
-number of items rescued by turn 2 or later stayed flat at \textbf{6--9 out of 540} from step 0
-to step 150. RL had improved first-draft quality and left multi-turn debugging untouched.
+We set out to train a multi-turn code agent with RL and could not explain our own training curve.
+Over 150 GRPO steps on Qwen2.5-Coder-1.5B, pass@1 on a held-out EvalPlus split rose 2.6--2.8
+points across three independent runs (\emph{p} = 0.064 / 0.078 / 0.077 --- none significant at
+$\alpha$ = .05; the evidence is the consistent direction across two algorithms and two seeds, not
+any single test). But \textbf{91--94\% of newly-passing items passed on the first turn}, and items
+rescued by turn 2 or later stayed flat at \textbf{6--9 out of 540} from step 0 to step 150
+(Appendix~\ref{app:extra}). The natural reading is that a 1.5B model cannot learn multi-turn
+repair. The actual reason is that \textbf{the tool was never successfully called}. Not rarely ---
+never. And nothing in the stack said so: the server returned HTTP 200, \texttt{tool\_calls} was an
+empty array, and the training loop recorded a well-formed single-turn trajectory.
 
-\begin{figure}[htbp]
+\begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{fig4_training_curves.png}
-\caption{The anomaly this paper explains. Left: pass@1 rises over 150 steps on all three
-runs, driven by first drafts (dashed) rather than final answers. \textbf{Centre: the count of
-items rescued by turn 2 or later never moves} --- 6--9 out of 540 from step 0 to step 150,
-across two algorithms and two seeds. Right: the seeded-bug repair channel does improve,
-confirming the model is learning something about fixing code; it simply never does so
-\emph{across turns}. Section~\ref{sec:results} shows the tool was never successfully
-called in any of these runs.}
-\label{fig:training_curves}
+\includegraphics[width=\linewidth]{fig0_funnel.png}
+\caption{\textbf{Where the agent trajectory is censored.} Five layers, $n{=}100$ per arm. The two
+left panels (documented default configuration) show a tall first bar and a cliff to zero: the
+model emits well-formed calls and nothing downstream happens. Emitted-call counts are measurable
+only where the server parses nothing --- a successful parse moves the call into
+\texttt{tool\_calls} and empties \texttt{content} --- so those cells are N/A, not zero.}
+\label{fig:funnel}
 \end{figure}
 
-The natural reading is that a 1.5B model cannot learn multi-turn repair. The actual reason
-is that \textbf{the tool was never successfully called}. Not rarely --- never. And nothing in the
-stack said so: the server returned HTTP 200, \texttt{tool\_calls} was an empty array, and the
-training loop recorded a well-formed single-turn trajectory.
-
-\subsection{What is measured when we measure an agent}
-
-An agent evaluation does not measure a model. It measures a composition:
-
-{\footnotesize
-\begin{verbatim}
-model  x  protocol  x  serialization  x  parser  x  execution stack
-\end{verbatim}
-}
-
-Every stage can fail, and the failure of most stages is \textbf{indistinguishable at the output
-from model incapability}. When a parser does not recognise the format a model emits, the
-serving layer reports zero tool calls --- exactly what a model that refuses to use tools
-would produce. We call this \textbf{interface-induced trajectory censoring}: the agent's
-trajectory is truncated at an interface boundary, and the truncation is systematically
-misattributed to the policy.
-
-The interface acts in \textbf{two opposite directions}, and our results contain one clean
-instance of each:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Masking.} The model emits a valid call, the parser does not recognise it, the action
-  never reaches the environment (Qwen2.5-Coder, \S\ref{sec:scale}).
-\item
-  \textbf{Suppression.} The model emits an \emph{invalid} call, and a schema constraint removes it
-  from the sampleable support before it becomes an action (Llama-3.1-8B, \S\ref{sec:llama}).
-\end{itemize}
-
-The correct general statement is therefore neither ``the failure is in the model'' nor ``the
-failure is in the interface'':
+An agent evaluation does not measure a model. It measures a composition
+\texttt{model $\times$ protocol $\times$ serialization $\times$ parser $\times$ execution stack},
+and the failure of most stages is indistinguishable at the output from model incapability: when a
+parser does not recognise the format a model emits, the serving layer reports zero tool calls ---
+exactly what a model that refuses to use tools would produce. We call this
+\textbf{interface-induced trajectory censoring}.\footnote{\emph{Censoring} is borrowed by analogy.
+In survival analysis it is a threshold on a continuous variable; a parser is a deterministic
+filter on output \emph{format}. What carries over is the structure of the inference error: the
+observation is not missing at random, it is systematically unobservable on one side of a boundary,
+and the boundary correlates with the quantity being measured --- positively with checkpoint size,
+within this family.} It acts in two opposite directions, and our results contain a clean instance
+of each: \textbf{masking}, where a valid call is not recognised and the action never reaches the
+environment (Qwen2.5-Coder, \S\ref{sec:scale}), and \textbf{suppression}, where an invalid call is
+removed from the sampleable support before it becomes an action (Llama-3.1-8B,
+\S\ref{sec:llama}). The correct general statement is therefore neither ``the failure is in the
+model'' nor ``the failure is in the interface'':
 
 \begin{quote}
-\textbf{The serving interface is simultaneously part of the measurement function and part of
-the agent's effective action space.}
+\textbf{The serving interface is simultaneously part of the measurement function and part of the
+agent's effective action space.}
 \end{quote}
 
-Under RL this is not a metaphor. The interface sits literally between the policy and the
-environment: whatever the policy emits must survive serialisation and parsing before it
-becomes an action that earns a reward. When nothing tool-intended survives that passage, the
-experience distribution contains no tool-mediated trajectory at all.
+Under RL this is literal. The interface sits between the policy and the environment: whatever the
+policy emits must survive serialisation and parsing before it becomes an action that earns a
+reward. When nothing tool-intended survives that passage, the experience distribution contains no
+tool-mediated trajectory at all.
 
-\emph{Censoring} is borrowed \textbf{by analogy}, and we state the analogy's limit. In survival
-analysis censoring is a threshold on a continuous variable; a parser is instead a
-deterministic filter on output \emph{format}. What carries over --- and what motivates the term ---
-is the structure of the inference error: the observation is not noisy or missing at random,
-it is \textbf{systematically unobservable on one side of a boundary}, and the boundary
-correlates with the very quantity being measured. We show below that it
-correlates \emph{positively} with checkpoint size within this family: the larger the
-checkpoint, the more of its
-behaviour is censored.
+\paragraph{Why this is not a parser bug.}
+The term invites a reading we refuse at the outset. Replaying vLLM's own \texttt{hermes} extractor
+line by line over every stored first turn in our archive --- 4254 of them, after removing
+byte-identical duplicate files --- we find zero cases in which the server failed to parse a call
+its own rules would have accepted (\S\ref{sec:scale}). What fails is the \emph{contract} between
+three parties configured independently: what the checkpoint was trained to emit, what the chat
+template tells it to emit, and what the parser is defined to accept. Qwen2.5-Coder emits a
+well-formed bare call and never the \texttt{<tool\_call>} envelope, so \texttt{hermes} not seeing
+it is \emph{correct behaviour}; Qwen2.5-Instruct emits the envelope and then breaks the JSON
+inside it. Censoring can occur at any boundary along
+\texttt{emission $\to$ serialization $\to$ parse $\to$ execution}, and at every one the observable
+is identical: HTTP 200 with an empty \texttt{tool\_calls} array. The claim is therefore not that
+parsers are buggy but that \textbf{a tool-call rate is a property of a three-way contract, and is
+routinely reported as though it were a property of the model alone.}
 
-\paragraph{Where the boundary sits, and why it is not a parser bug.}
-The term invites a reading we must refuse at the outset: that some parser is defective. It is
-not. Replaying vLLM's own \texttt{hermes} extractor line by line over every stored first turn
-in our archive --- 4254 of them, after removing byte-identical duplicate files --- we find
-\textbf{zero} cases in which the server failed to
-parse a call that its own rules would have accepted (\S\ref{sec:scale}). Each parser behaves
-exactly as specified. What fails is the \emph{contract} between three parties that were
-configured independently: what the checkpoint was trained to emit, what the chat template
-tells it to emit, and what the parser is defined to accept. Qwen2.5-Coder emits a
-well-formed bare call and never the \texttt{\textless{}tool\_call\textgreater{}} envelope, so
-\texttt{hermes} not seeing it is \emph{correct behaviour}; Qwen2.5-Instruct emits the envelope
-and then breaks the JSON inside it.
-
-This matters because it decides what a reader concludes should be fixed. Censoring can occur
-at any boundary along
-\texttt{emission\ $\to$\ serialization\ $\to$\ parse\ $\to$\ execution}, and at every one of
-them the observable is the same: HTTP 200 with an empty \texttt{tool\_calls} array. The claim
-of this paper is therefore not that parsers are buggy but that \textbf{a tool-call rate is a
-property of a three-way contract, and is routinely reported as though it were a property of
-the model alone}. The one place where parser strictness alone costs anything in our data is
-narrow and repairable: 26 payloads at Qwen2.5-Instruct-3B are valid JSON followed by trailing
-text, which a lenient \texttt{raw\_decode} would accept (\S\ref{sec:scale}).
-
-\subsection{What is and is not new here}
-
-The specific observation that Qwen2.5-Coder does not emit \texttt{hermes}-format tool calls was
-reported in vLLM issue \#32926 (2026-01-23) together with a \texttt{\textless{}tools\textgreater{}} parser proposal; that
-issue was closed as \emph{not planned} and labelled \emph{stale}, so the trap is still live today.
-\S\ref{sec:related} gives full attribution. What this paper adds is measurement, decomposition and
-consequence:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{Quantification.} How much capability the censoring removes, across a 21$\times$ scale range,
-  under a criterion strict enough to exclude schema echo and pseudo-code.
-\item
-  \textbf{Layer disentanglement.} Separating \emph{model intent} / \emph{emitted format} / \emph{server
-  parse} / \emph{actual execution} / \emph{multi-turn rescue} into five independently measured
-  quantities. Reporting only the third is the standard practice we argue against.
-\item
-  \textbf{External validity on a standard benchmark.} The same five-layer funnel measured on
-  BFCL~v4 with its official data, multi-turn executor and scorer at a pinned commit
-  (\S\ref{sec:bfcl}). Holding weights, cases, decoding, seeds, executor and scorer fixed and
-  changing only the \emph{serving adapter configuration}, the reported score moves from
-  \textbf{0.00} to \textbf{0.96} on \texttt{simple\_python} and \textbf{0.19} on
-  \texttt{multi\_turn\_base}. The measurement-validity problem is therefore not a property of
-  our harness. A $2\times2$ ablation over template and parser decomposes it: both main effects
-  are exactly zero and the whole effect is their interaction, so the failure is a property of
-  the \emph{pairing} rather than of either component.
-\item
-  \textbf{A counterfactual for the scale result.} The undercount grows with checkpoint size
-  only under a mismatched interface. Run under a \emph{matched} one, across a comparable span
-  of scale, the silent fraction stays at 0--2 instead of rising to 80
-  (\S\ref{sec:scale}) --- capability growth alone does not manufacture an undercount.
-\item
-  \textbf{Four concrete failure modes motivating a layered taxonomy.} Four families failing
-  at four different layers --- template, parser, schema, token --- with different remedies
-  and different detectability. The evidence is deliberately asymmetric and we mark it as
-  such: Qwen carries a scale ladder, a replay matrix and a repair; Llama carries a
-  single-variable intervention; Mistral has no admissible comparison at all; DeepSeek is a
-  template check. This is four instances, not an enumeration of the failure space.
-\item
-  \textbf{RL contamination, measured.} Direct instrumentation showing the censored interface
-  yields zero tool executions in training rollouts, so the sampled experience contains no
-  tool-mediated trajectory to reinforce and the branch is effectively inaccessible to
-  policy-gradient learning in this cold-start regime. We argue this from the sampled
-  rollouts, not from the support of the policy: \emph{zero observed samples is not zero
-  probability}. We report it as mechanism evidence observed inside rollout collection, not
-  as a clean causal RL result --- the comparison arm changes protocol and interface
-  together. The parser-repair control that would separate them is not available through this
-  stack's \emph{configuration}; what actually blocks it is scale, and we say so precisely in
-  \S\ref{sec:rl}. We further show that opening the channel was not by itself
-  sufficient \emph{at this model scale and training budget} (\S\ref{sec:sufficiency}): in a
-  75-step ReAct run the bottleneck was not singular. That is an observation about one arm,
-  not a general sufficiency theorem.
-\item
-  \textbf{A repair loop.} How much is recovered by installing a correct adapter, and what
-  protocol gap survives the repair.
-\end{enumerate}
-
-We deliberately foreground (2) and (4). A reader who takes this as a catalogue of
-misconfigurations has read it as a systems note; the claim we defend is that \textbf{the
-composition above is what benchmarks actually measure, and that attributing its output to
-the model is a systematic error with a measurable magnitude.}
-
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+\paragraph{What is and is not new.}
+That Qwen2.5-Coder does not emit \texttt{hermes}-format tool calls was reported in vLLM issue
+\#32926 (2026-01-23) together with a \texttt{<tools>} parser proposal; it was closed as \emph{not
+planned} and labelled \emph{stale}, so the trap is still live (\S\ref{sec:related}). What this
+paper adds is measurement, decomposition and consequence. We measure the funnel on \emph{two}
+standard benchmarks --- BFCL~v4 and $\tau$-bench --- where changing only the serving adapter moves
+BFCL's reported score from 0.00 to 0.96 / 0.19 and $\tau$-bench's parsed calls from 0 to 636, and
+a $2\times2$ over template and parser finds both main effects exactly zero with the whole effect
+in their interaction (\S\ref{sec:bfcl}). We separate \emph{model intent} / \emph{emitted format} /
+\emph{server parse} / \emph{actual execution} / \emph{multi-turn rescue} into five independently
+measured quantities --- reporting only the third is the standard practice we argue against ---
+quantify how much censoring removes across a 21$\times$ scale range, and pair that ladder with a
+counterfactual under a \emph{matched} envelope where the silent fraction stays at 0--2 instead of
+rising to 80 (\S\ref{sec:scale}). Four families failing at template, parser, schema and token
+layers motivate a layered taxonomy, on deliberately asymmetric evidence we mark as such
+(\S\ref{sec:families}). And we follow the distortion into training: at 7B, 45 of 115 generations
+inside verl's AgentLoop carry a complete call and none becomes an action, so the sampled
+experience contains no tool-mediated trajectory to reinforce. We argue that from the sampled
+rollouts, not the support of the policy --- \emph{zero observed samples is not zero probability}
+--- and the comparison arm changes protocol and interface together; the parser-repair control that
+would separate them is a code change blocked by scale, not by the stack (\S\ref{sec:norepair}).
