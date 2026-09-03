@@ -32,6 +32,15 @@ PROJ_DIR="${PROJ_DIR:-/root/autodl-tmp/code-agent}"
 # **两条臂必须用同一个 EVAL_FREQ**，否则对照不成立。
 EVAL_FREQ="${EVAL_FREQ:-30}"
 
+# ---- 评测钩子要能离线加载 EvalPlus ----
+# 这台机器连不上 huggingface.co。数据集本来就缓存在 /root/autodl-tmp/hf，
+# 但 HF_HOME 没设时 datasets 会去找 ~/.cache/huggingface，看不见它，于是发起网络请求、
+# 抛 [Errno 101] Network is unreachable，code_patch 的 fail-fast 把整轮训练中止。
+# （这与当初 BFCL 踩的是同一个坑，那边已经这么修过，P3 脚本漏了。）
+export HF_HOME="${HF_HOME:-/root/autodl-tmp/hf}"
+export HF_HUB_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+
 case "$ARM" in
   broken)   FORMAT=hermes ;;
   repaired) FORMAT=qwen2_5_coder ;;
