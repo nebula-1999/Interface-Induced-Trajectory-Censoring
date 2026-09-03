@@ -49,6 +49,11 @@ print(f"[p3] 数据自检: agent_name={dict(an)}  FC_MANDATORY={'必须先调用
 sys.exit(0 if ok else 1)
 PYCHK
 
+# verl 0.9.0 predates vLLM>=0.25's unstacked LoRA mapper API.  Without this
+# audited upstream backport Qwen q/k/v tensors collapse onto qkv_proj and the
+# very first in-memory adapter sync crashes before any rollout is generated.
+"$PY" "$PROJ_DIR/p3/apply_verl_vllm_compat.py" || exit 1
+
 echo "[p3] 磁盘余量（写权重会炸盘，本轮 save_freq=-1）："
 df -h /root/autodl-tmp | tail -1
 
