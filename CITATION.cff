@@ -7,7 +7,24 @@ authors:
     given-names: Wenbo
     email: wenbwang3-c@my.cityu.edu.hk
     affiliation: City University of Hong Kong
-repository-code: "https://github.com/nebula-1999/interface-induced-trajectory-censoring"
+repository-code: "https://github.com/nebula-1999/Interface-Induced-Trajectory-Censoring"
+
+# arXiv submitted 2026-09-03 (submission id submit/8014969, cs.AI).
+# The permanent identifier is assigned at announcement, not at submission.
+# When it lands (form 2609.NNNNN), uncomment and fill:
+#
+# identifiers:
+#   - type: other
+#     value: "arXiv:2609.NNNNN"
+#     description: The arXiv preprint of this work.
+# preferred-citation:
+#   type: article
+#   title: "Interface-Induced Trajectory Censoring"
+#   authors:
+#     - family-names: Wang
+#       given-names: Wenbo
+#   year: 2026
+#   journal: "arXiv preprint arXiv:2609.NNNNN"
 abstract: >-
   The fraction of agent tool use that a serving stack silently discards grows
   with model scale, and it reaches the policy gradient. Four model families
@@ -23,4 +40,4 @@ keywords:
   - reinforcement learning
   - vLLM
 license: MIT
-date-released: 2026-08-31
+date-released: 2026-09-03

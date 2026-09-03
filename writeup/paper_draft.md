@@ -48,7 +48,8 @@ direct on-policy gradient.
 *ReAct* run executing 23,676 tool calls leaves rescues flat at 6–8/540 —
 **at this model scale and training budget, a working channel was not sufficient**. We
 release a 98-line preflight check that catches every silent failure reported here.
-**The tool-call rate is not a property of the model; it is a property of the stack that
+**The observed tool-call rate is not a
+property of the model alone; it is a property of the model–interface stack that
 measures it.**
 
 # Introduction

@@ -16,8 +16,9 @@ Wenbo Wang · City University of Hong Kong · `wenbwang3-c@my.cityu.edu.hk`
 
 Across a 21× scale range the serving stack reports **zero** parsed tool calls at every size,
 while well-formed calls the model actually emits rise to **80/100** at 32B. Nothing errors:
-HTTP 200, `tool_calls: []`, a well-formed single-turn trajectory. **The tool-call rate is not a
-property of the model; it is a property of the stack that measures it.**
+HTTP 200, `tool_calls: []`, a well-formed single-turn trajectory. **The observed tool-call rate is not a
+property of the model alone; it is a property of the model–interface stack that
+measures it.**
 
 ---
 
