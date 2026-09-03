@@ -41,6 +41,14 @@ export HF_HOME="${HF_HOME:-/root/autodl-tmp/hf}"
 export HF_HUB_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
 
+# ---- 评测产物必须分臂，否则会覆盖别人的数据 ----
+# code_patch.py 的 _OUT 默认是固定路径 /root/autodl-tmp/runs/code-eval，**不分臂也不分 run**，
+# 文件名只有 step_NNNNN.jsonl。于是任何两次带评测的 run 会互相覆盖同名步。
+# 2026-09-03 就这么丢过一次：repaired 的 step 0 覆盖了 8-28 那轮历史 run 的 step_00000.jsonl
+# （论文引用的救回数序列 [7,9,6,...] 的原始逐题数据），其余 10 个点在覆盖前抢救到
+# runs/code-eval-ARCHIVE-20260828/。
+export CODE_EVAL_OUT="${CODE_EVAL_OUT:-/root/autodl-tmp/runs/code-eval-p3-$ARM}"
+
 case "$ARM" in
   broken)   FORMAT=hermes ;;
   repaired) FORMAT=qwen2_5_coder ;;
