@@ -16,6 +16,7 @@ export P3_PROJ_DIR="$PROJ_DIR"
 OUT="${P3_CKPT_DIR:-/root/p3_artifacts/probe_ckpt}"
 P3_BATCH="${P3_BATCH:-16}"
 P3_N="${P3_N:-8}"
+P3_MINI_BATCH="${P3_MINI_BATCH:-16}"
 P3_REWARD_WORKERS="${P3_REWARD_WORKERS:-1}"
 P3_AGENT_WORKERS="${P3_AGENT_WORKERS:-2}"
 P3_RAY_CPUS="${P3_RAY_CPUS:-6}"
@@ -67,7 +68,7 @@ df -h /root/autodl-tmp | tail -1
   actor_rollout_ref.model.lora_alpha=32 \
   actor_rollout_ref.model.target_modules=all-linear \
   actor_rollout_ref.actor.optim.lr=1e-6 \
-  actor_rollout_ref.actor.ppo_mini_batch_size=16 \
+  actor_rollout_ref.actor.ppo_mini_batch_size="$P3_MINI_BATCH" \
   actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
   actor_rollout_ref.actor.fsdp_config.param_offload=True \
   actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \
