@@ -32,6 +32,16 @@ PROJ_DIR="${PROJ_DIR:-/root/autodl-tmp/code-agent}"
 # **两条臂必须用同一个 EVAL_FREQ**，否则对照不成立。
 EVAL_FREQ="${EVAL_FREQ:-30}"
 
+# ---- checkpoint ----
+# 默认仍是 -1（不存）。code_eval_hook 是**就地评测**，救回数在训练过程中直接算出并落盘，
+# 所以主测量不需要权重——这也是当初 save_freq=-1 的理由（1.5B 的完整训练态 ckpt 约 21 GB）。
+# 开它是为了两件事：崩了能续跑，以及事后能换设置重评。
+# **开之前必须先量大小**：数据盘只剩 19 GB，而本项目记录过 max_actor_ckpt_to_keep
+# 失效的先例。若单个 ckpt 3 GB 而保留上限不生效，5 个就会在 step 120 附近写满盘，
+# 把跑了 8 小时的实验搞崩——比不存权重糟得多。
+SAVE_FREQ="${SAVE_FREQ:--1}"
+KEEP_CKPT="${KEEP_CKPT:-2}"
+
 # ---- 评测钩子要能离线加载 EvalPlus ----
 # 这台机器连不上 huggingface.co。数据集本来就缓存在 /root/autodl-tmp/hf，
 # 但 HF_HOME 没设时 datasets 会去找 ~/.cache/huggingface，看不见它，于是发起网络请求、
@@ -64,7 +74,7 @@ mkdir -p "$RUN_ROOT"
 rm -rf "$P3_OUT" "$P3_CKPT_DIR"
 mkdir -p "$P3_OUT" "$P3_CKPT_DIR"
 
-echo "[p3-formal] 臂=$ARM  format=$FORMAT  步数=$STEPS  评测间隔=$EVAL_FREQ"
+echo "[p3-formal] 臂=$ARM  format=$FORMAT  步数=$STEPS  评测间隔=$EVAL_FREQ  存档间隔=$SAVE_FREQ(保留 $KEEP_CKPT)"
 echo "[p3-formal] 产物目录=$RUN_ROOT"
 df -h /root/autodl-tmp | tail -1
 
@@ -77,5 +87,7 @@ bash p3/run_p3_probe.sh \
   actor_rollout_ref.rollout.multi_turn.format="$FORMAT" \
   trainer.total_training_steps="$STEPS" \
   trainer.test_freq="$EVAL_FREQ" \
+  trainer.save_freq="$SAVE_FREQ" \
+  trainer.max_actor_ckpt_to_keep="$KEEP_CKPT" \
   trainer.val_before_train=True \
   trainer.experiment_name="p3-$ARM-7b-lora"
