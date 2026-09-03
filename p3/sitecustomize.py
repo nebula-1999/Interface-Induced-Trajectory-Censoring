@@ -28,6 +28,7 @@ _T_LOOP = "verl.experimental.agent_loop.tool_agent_loop"
 _T_VLLM_LORA = "vllm.lora.layers.column_parallel_linear"
 _orig_import = builtins.__import__
 _done = {"parser": False, "loop": False, "vllm_lora": False}
+_installing = False
 
 
 def _chain_original() -> None:
@@ -45,7 +46,13 @@ def _chain_original() -> None:
 
 
 def _hook(name, g=None, l=None, fromlist=(), level=0):
+    global _installing
     mod = _orig_import(name, g, l, fromlist, level)
+    # Installer functions import their own dependencies.  Let those nested
+    # imports complete without recursively trying to run the installers again.
+    if _installing:
+        return mod
+    _installing = True
     try:
         # Check sys.modules after *every* import.  ``from package import child``
         # invokes __import__ with the parent name, so matching ``name`` exactly
@@ -67,6 +74,8 @@ def _hook(name, g=None, l=None, fromlist=(), level=0):
     except Exception as e:
         print(f"[p3] ✗ 装载 rollout_probe 失败: {type(e).__name__}: {e}",
               file=sys.stderr, flush=True)
+    finally:
+        _installing = False
     return mod
 
 
