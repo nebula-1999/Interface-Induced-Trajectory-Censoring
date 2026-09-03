@@ -53,13 +53,20 @@ class Result:
     passed: int = 0
     failed: int = 0
     errors: int = 0
+    skipped: int = 0
+    xfailed: int = 0
+    xpassed: int = 0
     status: str = "ok"          # ok / timeout / crash / no_tests
     stderr: str = ""            # 已截断，喂给模型的那份
     duration: float = 0.0
 
     @property
     def total(self) -> int:
-        return self.passed + self.failed + self.errors
+        # A skipped/xfail test is not evidence that the candidate passed it.
+        # Keep it in the denominator so generated code cannot earn full reward
+        # by disabling hard tests. XPASS is conservatively treated likewise.
+        return (self.passed + self.failed + self.errors + self.skipped
+                + self.xfailed + self.xpassed)
 
     @property
     def pass_ratio(self) -> float:
@@ -114,18 +121,33 @@ def _kill_group(p: subprocess.Popen) -> None:
 _IMPORTS_SOLUTION = re.compile(
     r"^\s*(?:from\s+solution\s+import|import\s+solution)\b", re.M)
 
-_PAT = {
-    "passed": re.compile(r"(\d+) passed"),
-    "failed": re.compile(r"(\d+) failed"),
-    "errors": re.compile(r"(\d+) errors?\b"),
-}
+_SUMMARY_LINE = re.compile(
+    r"^\s*(?:=+\s*)?(?P<body>.*?)\s+in\s+\d+(?:\.\d+)?s(?:\s*=+)?\s*$"
+)
+_OUTCOME = re.compile(
+    r"(?P<n>\d+)\s+(?P<kind>passed|failed|errors?|skipped|xfailed|xpassed)\b"
+)
 
 
-def _parse(text: str) -> tuple[int, int, int]:
-    def grab(k: str) -> int:
-        m = _PAT[k].search(text)
-        return int(m.group(1)) if m else 0
-    return grab("passed"), grab("failed"), grab("errors")
+def _parse(text: str) -> tuple[int, int, int, int, int, int]:
+    """Parse pytest's final summary line, never model-controlled output."""
+    counts = {k: 0 for k in
+              ("passed", "failed", "errors", "skipped", "xfailed", "xpassed")}
+    for line in reversed(text.splitlines()):
+        match = _SUMMARY_LINE.match(line)
+        if not match:
+            continue
+        found = list(_OUTCOME.finditer(match.group("body")))
+        if not found:
+            continue
+        for item in found:
+            kind = item.group("kind")
+            if kind == "error":
+                kind = "errors"
+            counts[kind] = int(item.group("n"))
+        break
+    return tuple(counts[k] for k in
+                 ("passed", "failed", "errors", "skipped", "xfailed", "xpassed"))
 
 
 def _read_capped(path: Path) -> str:
@@ -252,10 +274,11 @@ def run_tests(solution: str, test: str, timeout: float = TIMEOUT_S,
         return Result(passed=int(ok), failed=int(not ok), status="ok",
                       stderr=text[-max_output:], duration=time.time() - t0)
 
-    pa, fa, er = _parse(text)
-    if status == "ok" and pa + fa + er == 0:
+    pa, fa, er, sk, xf, xp = _parse(text)
+    if status == "ok" and pa + fa + er + sk + xf + xp == 0:
         status = "no_tests"          # 语法错误到连 collection 都没跑起来也落这里
-    return Result(passed=pa, failed=fa, errors=er, status=status,
+    return Result(passed=pa, failed=fa, errors=er, skipped=sk,
+                  xfailed=xf, xpassed=xp, status=status,
                   stderr=text[-max_output:], duration=time.time() - t0)
 
 

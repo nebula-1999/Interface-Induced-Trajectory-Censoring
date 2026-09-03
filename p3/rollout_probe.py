@@ -25,6 +25,7 @@ vLLM 0.27.1 那条 `|<tool_call>(.*)` 的收尾兜底分支，即 verl 侧比服
 from __future__ import annotations
 
 import functools
+import hashlib
 import inspect
 import json
 import os
@@ -60,7 +61,10 @@ def _accepts(rx, text: str) -> bool:
 
 
 def _write(kind: str, **f) -> None:
-    with _LOCK, (OUT / "events.jsonl").open("a", encoding="utf-8") as fh:
+    # Ray actors are separate processes. A threading.Lock cannot protect one
+    # shared JSONL across them, so each PID owns an append-only event file.
+    path = OUT / f"events.{os.getpid()}.jsonl"
+    with _LOCK, path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps({"t": time.time(), "pid": os.getpid(), "kind": kind, **f},
                             ensure_ascii=False) + "\n")
 
@@ -79,6 +83,7 @@ def install() -> bool:
         print(f"[p3] ✗ import tool_parser 失败: {e!r}", file=sys.stderr, flush=True)
         return False
 
+    installed_parsers = []
     for name, cls in list(getattr(tp.ToolParser, "_registry", {}).items()):
         fn = cls.__dict__.get("extract_tool_calls")
         if fn is None or getattr(fn, "_p3", False):
@@ -103,14 +108,18 @@ def install() -> bool:
                    vllm_would_accept=_accepts(VLLM_RE, text),
                    verl_would_accept=_accepts(VERL_RE, text),
                    tight=bool((lambda m: m and REAL_RE.search(m.group(1)))(TIGHT_RE.search(text))),
-                   text=text[:4000])
+                   text_sha256=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                   text_chars=len(text),
+                   text=text)
             return res
 
         wrapper._p3 = True
         setattr(cls, "extract_tool_calls", wrapper)
         ok = True
+        installed_parsers.append(name)
         print(f"[p3] ✓ 已挂 {cls.__name__}.extract_tool_calls", file=sys.stderr, flush=True)
 
+    code_tool_ok = False
     try:
         import code_tool
         orig_e = code_tool.CodeTool.__dict__.get("execute")
@@ -123,11 +132,13 @@ def install() -> bool:
                 return await _o(self, instance_id, parameters, *a, **kw)
             execute._p3 = True
             code_tool.CodeTool.execute = execute
+            code_tool_ok = True
             print("[p3] ✓ 已挂 CodeTool.execute", file=sys.stderr, flush=True)
     except Exception as e:
         print(f"[p3] ! CodeTool.execute 未挂上: {e!r}", file=sys.stderr, flush=True)
 
-    _write("install", ok=ok, fired=dict(FIRED))
+    _write("install_parser", ok=ok, parsers=installed_parsers)
+    _write("install_code_tool", ok=code_tool_ok)
     return ok
 
 
@@ -155,8 +166,10 @@ def install_agentloop() -> bool:
 
         call_tool._p3 = True
         cls._call_tool = call_tool
+        _write("install_agentloop", ok=True)
         print("[p3] ✓ 已挂 ToolAgentLoop._call_tool", file=sys.stderr, flush=True)
         return True
     except Exception as e:
+        _write("install_agentloop", ok=False, error=repr(e))
         print(f"[p3] ! _call_tool 未挂上: {e!r}", file=sys.stderr, flush=True)
         return False

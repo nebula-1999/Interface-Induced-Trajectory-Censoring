@@ -21,7 +21,7 @@ export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 # Ray 的对象溢写默认落 /tmp。数据盘只剩 ~3.9 GB，绝不能让它写那儿。
 export RAY_TMPDIR=/tmp/ray_p3
 mkdir -p "$RAY_TMPDIR" "$P3_OUT"
-rm -f "$P3_OUT/events.jsonl" "$P3_OUT/summary.json" "$P3_OUT/P3_INVALID"
+rm -f "$P3_OUT"/events.*.jsonl "$P3_OUT/summary.json" "$P3_OUT/P3_INVALID"
 rm -f /root/autodl-tmp/runs/.tool_called
 
 # 非交互 shell 里没有 `python`——原训练脚本靠 source env.sh 激活 venv 才有。

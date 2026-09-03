@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """收尾：判定本轮探针是否成立，并给出 emitted / accepted / executed 三个数。
 
-**先判钩子，再判结论。** 三个计数天然都可能是 0，「钩子没装上」与「模型真的
-没发出调用」在产物上无法区分。所以任一钩子零触发 → 落 P3_INVALID，不给结论。
+**先判钩子，再判结论。** 三个运行时计数天然都可能是 0，尤其 broken 臂本来就
+应当零执行；因此不能用事件数证明安装成功。三个 patch 点分别写 installation
+record，任一缺失或失败才落 P3_INVALID；parser 还必须至少产生一条运行时记录。
 """
 from __future__ import annotations
 
@@ -13,8 +14,11 @@ from collections import Counter
 from pathlib import Path
 
 OUT = Path(os.environ.get("P3_OUT", "/root/autodl-tmp/runs/p3_rollout_probe"))
-rows = [json.loads(l) for l in (OUT / "events.jsonl").open(encoding="utf-8")
-        if l.strip()] if (OUT / "events.jsonl").exists() else []
+event_files = sorted(OUT.glob("events.*.jsonl"))
+rows = []
+for path in event_files:
+    with path.open(encoding="utf-8") as fh:
+        rows.extend(json.loads(l) for l in fh if l.strip())
 
 ext = [r for r in rows if r["kind"] == "extract"]
 res = {
@@ -30,11 +34,23 @@ res = {
     "accepted_name_hist": dict(Counter(
         n for r in ext for n in (r.get("accepted_names") or []) if n)),
     "parsers_seen": sorted({r["parser"] for r in ext}),
+    "event_files": [p.name for p in event_files],
+    "parser_hook_installed": any(r["kind"] == "install_parser" and r.get("ok")
+                                 for r in rows),
+    "agentloop_hook_installed": any(r["kind"] == "install_agentloop" and r.get("ok")
+                                    for r in rows),
+    "code_tool_hook_installed": any(r["kind"] == "install_code_tool" and r.get("ok")
+                                    for r in rows),
 }
 
 dead = []
+for key, label in (("parser_hook_installed", "extract_tool_calls install"),
+                   ("agentloop_hook_installed", "_call_tool install"),
+                   ("code_tool_hook_installed", "CodeTool.execute install")):
+    if not res[key]:
+        dead.append(label)
 if not ext:
-    dead.append("extract_tool_calls")          # 这个必须触发，否则整轮无意义
+    dead.append("extract_tool_calls runtime")
 res["valid"] = not dead
 res["dead_hooks"] = dead
 

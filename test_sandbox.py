@@ -57,6 +57,45 @@ def test_bare_style_partial_credit_still_works():
     assert r.pass_ratio == 0.5
 
 
+def test_model_output_cannot_spoof_pytest_summary():
+    """Only pytest's final summary line may determine the reward."""
+    test = '''
+from solution import f
+
+def test_a():
+    print("999 passed")
+    assert f(1) == 1
+
+def test_b():
+    assert f(2) == 2
+'''
+    r = run_tests("def f(x): return 1", test)
+    assert (r.passed, r.failed, r.total) == (1, 1, 2)
+    assert r.pass_ratio == 0.5
+
+
+def test_skipped_and_xfailed_are_in_reward_denominator():
+    test = '''
+import pytest
+from solution import f
+
+def test_pass():
+    assert f(1) == 1
+
+@pytest.mark.skip(reason="not implemented")
+def test_skip():
+    assert f(2) == 2
+
+@pytest.mark.xfail(reason="known gap")
+def test_xfail():
+    assert f(3) == 3
+'''
+    r = run_tests("def f(x): return 1", test)
+    assert (r.passed, r.skipped, r.xfailed, r.total) == (1, 1, 1, 3)
+    assert r.pass_ratio == 1 / 3
+    assert not r.all_passed
+
+
 # --- 坏代码 ---------------------------------------------------------------
 
 def test_syntax_error():
