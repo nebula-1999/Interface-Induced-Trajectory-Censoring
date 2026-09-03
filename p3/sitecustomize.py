@@ -25,8 +25,9 @@ import sys
 # ToolAgentLoop 会 AttributeError（实测过）。
 _T_PARSER = "verl.experimental.agent_loop.tool_parser"
 _T_LOOP = "verl.experimental.agent_loop.tool_agent_loop"
+_T_VLLM_LORA = "vllm.lora.layers.column_parallel_linear"
 _orig_import = builtins.__import__
-_done = {"parser": False, "loop": False}
+_done = {"parser": False, "loop": False, "vllm_lora": False}
 
 
 def _chain_original() -> None:
@@ -46,16 +47,23 @@ def _chain_original() -> None:
 def _hook(name, g=None, l=None, fromlist=(), level=0):
     mod = _orig_import(name, g, l, fromlist, level)
     try:
-        if not _done["parser"] and name == _T_PARSER and _T_PARSER in sys.modules:
+        # Check sys.modules after *every* import.  ``from package import child``
+        # invokes __import__ with the parent name, so matching ``name`` exactly
+        # misses a successfully loaded target (observed for ToolAgentLoop).
+        if not _done["parser"] and _T_PARSER in sys.modules:
             _done["parser"] = True
             import rollout_probe
             rollout_probe.install()
-        if not _done["loop"] and name == _T_LOOP and _T_LOOP in sys.modules:
+        if not _done["loop"] and _T_LOOP in sys.modules:
             import rollout_probe
             if rollout_probe.install_agentloop():
                 _done["loop"] = True
+        if not _done["vllm_lora"] and _T_VLLM_LORA in sys.modules:
+            import rollout_probe
+            if rollout_probe.install_vllm_lora_debug():
+                _done["vllm_lora"] = True
         if all(_done.values()):
-            builtins.__import__ = _orig_import       # 两个都装完才复原
+            builtins.__import__ = _orig_import       # 三个目标都装完才复原
     except Exception as e:
         print(f"[p3] ✗ 装载 rollout_probe 失败: {type(e).__name__}: {e}",
               file=sys.stderr, flush=True)

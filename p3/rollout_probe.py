@@ -186,3 +186,54 @@ def install_agentloop() -> bool:
         _write("install_agentloop", ok=False, error=repr(e))
         print(f"[p3] ! _call_tool 未挂上: {e!r}", file=sys.stderr, flush=True)
         return False
+
+
+def install_vllm_lora_debug() -> bool:
+    """Record the exact packed-LoRA shapes if vLLM rejects an adapter.
+
+    This is diagnostic only: the wrapper delegates unchanged and re-raises the
+    original exception.  In particular it must not reshape tensors, because
+    doing so would turn a compatibility diagnosis into an unreviewed runtime
+    patch and could change the P3 intervention.
+    """
+    try:
+        from vllm.lora.layers.column_parallel_linear import (
+            MergedColumnParallelLinearWithLoRA,
+        )
+        cls = MergedColumnParallelLinearWithLoRA
+        orig = cls.__dict__.get("set_lora")
+        if orig is None:
+            return False
+        if getattr(orig, "_p3_debug", False):
+            return True
+
+        def _shapes(value):
+            if isinstance(value, (list, tuple)):
+                return [None if x is None else list(x.shape) for x in value]
+            return list(getattr(value, "shape", ()))
+
+        @functools.wraps(orig)
+        def set_lora(self, index, lora_a, lora_b, _o=orig):
+            try:
+                return _o(self, index, lora_a, lora_b)
+            except Exception as e:
+                _write(
+                    "vllm_lora_error",
+                    error=f"{type(e).__name__}: {e}",
+                    wrapper=type(self).__name__,
+                    base_layer=type(getattr(self, "base_layer", None)).__name__,
+                    n_slices=getattr(self, "n_slices", None),
+                    lora_a_type=type(lora_a).__name__,
+                    lora_a_shapes=_shapes(lora_a),
+                    lora_b_type=type(lora_b).__name__,
+                    lora_b_shapes=_shapes(lora_b),
+                )
+                raise
+
+        set_lora._p3_debug = True
+        cls.set_lora = set_lora
+        _write("install_vllm_lora_debug", ok=True)
+        return True
+    except Exception as e:
+        _write("install_vllm_lora_debug", ok=False, error=repr(e))
+        return False
