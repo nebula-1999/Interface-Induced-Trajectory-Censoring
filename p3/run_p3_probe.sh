@@ -13,14 +13,19 @@ DATA=/root/autodl-tmp/train/code-data
 MODEL="${MODEL:-/root/autodl-tmp/models/Qwen2.5-Coder-7B-Instruct}"
 export P3_OUT="${P3_OUT:-/root/autodl-tmp/runs/p3_rollout_probe}"
 export P3_PROJ_DIR="$PROJ_DIR"
-OUT=/root/autodl-tmp/runs/p3-probe-run
+OUT="${P3_CKPT_DIR:-/root/p3_artifacts/probe_ckpt}"
+P3_BATCH="${P3_BATCH:-16}"
+P3_N="${P3_N:-8}"
+P3_REWARD_WORKERS="${P3_REWARD_WORKERS:-1}"
+P3_AGENT_WORKERS="${P3_AGENT_WORKERS:-2}"
+P3_RAY_CPUS="${P3_RAY_CPUS:-6}"
 
 # p3 必须在最前：它的 sitecustomize 会装探针钩子，并接力加载 PROJ_DIR 那份
 export PYTHONPATH="$PROJ_DIR/p3:$PROJ_DIR/flash_attn_shim:$PROJ_DIR:${PYTHONPATH:-}"
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 # Ray 的对象溢写默认落 /tmp。数据盘只剩 ~3.9 GB，绝不能让它写那儿。
 export RAY_TMPDIR=/tmp/ray_p3
-mkdir -p "$RAY_TMPDIR" "$P3_OUT"
+mkdir -p "$RAY_TMPDIR" "$P3_OUT" "$OUT"
 rm -f "$P3_OUT"/events.*.jsonl "$P3_OUT/summary.json" "$P3_OUT/P3_INVALID"
 rm -f /root/autodl-tmp/runs/.tool_called
 
@@ -52,7 +57,8 @@ df -h /root/autodl-tmp | tail -1
   actor_rollout_ref.rollout.seed=0 \
   data.train_files="$DATA/train_fc3.parquet" \
   data.val_files="$DATA/val_fc3.parquet" \
-  data.train_batch_size=16 \
+  data.train_batch_size="$P3_BATCH" \
+  data.dataloader_num_workers=1 \
   actor_rollout_ref.model.path="$MODEL" \
   +actor_rollout_ref.model.override_config.attn_implementation=sdpa \
   actor_rollout_ref.model.use_remove_padding=False \
@@ -72,17 +78,20 @@ df -h /root/autodl-tmp | tail -1
   actor_rollout_ref.rollout.mode=async \
   actor_rollout_ref.rollout.tensor_model_parallel_size=1 \
   actor_rollout_ref.rollout.gpu_memory_utilization=0.55 \
-  actor_rollout_ref.rollout.n=8 \
+  actor_rollout_ref.rollout.n="$P3_N" \
   actor_rollout_ref.rollout.max_model_len=8192 \
   actor_rollout_ref.rollout.multi_turn.enable=True \
   actor_rollout_ref.rollout.multi_turn.max_assistant_turns=5 \
   actor_rollout_ref.rollout.multi_turn.max_tool_response_length=1200 \
   actor_rollout_ref.rollout.multi_turn.tool_config_path="$PROJ_DIR/code_tool_config.yaml" \
   actor_rollout_ref.rollout.multi_turn.format=hermes \
+  actor_rollout_ref.rollout.agent.num_workers="$P3_AGENT_WORKERS" \
   custom_reward_function.path="$PROJ_DIR/reward_code.py" \
   custom_reward_function.name=compute_score \
   reward.custom_reward_function.path="$PROJ_DIR/reward_code.py" \
   reward.custom_reward_function.name=compute_score \
+  reward.num_workers="$P3_REWARD_WORKERS" \
+  ray_kwargs.ray_init.num_cpus="$P3_RAY_CPUS" \
   trainer.use_v1=False \
   trainer.logger='[console]' \
   trainer.val_before_train=False \
@@ -98,5 +107,6 @@ df -h /root/autodl-tmp | tail -1
   "$@"
 rc=$?
 echo "[p3] launch_ppo rc=$rc"
+echo "$rc" > "$P3_OUT/launch_rc"
 echo "[p3] ===== 收尾判定 ====="
 "$PY" "$PROJ_DIR/p3/summarise_p3.py"

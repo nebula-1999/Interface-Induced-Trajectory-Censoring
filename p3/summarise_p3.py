@@ -21,7 +21,10 @@ for path in event_files:
         rows.extend(json.loads(l) for l in fh if l.strip())
 
 ext = [r for r in rows if r["kind"] == "extract"]
+launch_rc_path = OUT / "launch_rc"
+launch_rc = int(launch_rc_path.read_text().strip()) if launch_rc_path.exists() else None
 res = {
+    "launch_rc": launch_rc,
     "extract_calls": len(ext),
     "call_tool_events": sum(1 for r in rows if r["kind"] == "call_tool"),
     "code_tool_executes": sum(1 for r in rows if r["kind"] == "execute"),
@@ -46,6 +49,8 @@ res = {
 }
 
 dead = []
+if launch_rc != 0:
+    dead.append(f"launch_ppo rc={launch_rc!r}")
 for key, label in (("parser_hook_installed", "extract_tool_calls install"),
                    ("agentloop_hook_installed", "_call_tool install"),
                    ("code_tool_hook_installed", "CodeTool.execute install"),
