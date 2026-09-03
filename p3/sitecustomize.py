@@ -57,15 +57,27 @@ def _hook(name, g=None, l=None, fromlist=(), level=0):
         # Check sys.modules after *every* import.  ``from package import child``
         # invokes __import__ with the parent name, so matching ``name`` exactly
         # misses a successfully loaded target (observed for ToolAgentLoop).
-        if not _done["parser"] and _T_PARSER in sys.modules:
-            _done["parser"] = True
+        parser_mod = sys.modules.get(_T_PARSER)
+        if (
+            not _done["parser"]
+            and parser_mod is not None
+            and hasattr(parser_mod, "ToolParser")
+            and hasattr(parser_mod, "FunctionCall")
+        ):
             import rollout_probe
-            rollout_probe.install()
-        if not _done["loop"] and _T_LOOP in sys.modules:
+            if rollout_probe.install():
+                _done["parser"] = True
+        loop_mod = sys.modules.get(_T_LOOP)
+        if not _done["loop"] and loop_mod is not None and hasattr(loop_mod, "ToolAgentLoop"):
             import rollout_probe
             if rollout_probe.install_agentloop():
                 _done["loop"] = True
-        if not _done["vllm_lora"] and _T_VLLM_LORA in sys.modules:
+        vllm_lora_mod = sys.modules.get(_T_VLLM_LORA)
+        if (
+            not _done["vllm_lora"]
+            and vllm_lora_mod is not None
+            and hasattr(vllm_lora_mod, "MergedColumnParallelLinearWithLoRA")
+        ):
             import rollout_probe
             if rollout_probe.install_vllm_lora_debug():
                 _done["vllm_lora"] = True
