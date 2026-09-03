@@ -59,22 +59,21 @@ routinely reported as though it were a property of the model alone.}
 
 \paragraph{What is and is not new.}
 That Qwen2.5-Coder does not emit \texttt{hermes}-format tool calls was reported in vLLM issue
-\#32926 (2026-01-23) together with a \texttt{<tools>} parser proposal; it was closed as \emph{not
-planned} and labelled \emph{stale}, so the trap is still live (\S\ref{sec:related}). What this
-paper adds is measurement, decomposition and consequence. We measure the funnel on \emph{two}
-standard benchmarks --- BFCL~v4 and $\tau$-bench --- where changing only the serving adapter moves
-BFCL's reported score from 0.00 to 0.96 / 0.19 and $\tau$-bench's parsed calls from 0 to 636, and
-a $2\times2$ over template and parser finds both main effects exactly zero with the whole effect
-in their interaction (\S\ref{sec:bfcl}). We separate \emph{model intent} / \emph{emitted format} /
+\#32926 (2026-01-23) with a \texttt{<tools>} parser proposal; it was closed as \emph{not planned}
+and labelled \emph{stale}, so the trap is still live (\S\ref{sec:related}). What this paper adds is
+measurement, decomposition and consequence. We measure the funnel on \emph{two} standard
+benchmarks --- BFCL~v4 and $\tau$-bench --- where changing only the serving adapter moves BFCL's
+reported score from 0.00 to 0.96 / 0.19 and $\tau$-bench's parsed calls from 0 to 636, and a
+$2\times2$ over template and parser finds both main effects exactly zero with the whole effect in
+their interaction (\S\ref{sec:bfcl}). We separate \emph{model intent} / \emph{emitted format} /
 \emph{server parse} / \emph{actual execution} / \emph{multi-turn rescue} into five independently
-measured quantities --- reporting only the third is the standard practice we argue against ---
-quantify how much censoring removes across a 21$\times$ scale range, and pair that ladder with a
+measured quantities --- reporting only the third is the practice we argue against --- quantify
+what censoring removes across a 21$\times$ scale range, and pair that ladder with a preregistered
 counterfactual under a \emph{matched} envelope where the silent fraction stays at 0--2 instead of
 rising to 80 (\S\ref{sec:scale}). Four families failing at template, parser, schema and token
-layers motivate a layered taxonomy, on deliberately asymmetric evidence we mark as such
-(\S\ref{sec:families}). And we follow the distortion into training: at 7B, 45 of 115 generations
-inside verl's AgentLoop carry a complete call and none becomes an action, so the sampled
-experience contains no tool-mediated trajectory to reinforce. We argue that from the sampled
-rollouts, not the support of the policy --- \emph{zero observed samples is not zero probability}
---- and the comparison arm changes protocol and interface together; the parser-repair control that
-would separate them is a code change blocked by scale, not by the stack (\S\ref{sec:norepair}).
+layers motivate a layered taxonomy on deliberately asymmetric evidence (\S\ref{sec:families}). And
+we follow the distortion into training: at 7B, 45 of 115 generations inside verl's AgentLoop carry
+a complete call and none becomes an action, so the sampled experience contains no tool-mediated
+trajectory to reinforce. We argue that from the sampled rollouts, not the support of the policy
+--- \emph{zero observed samples is not zero probability} --- and the comparison arm changes
+protocol and interface together (\S\ref{sec:norepair}).

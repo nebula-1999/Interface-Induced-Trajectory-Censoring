@@ -62,16 +62,14 @@ claim, since it can only understate the censoring we report.
 \label{sec:control}
 
 Before attributing a zero to a model we verify the instrument. On the same live server, model,
-tools and system prompt, changing only \texttt{tool\_choice}: under \texttt{auto} the server
-returns \texttt{finish\_reason = stop} with \texttt{tool\_calls = 0} and the assistant writes the
-solution as fenced code; under \texttt{required} it returns \texttt{finish\_reason = tool\_calls}
-with one call, \texttt{name = run\_tests} and \texttt{arguments} carrying real Python. Server flag,
-parser and chat template are therefore all functional. \textbf{This establishes that the pipeline
-can accept a conforming call; it does not by itself locate the zero under \texttt{auto} in the
-model}, because \texttt{required} uses constrained decoding and so says nothing about whether the
-model spontaneously knows the \texttt{<tool\_call>} format. Separating the two is what the emitted
--intent measurement of \S\ref{sec:results} supplies. (Our task prompts are in Chinese and we do not
-translate model output in transcripts; the verbatim exchange is in Appendix~\ref{app:prompts}.)
+tools and prompt, changing only \texttt{tool\_choice}: under \texttt{auto} the server returns
+\texttt{finish\_reason = stop} with \texttt{tool\_calls = 0} while the assistant writes the solution
+as fenced code; under \texttt{required} it returns one parsed call naming \texttt{run\_tests} with
+real Python in \texttt{arguments}. Server flag, parser and template are therefore all functional.
+\textbf{This establishes that the pipeline can accept a conforming call; it does not locate the
+zero under \texttt{auto} in the model}, since \texttt{required} uses constrained decoding and says
+nothing about whether the model spontaneously knows the format. The emitted-intent measurement of
+\S\ref{sec:results} is what separates them.
 
 \subsection{Validity gating}
 \label{sec:gating}

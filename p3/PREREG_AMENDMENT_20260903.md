@@ -1,5 +1,9 @@
 # P3 预注册修正：这条 run 能回答什么、不能回答什么
 
+> **19:55 更新（仍在 repaired 出任何结果之前）**：下述第二、三节的前提已被推翻，
+> 修正见文末「附：evaluation 其实一直是可开的」。结论从「sufficiency 完全不可测」
+> 改为「**repaired 臂可测，broken 臂不可测**」。第一节（判据用错了量）依然成立。
+
 **写于 2026-09-03 19:40 —— broken 臂已完成（summary 已落盘），repaired 臂尚未启动。
 在看到 repaired 任何结果之前提交。**
 
@@ -96,3 +100,47 @@ trainer.save_freq=-1
 两臂都开 `test_freq`（与历史 run 同一个评估钩子、同一个 540 题保留集），
 或者在 rollout 探针里补记每条 rollout 的 (轮次, 最终奖励)，
 使"首轮失败→后续救回"的比例可以逐步计算。二选一，但必须**两臂同时**做。
+
+
+---
+
+## 附：evaluation 其实一直是可开的（19:55 补）
+
+上面第二节说"救回数没测、事后补不回"。**前半句对，后半句的原因我找错了。**
+
+真实情况：`code_patch.py` 把 `CodeEvalHook` 包在 `RayPPOTrainer._validate` 外面，
+而 `_validate` 只在 `test_freq>0` 时被调用。`launch_ppo.py` 顶层就 import 了
+`code_patch`，所以**钩子一直是装好的，只是从来没被触发过**。它产出
+`code/turn1_pass`、`code/final_pass`、`code/gap_final_minus_turn1`——
+**那个 gap 就是救回数**。探针集 `probes_repair.jsonl` 有 454 题，在服务器上现成。
+
+也就是说，让 P3 回答 sufficiency 只需要改**一个 flag**，不是重新设计。
+
+**已做**：repaired 臂在 0 步时停掉重启，`EVAL_FREQ=30` + `val_before_train=True`
+（step 0/30/60/90/120/150 共 6 个评测点）。改动落在 `p3/run_p3_arm.sh`，
+两条臂共用同一个 `EVAL_FREQ` 变量，将来重跑 broken 时自动匹配。
+
+**因此修正后的可主张范围：**
+
+| | broken | repaired |
+|---|---|---|
+| 机制（发出/接受/执行） | ✅ 已测 | ✅ 会测 |
+| 多轮救回数随步数的走势 | ❌ 无（跑在 test_freq=-1 下） | ✅ 会测 |
+
+- **sufficiency 现在是可回答的，但只有臂内趋势**：repaired 的救回数在 150 步内
+  是否上升。这直接回答"通道打开后多轮学习是否恢复"，且不需要 broken 做对照——
+  因为它问的是**趋势**，不是**臂间差**。
+- **缺的是匹配对照**：broken 没有救回数，所以无法说"同样配置下通道关着就不涨"。
+  历史那三条零执行 run 有该量，但它们是 1.5B 全参、540 题，与 7B LoRA、454 题
+  不可直接比。
+
+**broken 要不要补跑（+6.2h）——分阶段决定，看 repaired 的结果：**
+- repaired 救回数**平**→ sufficiency 主张加强（趋势证据），broken 的对照增量小
+  （它只有 7 次执行，救回数近似 0 是构造性的）。**不补跑。**
+- repaired 救回数**上升**→ 这是能推翻我们自己主张的情形，归因必须干净，
+  broken 的匹配对照就值那 6.2 小时。**补跑。**
+
+只在买得到东西的时候花钱。
+
+**第一节的结论不变**：无论如何都不能用 `critic/score/mean` 判分支——
+它是聚合量，本文 §1 已证明它可完全由首轮质量驱动。判据用救回数。

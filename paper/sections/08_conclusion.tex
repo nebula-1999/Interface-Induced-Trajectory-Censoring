@@ -1,14 +1,13 @@
 \section{Conclusion}
 
-Tool-call interfaces censor agent trajectories, and the censoring is silent and
-checkpoint-specific; within Qwen2.5-Coder the absolute undercount increases monotonically with
-checkpoint size, which we report as a within-family observation rather than a general law. In
-reinforcement learning the same mismatch leaves the sampled experience distribution with no
-tool-mediated trajectories --- 45 of 115 generations inside the training loop carry a complete
-call and none becomes an action --- so the tool-using branch receives no direct on-policy gradient
-signal under the observed rollout distribution. Repairing the interface restores the mechanism but
-recovers only part of the outcome gap, and a genuine protocol difference remains underneath on one
-of the two families that admit a comparison.
+Tool-call interfaces censor agent trajectories, silently and per checkpoint; within Qwen2.5-Coder
+the absolute undercount rises monotonically with checkpoint size, which we report as a
+within-family observation rather than a general law. In reinforcement learning the same mismatch
+leaves the sampled experience distribution with no tool-mediated trajectories --- 45 of 115
+generations inside the training loop carry a complete call and none becomes an action --- so the
+tool-using branch receives no direct on-policy gradient signal under the observed rollout
+distribution. Repairing the interface restores the mechanism but recovers only part of the outcome
+gap.
 
 Two controls fix what the effect is a property of. A $2\times2$ over chat template and parser on a
 public benchmark finds both main effects exactly zero, with the entire 0.00-to-0.96 swing in their
@@ -16,10 +15,9 @@ interaction; and a ladder under a \emph{matched} interface holds the silent frac
 a comparable span of scale, where the mismatched interface takes it to 80. \textbf{What the serving
 layer removes is not a property of the model, nor of the parser, but of the contract between them.}
 
-The most uncomfortable finding is methodological. We ran three single-variable paired controls on
-a 23\% failure and concluded it was a model deficiency; a fourth control, taken from a sentence in
-the serving documentation, reduced it to zero. Our own human validation reproduced the same
-mechanism a second time: twelve of ninety-eight annotations missed a tool call because it sat
-after a fenced code block, and the annotator --- like the parser --- concluded from the same bytes
-that no call had been made. Reporting server-parsed tool-call rates as model capability is not a
-safe default.
+The most uncomfortable finding is methodological. We ran three single-variable paired controls on a
+23\% failure and concluded it was a model deficiency; a fourth, taken from a sentence in the serving
+documentation, reduced it to zero. Our own human validation reproduced the same mechanism: twelve of
+ninety-eight annotations missed a tool call because it sat after a fenced code block, and the
+annotator --- like the parser --- concluded from the same bytes that no call had been made.
+Reporting server-parsed tool-call rates as model capability is not a safe default.

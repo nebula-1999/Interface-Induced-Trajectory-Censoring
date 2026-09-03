@@ -146,7 +146,7 @@ fi
   if [ "$R_SUMMARY" = "has_summary" ]; then
     echo "- repaired 已完成"
     sync_arm repaired
-    echo "- ★★ 两臂全部完成，结果已在仓库，可以按分支 A/B 写论文了"
+    echo "- ★★ 两臂全部完成，结果已在仓库，可按 p3/PREREG_AMENDMENT_20260903.md 的分支 C 改稿（A/B 已作废）"
   elif [ "$R_LAUNCHED" = "launched" ]; then
     echo "- repaired 运行中，本轮不动"
   fi
