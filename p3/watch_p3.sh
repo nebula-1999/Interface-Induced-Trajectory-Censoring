@@ -64,25 +64,49 @@ launch_arm() {
 
 sync_arm() {
   local arm="$1"
-  local dst="p3/results/${arm}_formal_summary.json"
+  local sum_dst="p3/results/${arm}_formal_summary.json"
+  local log_tmp="/tmp/p3_${arm}_driver.log"
+  local csv_dst="p3/results/${arm}_steps.csv"
 
   scp -q "$SSH_HOST:$FORMAL_DIR/$arm/events/summary.json" \
         "/tmp/p3_${arm}_formal.json" 2>/dev/null || {
     echo "[watch] $arm: summary 拉取失败，下轮重试"; return 1
   }
-  cd "$LOCAL_REPO" || return 1
-  cp "/tmp/p3_${arm}_formal.json" "$dst"
-  git add "$dst" 2>/dev/null
-  if git diff --cached --quiet; then
-    echo "[watch] $arm: 结果无变化，跳过提交"
-  else
-    git commit -q -m "P3: $arm 臂正式训练结果（$STEPS 步）
+  # 驱动日志也要拉回来：判分支 A/B 用的是**每步趋势**，不是一个汇总数
+  scp -q "$SSH_HOST:$FORMAL_DIR/${arm}_driver.log" "$log_tmp" 2>/dev/null || {
+    echo "[watch] $arm: 驱动日志拉取失败（本轮仍提交 summary）"
+    log_tmp=""
+  }
 
-自动回传，见 p3/WATCH_LOG.md 的进度记录。" \
-      && git push -q origin main \
-      && echo "[watch] $arm: 已推送 $dst" \
-      || echo "[watch] $arm: 推送失败，产物保留在本地，下轮重试"
+  cd "$LOCAL_REPO" || return 1
+
+  # 内容变了才提交——用内容比对而不是「文件在不在」，
+  # 这样上一轮提交成功但推送失败的情况也能自动补齐
+  local changed=0
+  if ! cmp -s "/tmp/p3_${arm}_formal.json" "$sum_dst" 2>/dev/null; then
+    cp "/tmp/p3_${arm}_formal.json" "$sum_dst"; changed=1
   fi
+
+  if [ -n "$log_tmp" ]; then
+    python3 p3/parse_steps.py "$log_tmp" --arm "$arm" \
+            --csv-out "$csv_dst" > "/tmp/p3_${arm}_trend.json" 2>&1
+    if ! cmp -s "$csv_dst" "/tmp/p3_${arm}_csv_prev" 2>/dev/null; then
+      cp "$csv_dst" "/tmp/p3_${arm}_csv_prev"; changed=1
+    fi
+  fi
+
+  if [ "$changed" -eq 0 ]; then
+    echo "[watch] $arm: 结果无变化，跳过提交"; return 0
+  fi
+
+  git add "$sum_dst" "$csv_dst" 2>/dev/null
+  git commit -q -m "P3: $arm 臂正式训练结果（$STEPS 步）
+
+自动回传：整轮 summary + 每步指标 CSV。
+判分支 A/B 看每步趋势，见 p3/PAPER_EDIT_MAP.md 第四节。" \
+    && git push -q origin main \
+    && echo "[watch] $arm: 已推送 summary + 每步 CSV" \
+    || echo "[watch] $arm: 推送失败，产物保留在本地，下轮重试"
 }
 
 # ---------------------------------------------------------------- 主流程
@@ -109,7 +133,7 @@ fi
     launch_arm broken
   elif [ "$B_SUMMARY" = "has_summary" ]; then
     echo "- broken 已完成"
-    [ -f "$LOCAL_REPO/p3/results/broken_formal_summary.json" ] || sync_arm broken
+    sync_arm broken
     if [ "$R_LAUNCHED" != "launched" ]; then
       echo "- → 启动 repaired 臂接力"
       launch_arm repaired
@@ -121,7 +145,7 @@ fi
   # ---- repaired ----
   if [ "$R_SUMMARY" = "has_summary" ]; then
     echo "- repaired 已完成"
-    [ -f "$LOCAL_REPO/p3/results/repaired_formal_summary.json" ] || sync_arm repaired
+    sync_arm repaired
     echo "- ★★ 两臂全部完成，结果已在仓库，可以按分支 A/B 写论文了"
   elif [ "$R_LAUNCHED" = "launched" ]; then
     echo "- repaired 运行中，本轮不动"
