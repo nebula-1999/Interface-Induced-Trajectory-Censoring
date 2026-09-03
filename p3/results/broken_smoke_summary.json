@@ -1,0 +1,34 @@
+{
+  "launch_rc": 0,
+  "extract_calls": 8,
+  "call_tool_events": 0,
+  "code_tool_executes": 0,
+  "with_envelope": 0,
+  "names_run_tests": 3,
+  "emitted_vllm_acceptable": 0,
+  "emitted_verl_acceptable": 0,
+  "emitted_tight": 2,
+  "accepted_total": 0,
+  "accepted_name_hist": {},
+  "parsers_seen": [
+    "hermes"
+  ],
+  "event_files": [
+    "events.18346.jsonl",
+    "events.18359.jsonl",
+    "events.19500.jsonl",
+    "events.19693.jsonl",
+    "events.19816.jsonl",
+    "events.20025.jsonl",
+    "events.20217.jsonl",
+    "events.20218.jsonl",
+    "events.20219.jsonl"
+  ],
+  "parser_hook_installed": true,
+  "agentloop_hook_installed": true,
+  "code_tool_hook_installed": true,
+  "custom_parser_registered": true,
+  "valid": true,
+  "dead_hooks": [],
+  "verdict": "闭合：训练栈内发出了语义正确的工具调用，但缺包装层，栈内无一 parser 接受，零执行零 observation"
+}
