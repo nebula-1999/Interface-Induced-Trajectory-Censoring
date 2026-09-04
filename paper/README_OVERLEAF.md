@@ -41,3 +41,11 @@ sections/*.tex    11 个分节
 
 全文唯一的中文在 §4 的 verbatim 块里——那是模型的真实输出，属于数据，
 逐字保留而不翻译。附录 A 已译成英文。
+
+## Published
+
+arXiv:2609.03966 (cs.AI), announced 2026-09-04.
+https://arxiv.org/abs/2609.03966
+
+Updating the preprint goes through arXiv's **Replace**, not a new submission --
+that keeps the identifier and adds a version (v2).

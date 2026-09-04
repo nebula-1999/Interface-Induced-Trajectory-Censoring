@@ -4,6 +4,8 @@
 
 Wenbo Wang · City University of Hong Kong · `wenbwang3-c@my.cityu.edu.hk`
 
+[![arXiv](https://img.shields.io/badge/arXiv-2609.03966-b31b1b.svg)](https://arxiv.org/abs/2609.03966)
+
 > **Language.** The paper, this README, [`RESULTS.md`](RESULTS.md) and
 > [`runs/final/ERRATA.md`](runs/final/ERRATA.md) are in English; each has a `_zh` counterpart.
 > [`writeup/section_config.md`](writeup/section_config.md) — the full evidence and control

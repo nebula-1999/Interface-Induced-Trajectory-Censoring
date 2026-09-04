@@ -9,22 +9,25 @@ authors:
     affiliation: City University of Hong Kong
 repository-code: "https://github.com/nebula-1999/Interface-Induced-Trajectory-Censoring"
 
-# arXiv submitted 2026-09-03 (submission id submit/8014969, cs.AI).
-# The permanent identifier is assigned at announcement, not at submission.
-# When it lands (form 2609.NNNNN), uncomment and fill:
-#
-# identifiers:
-#   - type: other
-#     value: "arXiv:2609.NNNNN"
-#     description: The arXiv preprint of this work.
-# preferred-citation:
-#   type: article
-#   title: "Interface-Induced Trajectory Censoring"
-#   authors:
-#     - family-names: Wang
-#       given-names: Wenbo
-#   year: 2026
-#   journal: "arXiv preprint arXiv:2609.NNNNN"
+identifiers:
+  - type: doi
+    value: "10.48550/arXiv.2609.03966"
+    description: arXiv-issued DOI for the preprint.
+  - type: other
+    value: "arXiv:2609.03966"
+    description: The arXiv preprint of this work.
+preferred-citation:
+  type: article
+  title: "Interface-Induced Trajectory Censoring: A mismatched serving interface distorts both what a benchmark measures and what RL training ever sees"
+  authors:
+    - family-names: Wang
+      given-names: Wenbo
+      affiliation: City University of Hong Kong
+  year: 2026
+  month: 9
+  journal: "arXiv preprint arXiv:2609.03966"
+  doi: "10.48550/arXiv.2609.03966"
+  url: "https://arxiv.org/abs/2609.03966"
 abstract: >-
   The fraction of agent tool use that a serving stack silently discards grows
   with model scale, and it reaches the policy gradient. Four model families
