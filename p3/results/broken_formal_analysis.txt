@@ -1,0 +1,16 @@
+extract 事件 19202 条
+  sha256 校验不通过: 0
+  文本长度 最大 15751 / 中位 704 / 超 4000 字符 45 条
+
+训练侧失败层：
+  server_parsed       7   0.04%
+  no_envelope     19182  99.90%
+  bad_payload        13   0.07%
+  strict_only         0   0.00%
+  parser_loss         0   0.00%
+
+漏斗：
+  extract 检查        19202
+  tight（语义完整）    8591
+  带 <tool_call> 信封  20
+  被 hermes 接受       7

@@ -1,0 +1,5 @@
+{"t": 1788412287.3500378, "pid": 26466, "kind": "install_vllm_lora_debug", "ok": true}
+{"t": 1788412314.1676872, "pid": 26466, "kind": "register_custom_parser", "ok": true, "present": true}
+{"t": 1788412314.1678898, "pid": 26466, "kind": "install_parser", "ok": true, "parsers": ["hermes", "gpt-oss", "qwen3_coder", "glm", "seed", "minimax", "kimi", "deepseek_v4", "gemma4", "qwen2_5_coder"]}
+{"t": 1788412314.1679363, "pid": 26466, "kind": "install_code_tool", "ok": true}
+{"t": 1788412314.1684506, "pid": 26466, "kind": "install_agentloop", "ok": true}

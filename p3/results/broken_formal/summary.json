@@ -1,0 +1,36 @@
+{
+  "launch_rc": 0,
+  "extract_calls": 19202,
+  "call_tool_events": 7,
+  "code_tool_executes": 7,
+  "with_envelope": 20,
+  "names_run_tests": 9990,
+  "emitted_vllm_acceptable": 7,
+  "emitted_verl_acceptable": 0,
+  "emitted_tight": 8591,
+  "accepted_total": 7,
+  "accepted_name_hist": {
+    "run_tests": 7
+  },
+  "parsers_seen": [
+    "hermes"
+  ],
+  "event_files": [
+    "events.25306.jsonl",
+    "events.25319.jsonl",
+    "events.26466.jsonl",
+    "events.26667.jsonl",
+    "events.26783.jsonl",
+    "events.26973.jsonl",
+    "events.27171.jsonl",
+    "events.27172.jsonl",
+    "events.27173.jsonl"
+  ],
+  "parser_hook_installed": true,
+  "agentloop_hook_installed": true,
+  "code_tool_hook_installed": true,
+  "custom_parser_registered": true,
+  "valid": true,
+  "dead_hooks": [],
+  "verdict": "混合：emitted=8591 accepted=7 executed=7，需逐条看"
+}
