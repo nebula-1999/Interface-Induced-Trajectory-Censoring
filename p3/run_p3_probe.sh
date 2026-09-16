@@ -1,5 +1,5 @@
 #!/bin/bash
-# P3：7B 在 verl 训练 rollout 路径上的探针。**不训练、不存权重、不评测。**
+# P3: one training update by default; the formal wrapper supplies eval/save overrides.
 #
 # 复现的是 §5.7 那条 FC 结论对应的条件：multi_turn.format=hermes + 默认的
 # ToolAgentLoop（**不是** react_agent——最后一次训练用的是 ReAct，那是另一个条件）。
@@ -8,8 +8,8 @@
 # 但先判钩子：三个计数都可能天然为 0，钩子没装上产生的也是一串 0。
 set -uo pipefail
 
-PROJ_DIR=/root/autodl-tmp/code-agent
-DATA=/root/autodl-tmp/train/code-data
+PROJ_DIR="${PROJ_DIR:-/root/autodl-tmp/code-agent}"
+export DATA="${DATA:-/root/autodl-tmp/train/code-data}"
 MODEL="${MODEL:-/root/autodl-tmp/models/Qwen2.5-Coder-7B-Instruct}"
 export P3_OUT="${P3_OUT:-/root/autodl-tmp/runs/p3_rollout_probe}"
 export P3_PROJ_DIR="$PROJ_DIR"
@@ -25,22 +25,27 @@ P3_RAY_CPUS="${P3_RAY_CPUS:-6}"
 export PYTHONPATH="$PROJ_DIR/p3:$PROJ_DIR/flash_attn_shim:$PROJ_DIR:${PYTHONPATH:-}"
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 # Ray 的对象溢写默认落 /tmp。数据盘只剩 ~3.9 GB，绝不能让它写那儿。
-export RAY_TMPDIR=/tmp/ray_p3
-mkdir -p "$RAY_TMPDIR" "$P3_OUT" "$OUT"
-rm -f "$P3_OUT"/events.*.jsonl "$P3_OUT/summary.json" "$P3_OUT/P3_INVALID"
-rm -f /root/autodl-tmp/runs/.tool_called
+export RAY_TMPDIR="${RAY_TMPDIR:-$P3_OUT/ray}"
 
 # 非交互 shell 里没有 `python`——原训练脚本靠 source env.sh 激活 venv 才有。
 # setsid 起的进程走的正是那个 PATH，所以必须显式钉死解释器（P1 上同类坑踩过）。
 PY="${P3_PYTHON:-/root/code-venv/bin/python}"
+if [ "${DRY:-0}" != 1 ]; then
+# Refuse reused outputs; never delete evidence or checkpoints.
+[ ! -e "$P3_OUT" ] && [ ! -e "$OUT" ] || {
+  echo "[p3] REFUSED: output/checkpoint directory already exists" >&2; exit 2;
+}
+mkdir -p "$(dirname "$P3_OUT")" "$(dirname "$OUT")"
+mkdir "$P3_OUT" "$OUT" || exit 2
+mkdir -p "$RAY_TMPDIR"
 [ -x "$PY" ] || { echo "[p3] ★ 找不到解释器 $PY"; exit 1; }
 echo "[p3] 解释器: $PY"
 # 数据自检：train.parquet 是 ReAct 版（agent_name=react_agent、Thought/Action 提示词），
 # 用它会得到「Agent loop react_agent not registered」——第一次就是这么失败的。
 # §5.7 那条 FC 结论对应 fc3：tool_agent + FC_MANDATORY 提示词。
 "$PY" - <<'PYCHK' || exit 1
-import pyarrow.parquet as pq, collections, sys
-t = pq.read_table("/root/autodl-tmp/train/code-data/train_fc3.parquet")
+import pyarrow.parquet as pq, collections, sys, os
+t = pq.read_table(os.path.join(os.environ["DATA"], "train_fc3.parquet"))
 an = collections.Counter(t.column("agent_name").to_pylist())
 pr = t.column("prompt").to_pylist()[0]
 txt = pr[0]["content"] if isinstance(pr, list) else str(pr)
@@ -54,10 +59,11 @@ PYCHK
 # very first in-memory adapter sync crashes before any rollout is generated.
 "$PY" "$PROJ_DIR/p3/apply_verl_vllm_compat.py" || exit 1
 
-echo "[p3] 磁盘余量（写权重会炸盘，本轮 save_freq=-1）："
-df -h /root/autodl-tmp | tail -1
+echo "[p3] Checkpoint filesystem (verify capacity before launch):"
+df -h "$OUT" | tail -1
+fi
 
-"$PY" "$PROJ_DIR/launch_ppo.py" \
+cmd=("$PY" "$PROJ_DIR/launch_ppo.py" \
   algorithm.adv_estimator=grpo \
   data.seed=0 \
   actor_rollout_ref.rollout.seed=0 \
@@ -114,7 +120,14 @@ df -h /root/autodl-tmp | tail -1
   trainer.default_local_dir="$OUT" \
   trainer.project_name=code-agent \
   trainer.experiment_name=p3-rollout-probe-7b \
-  "$@"
+  "$@")
+# Print the exact ordered arguments: trailing Hydra overrides are authoritative.
+printf '[p3-command]'; printf ' %q' "${cmd[@]}"; printf '\n'
+if [ "${DRY:-0}" = 1 ]; then exit 0; fi
+printf '%s\n' "${cmd[@]}" > "$P3_OUT/effective_argv.txt"
+"$PY" -I "$PROJ_DIR/p3/record_launch.py" "${cmd[@]:2}" || exit 2
+cd "$PROJ_DIR" || exit 2
+"${cmd[@]}"
 rc=$?
 echo "[p3] launch_ppo rc=$rc"
 echo "$rc" > "$P3_OUT/launch_rc"

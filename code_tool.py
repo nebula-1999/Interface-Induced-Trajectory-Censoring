@@ -52,7 +52,7 @@ SCHEMA = OpenAIFunctionToolSchema.model_validate({
 # （vLLM 默认 parser 与 Qwen2.5-Coder-1.5B 不兼容，finish_reason 恒为 "stop"），
 # 而日志唯一的破绽是 timing_s/agent_loop/tool_calls/mean 那个 0.0。
 # 4 小时 ¥20 全程没有任何报警。guard_tool_calls.sh 靠这个文件兜底。
-TOOL_CALLED_FLAG = Path("/root/autodl-tmp/runs/.tool_called")
+TOOL_CALLED_FLAG = Path(os.environ.get("TOOL_CALLED_FLAG", "/root/autodl-tmp/runs/.tool_called"))
 
 
 class CodeTool(BaseTool):

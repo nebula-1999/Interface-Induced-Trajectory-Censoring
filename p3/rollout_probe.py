@@ -33,31 +33,21 @@ import re
 import sys
 import threading
 import time
+from contextvars import ContextVar
 from pathlib import Path
 
 OUT = Path(os.environ.get("P3_OUT", "/root/autodl-tmp/runs/p3_rollout_probe"))
 OUT.mkdir(parents=True, exist_ok=True)
 _LOCK = threading.Lock()
+_TRAJECTORY = ContextVar("p3_trajectory", default={})
 
 FIRED: dict[str, int] = {"extract_tool_calls": 0, "call_tool": 0, "code_tool_execute": 0}
 
 # 判据与 analysis/failure_layer.py 同源：照抄 vLLM 0.27.1 的正则（含兜底分支）
-VLLM_RE = re.compile(r"<tool_call>(.*?)</tool_call>|<tool_call>(.*)", re.DOTALL)
-VERL_RE = re.compile(r"<tool_call>(.*?)</tool_call>", re.DOTALL)
+from p3.parser_diagnostics import VLLM_RE, VERL_RE, accepts as _accepts, DIAGNOSTIC_VERSION
 TIGHT_RE = re.compile(
     r'"name"\s*:\s*"run_tests".{0,200}?"arguments"\s*:\s*\{.{0,80}?"code"\s*:\s*"(.{0,4000}?)"\s*\}', re.S)
 REAL_RE = re.compile(r"\\n|def |class |return |import |lambda ")
-
-
-def _accepts(rx, text: str) -> bool:
-    if "<tool_call>" not in text:
-        return False
-    try:
-        caps = [m[0] if m[0] else (m[1] if len(m) > 1 else "") for m in rx.findall(text)]
-        calls = [json.loads(c) for c in caps if c]
-        return bool(calls) and all("name" in c and "arguments" in c for c in calls)
-    except Exception:
-        return False
 
 
 def _write(kind: str, **f) -> None:
@@ -65,7 +55,11 @@ def _write(kind: str, **f) -> None:
     # shared JSONL across them, so each PID owns an append-only event file.
     path = OUT / f"events.{os.getpid()}.jsonl"
     with _LOCK, path.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps({"t": time.time(), "pid": os.getpid(), "kind": kind, **f},
+        fh.write(json.dumps({**_TRAJECTORY.get(),
+                            "t": time.time(), "pid": os.getpid(), "kind": kind,
+                            "run_id": os.environ.get("P3_RUN_ID"),
+                            "arm": os.environ.get("P3_ARM"),
+                            "diagnostic_version": DIAGNOSTIC_VERSION, **f},
                             ensure_ascii=False) + "\n")
 
 
@@ -140,9 +134,22 @@ def install() -> bool:
             @functools.wraps(orig_e)
             async def execute(self, instance_id, parameters, *a, _o=orig_e, **kw):
                 FIRED["code_tool_execute"] += 1
-                _write("execute", n=FIRED["code_tool_execute"],
+                agent_data = kw.get("agent_data")
+                common = {
+                    "request_id": getattr(agent_data, "request_id", None),
+                    "assistant_turn": getattr(agent_data, "assistant_turns", None),
+                }
+                _write("execute", n=FIRED["code_tool_execute"], **common,
                        has_code=bool((parameters or {}).get("code")))
-                return await _o(self, instance_id, parameters, *a, **kw)
+                result = await _o(self, instance_id, parameters, *a, **kw)
+                response = result[0] if isinstance(result, tuple) and result else None
+                observation = getattr(response, "text", None)
+                _write("execute_result", **common,
+                       observation_chars=len(observation or ""),
+                       observation_sha256=hashlib.sha256(
+                           (observation or "").encode("utf-8")).hexdigest(),
+                       observation=observation)
+                return result
             execute._p3 = True
             code_tool.CodeTool.execute = execute
             code_tool_ok = True
@@ -174,14 +181,55 @@ def install_agentloop() -> bool:
         @functools.wraps(orig)
         async def call_tool(self, *a, _o=orig, **kw):
             FIRED["call_tool"] += 1
-            _write("call_tool", n=FIRED["call_tool"], args=repr(a)[:400])
-            return await _o(self, *a, **kw)
+            tool_call = a[0] if a else kw.get("tool_call")
+            agent_data = a[2] if len(a) > 2 else kw.get("agent_data")
+            common = {
+                "request_id": getattr(agent_data, "request_id", None),
+                "assistant_turn": getattr(agent_data, "assistant_turns", None),
+                "tool_name": getattr(tool_call, "name", None),
+            }
+            _write("call_tool", n=FIRED["call_tool"], **common,
+                   arguments_sha256=hashlib.sha256(
+                       str(getattr(tool_call, "arguments", "")).encode("utf-8")).hexdigest())
+            result = await _o(self, *a, **kw)
+            response = result[0] if isinstance(result, tuple) and result else None
+            observation = getattr(response, "text", None)
+            _write("call_tool_result", **common,
+                   observation_chars=len(observation or ""),
+                   observation_sha256=hashlib.sha256(
+                       (observation or "").encode("utf-8")).hexdigest(),
+                   observation=observation)
+            return result
 
         call_tool._p3 = True
         cls._call_tool = call_tool
-        _write("install_agentloop", ok=True)
+        # AgentLoopWorker owns the only trajectory identity that includes the
+        # training step and rollout index. ContextVar keeps concurrent asyncio
+        # trajectories separated inside one worker process.
+        from verl.experimental.agent_loop.agent_loop import AgentLoopWorker
+        run_orig = AgentLoopWorker.__dict__.get("_run_agent_loop")
+        identity_ok = bool(run_orig)
+        if run_orig is not None and not getattr(run_orig, "_p3", False):
+            @functools.wraps(run_orig)
+            async def run_with_identity(self, sampling_params, trajectory, *a,
+                                        _o=run_orig, **kw):
+                token = _TRAJECTORY.set({
+                    "step": trajectory.get("step"),
+                    "sample_index": trajectory.get("sample_index"),
+                    "rollout_n": trajectory.get("rollout_n"),
+                    "validate": trajectory.get("validate"),
+                })
+                try:
+                    return await _o(self, sampling_params, trajectory, *a, **kw)
+                finally:
+                    _TRAJECTORY.reset(token)
+            run_with_identity._p3 = True
+            AgentLoopWorker._run_agent_loop = run_with_identity
+        elif run_orig is not None:
+            identity_ok = getattr(run_orig, "_p3", False)
+        _write("install_agentloop", ok=True, identity_ok=identity_ok)
         print("[p3] ✓ 已挂 ToolAgentLoop._call_tool", file=sys.stderr, flush=True)
-        return True
+        return identity_ok
     except Exception as e:
         _write("install_agentloop", ok=False, error=repr(e))
         print(f"[p3] ! _call_tool 未挂上: {e!r}", file=sys.stderr, flush=True)

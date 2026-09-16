@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "decision": "accepted",
+  "broken_smoke": "/root/autodl-tmp/runs/p3/acceptance-20260916-e/broken",
+  "resume_smoke": "/root/autodl-tmp/runs/p3/acceptance-20260916-g/broken",
+  "repaired_smoke": "/root/autodl-tmp/runs/p3/acceptance-20260916-h/repaired",
+  "scope": "Authorizes the paired 150-step P3 run only after live artifact re-verification.",
+  "notes": [
+    "Native evaluation attested current LoRA steps 0 and 1 in both fresh arms.",
+    "Resume loaded step 1 model, optimizer, RNG and scheduler, then attested steps 1 and 2.",
+    "The repaired arm produced parser acceptance, CodeTool execution, non-empty observations and subsequent generations on the same trajectory identities.",
+    "Two accepted calls were not dispatched because one emission contained three calls while verl max_parallel_calls was one; this is an explicit execution cap, not parser loss.",
+    "A DataLoader child emitted a teardown traceback after final validation; the driver returned zero, all artifacts completed, and the host had no OOM event."
+  ]
+}

@@ -4,9 +4,8 @@
 RayPPOTrainer._validate，先跑 verl 自带的验证，再用**同一个 rollout vLLM
 服务**跑一遍分解评测。
 
-为什么这样接：rollout 引擎本来就维护着与当前策略同步的 vLLM 服务并暴露
-OpenAI 兼容端点，而评测只需要生成——所以**权重一次都不用落盘**。
-1.5B 的完整训练态 checkpoint 约 21 GB，数据盘只有 50 GB。
+The endpoint must be checked for current-LoRA routing on the installed stack.
+In-place evaluation does not replace checkpoint saving or restore acceptance.
 
 被 import 即生效（顶层调用 _install），引导见 launch_ppo.py。
 """
@@ -82,36 +81,47 @@ def install(RayPPOTrainer=None) -> None:
     def _validate_with_code_eval(self, *args, **kwargs):
         metrics = original_validate(self, *args, **kwargs)
         try:
-            addrs = _find_addresses(self)
             step = int(getattr(self, "global_steps", 0) or 0)
+            mgr = getattr(self, "async_rollout_manager", None)
+            native_client = getattr(mgr, "llm_client", None)
+            if native_client is None and os.environ.get("CODE_EVAL_REQUIRE_NATIVE") == "1":
+                raise RuntimeError("No native rollout client; HTTP fallback would test the base model")
+            addrs = [] if native_client is not None else _find_addresses(self)
             from code_eval_hook import CodeEvalHook
 
             hook = CodeEvalHook(
                 addrs,
                 model_name=self.config.actor_rollout_ref.model.path,
                 out_dir=_OUT,
-                probes_path="/root/autodl-tmp/code-agent/probes_repair.jsonl",
+                probes_path=os.environ.get("CODE_EVAL_PROBES",
+                    "/root/autodl-tmp/code-agent/probes_repair.jsonl"),
                 # 冒烟时由 run_code_grpo.sh 设成小数，正式 run 不设即全量
                 limit=int(os.environ.get("CODE_EVAL_LIMIT", "0")) or None,
+                native_client=native_client,
+                tokenizer=getattr(self, "tokenizer", None),
+                expected_step=step,
             )
             m = hook.run(step=step)
+            if m.get("code/request_failures") != 0:
+                raise RuntimeError("Required evaluation has missing/error request accounting")
             brief = {k: v for k, v in m.items()
                      if k in ("code/final_pass", "code/turn1_pass",
                               "code/repair_rate", "code/gap_final_minus_turn1",
                               "code/elapsed_s", "code/request_failures")}
+            brief["code/native_weight_step"] = m.get("code/native_weight_step")
+            brief["code/native_requests"] = m.get("code/native_requests")
             print(f"[code-eval] step {step} -> {brief}", flush=True)
             if isinstance(metrics, dict):
                 metrics.update(m)
         except Exception:
-            # 首次失败必须炸掉训练：评测静默失效 = GPU 白烧十几小时、
-            # 产出零份分解数据，而那正是这个项目唯一要采集的东西。
+            # Every required checkpoint evaluation is fatal on failure, not
+            # merely the first one. A previous success cannot validate this step.
             first = not getattr(self, "_code_eval_ok_once", False)
             print(f"[code-eval] 本轮评测失败（首次={first}）：\n"
                   + traceback.format_exc(), flush=True)
-            if first:
-                raise RuntimeError(
-                    "首次分解评测执行失败，已中止训练——继续跑只会产出没有分解"
-                    "数据的无用 checkpoint。请修复钩子后重跑。") from None
+            raise RuntimeError(
+                "Required decomposition evaluation failed; training stopped. "
+                "Preserve this attempt and repair the evaluation before resuming.") from None
         else:
             self._code_eval_ok_once = True
         return metrics

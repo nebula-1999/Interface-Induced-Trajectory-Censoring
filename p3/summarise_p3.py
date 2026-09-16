@@ -42,6 +42,8 @@ res = {
                                  for r in rows),
     "agentloop_hook_installed": any(r["kind"] == "install_agentloop" and r.get("ok")
                                     for r in rows),
+    "trajectory_identity_installed": any(r["kind"] == "install_agentloop"
+                                          and r.get("identity_ok") for r in rows),
     "code_tool_hook_installed": any(r["kind"] == "install_code_tool" and r.get("ok")
                                     for r in rows),
     "custom_parser_registered": any(r["kind"] == "register_custom_parser" and r.get("ok")
@@ -53,6 +55,7 @@ if launch_rc != 0:
     dead.append(f"launch_ppo rc={launch_rc!r}")
 for key, label in (("parser_hook_installed", "extract_tool_calls install"),
                    ("agentloop_hook_installed", "_call_tool install"),
+                   ("trajectory_identity_installed", "trajectory identity install"),
                    ("code_tool_hook_installed", "CodeTool.execute install"),
                    ("custom_parser_registered", "qwen2_5_coder registration")):
     if not res[key]:
@@ -60,19 +63,17 @@ for key, label in (("parser_hook_installed", "extract_tool_calls install"),
 if not ext:
     dead.append("extract_tool_calls runtime")
 res["valid"] = not dead
+res["valid_scope"] = "launch-and-basic-instrumentation-only; NOT learning acceptance"
 res["dead_hooks"] = dead
 
 if not dead:
     e, a, x = res["emitted_tight"], res["accepted_total"], res["code_tool_executes"]
     if e > 0 and a == 0 and x == 0:
-        # 措辞要精确：不是「parser 错误地拒绝了合规调用」。实测机制是模型发出了
-        # 语义正确、载荷完整的裸 JSON 调用但**缺少 <tool_call> 包装层**，因此
-        # 栈里每一个 parser 看不见它都是正确行为。两种说法的可操作含义完全不同：
-        # 前者要修 parser，后者要修模型—模板—parser 这份三方契约。
-        res["verdict"] = ("闭合：训练栈内发出了语义正确的工具调用，但缺包装层，"
-                          "栈内无一 parser 接受，零执行零 observation")
+        # Heuristic matches do not establish JSON/schema validity or causality.
+        res["verdict"] = ("存在 tight 启发式候选，accepted=0、execute事件=0；"
+                          "需独立校验 JSON/schema 及 observation，不能单凭 regex 宣告机制闭合")
     elif e == 0:
-        res["verdict"] = "未闭合：训练栈内没有发出合规调用——与 1.5B 同类，是策略问题"
+        res["verdict"] = "未检出 tight 启发式候选；不能据此断言模型从未尝试调用"
     else:
         res["verdict"] = f"混合：emitted={e} accepted={a} executed={x}，需逐条看"
 else:
