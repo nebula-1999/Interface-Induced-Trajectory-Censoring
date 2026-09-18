@@ -17,7 +17,7 @@ from chat_policy import ChatPolicy, NativeRolloutPolicy
 from code_eval_hook import CodeEvalHook, _base_url
 from eval_artifacts import StepArtifact, bind_manifest
 from eval_decompose import Task, Turn
-from p3.launch_arm import main as launch_main, plan
+from p3.launch_arm import main as launch_main, plan, verify_formal_resume
 from p3.check_smoke import check
 from p3.record_launch import effective_config
 from p3.parser_diagnostics import accepts, VLLM_RE, VERL_RE
@@ -145,6 +145,52 @@ class AcceptanceTests(unittest.TestCase):
         self.assertEqual(launch["resume_from"], str(source))
         self.assertEqual(launch["resume_checkpoint_files"]["actor/model.pt"]["sha256"],
                          __import__("hashlib").sha256(b"checkpoint").hexdigest())
+
+    def make_formal_resume(self, **resume_changes):
+        base_env = {**self.env, "ARM": "repaired", "P3_MODE": "formal", "DRY": "1"}
+        _, _, base_args, _ = plan(base_env)
+        base = self.root / "runs/test-pair/repaired"
+        source = base / "ckpt/global_step_90"
+        (source / "actor").mkdir(parents=True)
+        (source / "actor/model.pt").write_bytes(b"model")
+        (source / "actor/optim.pt").write_bytes(b"optimizer")
+        (source / "actor/extra_state.pt").write_bytes(b"rng-scheduler")
+        (source / "data.pt").write_bytes(b"dataloader")
+        artifact = StepArtifact(base / "eval", 90, "test-pair/repaired", "manifest")
+        artifact.finish([self.task()], [], ["t1"], [], {
+            "code/request_failures": 0, "code/native_weight_step": 90,
+            "code/native_requests": 1})
+        (base.parent / "training_manifest.json").write_text("{}")
+        (base / "launch.json").write_text(json.dumps({
+            "run_id": "test-pair", "arm": "repaired", "mode": "formal",
+            "argv": base_args, "source_sha256": {}}))
+        resume_env = {**self.env, "ARM": "repaired", "P3_MODE": "formal-resume",
+                      "DRY": "1", "RESUME_FROM": str(source), **resume_changes}
+        root, _, args, _ = plan(resume_env)
+        return source, root, args
+
+    def test_formal_resume_is_isolated_and_config_equal(self):
+        source, root, args = self.make_formal_resume()
+        with patch.dict(os.environ, {"P3_RUN_BASE": str(self.root / "runs")}):
+            proof = verify_formal_resume(source, root, ROOT, "test-pair", "repaired", args)
+        self.assertEqual(root.name, "repaired_resume_00090")
+        self.assertEqual(proof["resume_step"], 90)
+        self.assertTrue(proof["normalized_config_equal"])
+        self.assertIn("trainer.resume_mode=resume_path", args)
+        self.assertIn(f"trainer.resume_from_path={source}", args)
+
+    def test_formal_resume_refuses_scientific_config_drift(self):
+        source, root, args = self.make_formal_resume(EVAL_FREQ="15")
+        with patch.dict(os.environ, {"P3_RUN_BASE": str(self.root / "runs")}), \
+             self.assertRaisesRegex(ValueError, "config drift"):
+            verify_formal_resume(source, root, ROOT, "test-pair", "repaired", args)
+
+    def test_formal_resume_requires_optimizer_and_rng_state(self):
+        source, root, args = self.make_formal_resume()
+        (source / "actor/optim.pt").unlink()
+        with patch.dict(os.environ, {"P3_RUN_BASE": str(self.root / "runs")}), \
+             self.assertRaisesRegex(ValueError, "optimizer"):
+            verify_formal_resume(source, root, ROOT, "test-pair", "repaired", args)
 
     def test_bad_identity_and_path_override_refused(self):
         for changes in ({"RUN_ID": "../oops"}, {"RUN_ID": ""},

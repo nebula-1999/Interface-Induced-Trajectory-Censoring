@@ -45,7 +45,7 @@ def check(root):
     size = sum(p.stat().st_size for p in files)
     if size == 0:
         raise ValueError("Final checkpoint actor files missing/empty")
-    restored = launch.get("mode") == "resume-smoke" and start_step > 0
+    restored = launch.get("mode") in ("resume-smoke", "formal-resume") and start_step > 0
     return dict(smoke_artifacts_complete=True, checkpoint_actor_bytes=size,
                 native_weight_steps_attested=expected_steps,
                 formal_accepted=False, weight_sync_verified=True,
