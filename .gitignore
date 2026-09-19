@@ -42,3 +42,12 @@ paper/*.out
 paper/*.toc
 paper/*.fls
 paper/*.fdb_latexmk
+paper/**/*.aux
+paper/**/*.blg
+paper/**/*.out
+paper/**/*.toc
+paper/**/*.fls
+paper/**/*.fdb_latexmk
+paper/**/*.xdv
+# Extracted evidence duplicates the committed, checksummed archive.
+p3/results/formal_20260916_a/raw/

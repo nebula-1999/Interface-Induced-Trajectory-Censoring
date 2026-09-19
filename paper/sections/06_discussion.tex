@@ -35,9 +35,10 @@ wide enough to contain effects as large as the unconditioned gap, so it is evide
 \emph{insufficient resolution}, not equivalence. \textbf{Comparisons of agent protocols that do not
 first exhaust the serving configuration matrix are not measuring protocols.}
 
-\textbf{A cold-start hazard for agentic RL.} \S\ref{sec:rl}'s mechanism generalises beyond this
-stack: whenever (a) tool trajectories are censored at rate ${\sim}1$ and (b) the reward admits a
-tool-free path, the tool-using branch has no sampled return and cannot be reinforced.
-Prompt-level coercion does not help, and we observed it actively hurting (final pass 31$\to$15).
-Practitioners should verify a \textbf{non-zero tool-execution count in the first training step}
-before interpreting any multi-turn result.
+\textbf{A cold-start hazard for agentic RL.} In the formal control, the mismatched parser admits
+only 10 executions from 8{,}689 tight-classified call-like emissions while a tool-free reward path remains open;
+the repaired parser admits 16{,}844 executed tool interactions. This isolates access to sampled tool
+experience from learning from that experience: the first changes by more than three orders of magnitude,
+while held-out rescues do not change. Practitioners should therefore verify both a
+\textbf{non-trivial tool-execution count in the first training step} and a held-out measure of the
+behaviour the tool is meant to teach. A rising reward curve establishes neither by itself.

@@ -1,0 +1,177 @@
+\begin{thebibliography}{21}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Albayaydh et~al.(2026)Albayaydh, Zhao, and
+  Flechais]{albayaydh2026beyondleaderboard}
+Wael Albayaydh, Rui Zhao, and Ivan Flechais.
+\newblock Beyond the leaderboard: A synthesis of tool-use, planning, and
+  reasoning failures in large language model agents.
+\newblock \emph{arXiv preprint arXiv:2607.05775}, 2026.
+\newblock Submitted 2026-07-07.
+
+\bibitem[Bhat et~al.(2026)Bhat, Vaghasiya, Mohsin, and
+  Aali]{bhat2026benchmarkingbenchmarks}
+Vishvesh Bhat, Jay Vaghasiya, Muhammad~Ahmed Mohsin, and Asad Aali.
+\newblock Benchmarking the benchmarks: A validity audit of tool-calling
+  evaluation.
+\newblock \emph{arXiv preprint arXiv:2607.02577}, 2026.
+\newblock Submitted 2026-06-30.
+
+\bibitem[Chen et~al.(2026)Chen, Chen, Zhu, Cao, Shen, and
+  Cheung]{chen2026agentreactive}
+Jingyi Chen, Songqiang Chen, Hengcheng Zhu, Jialun Cao, Jiasi Shen, and
+  Shing-Chi Cheung.
+\newblock Understanding agent-reactive bugs at the model-harness boundary: An
+  empirical study of llm agent issue reports.
+\newblock \emph{arXiv preprint arXiv:2607.15684}, 2026.
+
+\bibitem[Dehghani et~al.(2021)Dehghani, Tay, Gritsenko, Zhao, Houlsby, Diaz,
+  Metzler, and Vinyals]{dehghani2021benchmarklottery}
+Mostafa Dehghani, Yi~Tay, Alexey~A. Gritsenko, Zhe Zhao, Neil Houlsby, Fernando
+  Diaz, Donald Metzler, and Oriol Vinyals.
+\newblock The benchmark lottery.
+\newblock \emph{arXiv preprint arXiv:2107.07002}, 2021.
+
+\bibitem[Garware \& Zisad(2026)Garware and Zisad]{garware2026brokenruler}
+Chaitanya~Vilas Garware and Sharif~Noor Zisad.
+\newblock When the ruler is broken: Parsing-induced suppression in llm-based
+  security log evaluation.
+\newblock \emph{arXiv preprint arXiv:2605.07293}, 2026.
+\newblock Submitted 2026-05-08.
+
+\bibitem[hanXen(2026)]{vllm_issue_32926}
+hanXen.
+\newblock Feature request: dedicated tool parser for qwen2.5-coder models.
+\newblock vLLM issue \#32926, opened 2026-01-23, closed as not planned, 2026.
+\newblock \url{https://github.com/vllm-project/vllm/issues/32926}.
+
+\bibitem[Hu et~al.(2022)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and
+  Chen]{hu2022lora}
+Edward~J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean
+  Wang, Lu~Wang, and Weizhu Chen.
+\newblock {LoRA}: Low-rank adaptation of large language models.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2022.
+
+\bibitem[Kwon et~al.(2023)Kwon, Li, Zhuang, Sheng, Zheng, Yu, Gonzalez, Zhang,
+  and Stoica]{kwon2023vllm}
+Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody~Hao Yu,
+  Joseph~E. Gonzalez, Hao Zhang, and Ion Stoica.
+\newblock Efficient memory management for large language model serving with
+  pagedattention.
+\newblock In \emph{ACM SIGOPS Symposium on Operating Systems Principles
+  (SOSP)}, 2023.
+
+\bibitem[Li et~al.(2023)Li, Zhao, Yu, Song, Li, Yu, Li, Huang, and
+  Li]{li2023apibank}
+Minghao Li, Yingxiu Zhao, Bowen Yu, Feifan Song, Hangyu Li, Haiyang Yu, Zhoujun
+  Li, Fei Huang, and Yongbin Li.
+\newblock Api-bank: A comprehensive benchmark for tool-augmented llms.
+\newblock In \emph{Proceedings of the 2023 Conference on Empirical Methods in
+  Natural Language Processing (EMNLP)}, 2023.
+
+\bibitem[Mizrahi et~al.(2024)Mizrahi, Kaplan, Malkin, Dror, Shahaf, and
+  Stanovsky]{mizrahi2024stateofwhatart}
+Moran Mizrahi, Guy Kaplan, Dan Malkin, Rotem Dror, Dafna Shahaf, and Gabriel
+  Stanovsky.
+\newblock State of what art? a call for multi-prompt llm evaluation.
+\newblock \emph{Transactions of the Association for Computational Linguistics
+  (TACL)}, 12:\penalty0 933--949, 2024.
+
+\bibitem[Patil et~al.(2025)Patil, Mao, Yan, Ji, Suresh, Stoica, and
+  Gonzalez]{bfcl2025}
+Shishir~G. Patil, Huanzhi Mao, Fanjia Yan, Charlie Cheng-Jie Ji, Vishnu Suresh,
+  Ion Stoica, and Joseph~E. Gonzalez.
+\newblock The berkeley function calling leaderboard (bfcl): From tool use to
+  agentic evaluation of large language models.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2025.
+\newblock \url{https://gorilla.cs.berkeley.edu/leaderboard.html}.
+
+\bibitem[Qin et~al.(2024)Qin, Liang, Ye, Zhu, Yan, Lu, Lin, Cong, Tang, Qian,
+  Zhao, Hong, Tian, Xie, Zhou, Gerstein, Li, Liu, and Sun]{qin2024toolllm}
+Yujia Qin, Shihao Liang, Yining Ye, Kunlun Zhu, Lan Yan, Yaxi Lu, Yankai Lin,
+  Xin Cong, Xiangru Tang, Bill Qian, Sihan Zhao, Lauren Hong, Runchu Tian,
+  Ruobing Xie, Jie Zhou, Mark Gerstein, Dahai Li, Zhiyuan Liu, and Maosong Sun.
+\newblock Toolllm: Facilitating large language models to master 16000+
+  real-world apis.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2024.
+
+\bibitem[Raj et~al.(2026)Raj, Gupta, Mahmoud, Dumitru, Yi, Sabharwal, and
+  He]{raj2026modelorharness}
+Harsh Raj, Vipul Gupta, Anas Mahmoud, Razvan-Gabriel Dumitru, Darvin Yi, Aakash
+  Sabharwal, and Yunzhong He.
+\newblock Model or harness? an interaction-centric taxonomy for localizing
+  agent failures.
+\newblock \emph{arXiv preprint arXiv:2607.28802}, 2026.
+\newblock Submitted 2026-07-30.
+
+\bibitem[Sclar et~al.(2024)Sclar, Choi, Tsvetkov, and
+  Suhr]{sclar2024formatspread}
+Melanie Sclar, Yejin Choi, Yulia Tsvetkov, and Alane Suhr.
+\newblock Quantifying language models' sensitivity to spurious features in
+  prompt design, or: How i learned to start worrying about prompt formatting.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2024.
+
+\bibitem[Shao et~al.(2024)Shao, Wang, Zhu, Xu, Song, Bi, Zhang, Zhang, Li, Wu,
+  and Guo]{shao2024deepseekmath}
+Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei
+  Zhang, Mingchuan Zhang, Y.~K. Li, Y.~Wu, and Daya Guo.
+\newblock Deepseekmath: Pushing the limits of mathematical reasoning in open
+  language models.
+\newblock \emph{arXiv preprint arXiv:2402.03300}, 2024.
+
+\bibitem[Sheng et~al.(2025)Sheng, Zhang, Ye, Wu, Zhang, Zhang, Peng, Lin, and
+  Wu]{sheng2025hybridflow}
+Guangming Sheng, Chi Zhang, Zilingfeng Ye, Xibin Wu, Wang Zhang, Ru~Zhang,
+  Yanghua Peng, Haibin Lin, and Chuan Wu.
+\newblock Hybridflow: A flexible and efficient rlhf framework.
+\newblock In \emph{Proceedings of the Twentieth European Conference on Computer
+  Systems (EuroSys)}, 2025.
+
+\bibitem[Soni(2026)]{soni2026toolfailbench}
+Harsh Soni.
+\newblock Toolfailbench: Diagnosing tool-use failures in llm agents.
+\newblock \emph{arXiv preprint arXiv:2607.04686}, 2026.
+\newblock Submitted 2026-07-06; workshops on Agents in the Wild (AIWILD) and
+  Failure Modes of Agentic AI (FAGEN) at ICML 2026.
+
+\bibitem[Tam et~al.(2024)Tam, Wu, Tsai, Lin, Lee, and Chen]{tam2024speakfreely}
+Zhi~Rui Tam, Cheng-Kuang Wu, Yi-Lin Tsai, Chieh-Yen Lin, Hung-yi Lee, and
+  Yun-Nung Chen.
+\newblock Let me speak freely? a study on the impact of format restrictions on
+  performance of large language models.
+\newblock In \emph{Proceedings of the 2024 Conference on Empirical Methods in
+  Natural Language Processing: Industry Track (EMNLP Industry)}, pp.\
+  1218--1236, 2024.
+
+\bibitem[Xu et~al.(2025)Xu, Liu, Yin, Zhou, and Poovendran]{kodcode2025}
+Zhangchen Xu, Yang Liu, Yueqin Yin, Mingyuan Zhou, and Radha Poovendran.
+\newblock Kodcode: A diverse, challenging, and verifiable synthetic dataset for
+  coding.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  ACL 2025}, pp.\  6980--7008, 2025.
+\newblock \doi{10.18653/v1/2025.findings-acl.365}.
+
+\bibitem[Yao et~al.(2025)Yao, Shinn, Razavi, and Narasimhan]{yao2025taubench}
+Shunyu Yao, Noah Shinn, Pedram Razavi, and Karthik Narasimhan.
+\newblock $\tau$-bench: A benchmark for tool-agent-user interaction in
+  real-world domains.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2025.
+
+\bibitem[Yao et~al.(2026)Yao, Tan, Liu, Li, Wang, Yu, Tan, Tian, Zhao, Sun,
+  Zhang, and Yang]{yao2026harnessbench}
+Yilun Yao, Xinyu Tan, Chao-Hsuan Liu, Yaoming Li, Zhengyang Wang, Wenhan Yu,
+  Zhewen Tan, Yuxuan Tian, Guangxiang Zhao, Lin Sun, Xiangzheng Zhang, and Tong
+  Yang.
+\newblock Harness-bench: Measuring harness effects across models in realistic
+  agent workflows.
+\newblock \emph{arXiv preprint arXiv:2605.27922}, 2026.
+
+\end{thebibliography}

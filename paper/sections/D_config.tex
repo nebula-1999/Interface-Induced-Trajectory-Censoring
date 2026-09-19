@@ -3,30 +3,30 @@
 
 \subsection{Per-family serving flags}
 
-These are the configurations under test, not our inventions: each is what the vLLM
-documentation prescribes for that family. The rightmost column is what happens when the flag
-is absent --- the property that motivates the paper.
+These are the configurations under test, including documented serving flags and the
+adapter/schema interventions identified in our experiments. The rightmost column summarizes
+observed limitations or failure symptoms; it is not a uniform flag-omission ablation.
 
 {\small
-\begin{longtable}[]{@{}p{2.6cm}p{7.4cm}p{4.2cm}@{}}
-\caption{Serving configuration per family (vLLM 0.27.1) and the symptom of omission.}
+\begin{longtable}[]{@{}p{.17\linewidth}p{.48\linewidth}p{\dimexpr.35\linewidth-4\tabcolsep\relax}@{}}
+\caption{Serving configurations and observed symptoms (vLLM 0.27.1).}
 \label{tab:serving}\\
 \toprule
-Family & Flags & If omitted \\
+Family & Flags / intervention & Observed symptom \\
 \midrule
 \endfirsthead
 \toprule
-Family & Flags & If omitted \\
+Family & Flags / intervention & Observed symptom \\
 \midrule
 \endhead
-all & \texttt{-{}-enable-auto-tool-choice} & HTTP 400 --- \textbf{the only loud failure} \\
+all & \texttt{-{}-enable-auto-tool-choice} & HTTP 400 if omitted \\
 Qwen2.5 (Instruct) & \texttt{-{}-tool-call-parser hermes} & silent empty \texttt{tool\_calls} \\
 Qwen2.5-Coder & \emph{no working stock configuration}; we install the community
   \texttt{<tools>} parser plus its chat template & silent, at every scale \\
 Llama 3.1 / 3.2 & \texttt{-{}-tool-call-parser llama3\_json} \newline
-  \texttt{-{}-chat-template tool\_chat\_template\_llama3.1\_json.jinja} \newline
+  \texttt{-{}-chat-template} \path{tool_chat_template_llama3.1_json.jinja} \newline
   plus \texttt{"strict": true} in the schema & malformed arguments; without
-  \texttt{strict} the wrong-tool rate is 23\% \\
+  \texttt{strict} the terse baseline has 23\% wrong-tool calls \\
 Mistral (HF format) & \texttt{-{}-tokenizer-mode hf -{}-config-format hf -{}-load-format hf}
   \newline \texttt{-{}-tool-call-parser mistral} \newline
   \texttt{-{}-chat-template\allowbreak\ tool\_\allowbreak chat\_\allowbreak template\_\allowbreak mistral\_\allowbreak parallel.jinja} \newline
@@ -37,20 +37,20 @@ DeepSeek-Coder & none available: the chat template never injects \texttt{tools} 
 \end{longtable}
 }
 
-\textbf{Only the first row fails loudly.} Every other omission returns HTTP 200 with an empty
-\texttt{tool\_calls} array, which is byte-identical to a model that declined to call the tool.
-This is what \texttt{preflight\_toolcall.py} (98 lines, released with this paper) exists to
-catch: it issues one canonical request, asserts \texttt{tool\_calls} is non-empty with the
-right name and parseable arguments, then repeats under \texttt{tool\_choice: required} as a
-positive control. It would have caught every silent failure reported here.
+Missing auto-tool-choice support and the tested Mistral configurations produce explicit
+request errors. Other mismatches can return HTTP 200 with empty \texttt{tool\_calls},
+indistinguishable at that field from declining to call a tool. The released 98-line
+\texttt{preflight\_toolcall.py} checks a canonical request for a non-empty call with the
+right name and parseable arguments, then repeats under \texttt{tool\_choice: required}
+as a positive control. This is a screening check, not a guarantee of compatibility on all tasks.
 
 \subsection{Training configuration}
 
-Shared by all training arms, including the three historical runs of \S\ref{sec:intro} and the arms of
-\S\ref{sec:rl}:
+The historical 1.5B runs use the following configuration; they motivate the investigation but are
+not the formal parser-repair control:
 
 {\small
-\begin{longtable}[]{@{}ll@{}}
+\begin{longtable}[]{@{}p{.27\linewidth}p{\dimexpr.73\linewidth-2\tabcolsep\relax}@{}}
 \caption{Training configuration. All arms share every value below; arms differ only in the
 protocol and, for the historical runs, the algorithm and seed.}\label{tab:trainconfig}\\
 \toprule
@@ -65,7 +65,8 @@ Model & Qwen2.5-Coder-1.5B-Instruct \\
 Framework & verl 0.9.0 (vLLM 0.27.1 rollout backend) \\
 Algorithm & GRPO ($\times$2 seeds) and RLOO ($\times$1 seed) \\
 Trajectories per step & \texttt{train\_batch\_size} 16 $\times$ \texttt{rollout.n} 8 = 128 \\
-Steps & 150 (historical runs); 10 / 3 / 75 for the arms of \S\ref{sec:rl} \\
+Steps & 150 for the historical runs and formal 7B control; 10 / 3 / 75 for the historical
+diagnostic arms in Appendix~\ref{app:extra} \\
 Training data & KodCode, decontaminated pool of 7669 items \\
 Held-out evaluation & EvalPlus: HumanEval+ 319, MBPP+ 677 \\
 Denominators & 540 (multi channel), 454 (repair channel), after removing 2 known-defective items \\
@@ -76,6 +77,19 @@ Hardware & single A800 80\,GB \\
 \bottomrule
 \end{longtable}
 }
+
+The formal control of \S\ref{sec:rl} instead uses Qwen2.5-Coder-7B-Instruct, GRPO, LoRA rank and
+alpha 32 over all linear modules, seed 0, 150 steps, and the same 16 prompts $\times$ 8 rollouts
+per step in both arms. Both use the mandatory FC prompt and fixed verifier, retain complete rollout
+text, and evaluate the same 542 paired multi-turn items at steps 0/30/60/90/120/150. Evaluation
+uses a shared parser-independent programmatic-feedback protocol: the current LoRA is queried
+through verl's native rollout RPC at temperature 0, for at most four turns and 1,024 tokens per
+turn; generated code is executed against EvalPlus tests and the observation is appended as a user
+message. Native RPC metadata must match the expected global weight step. The sole arm
+difference is \texttt{multi\_turn.format=hermes} versus the registered
+\texttt{qwen2\_5\_coder} parser. Full-parameter 7B RL did not fit the single 80\,GB card, so both
+arms use the same parameter-efficient configuration; this preserves the arm contrast but prevents
+a strict comparison to the historical full-parameter curves.
 
 \subsection{Tool-call instrumentation}
 
@@ -97,15 +111,14 @@ evaluates the final program through that same function, so a counter there confl
 evaluation with agent tool use. We hit this and moved the counter; the sandbox's own counter
 was renamed \texttt{sandbox\_exec\_count} so the two can never be confused again.
 
-Result: the FC arm's counter file has \textbf{0 lines}; the ReAct arm's has \textbf{788}, all
+In the historical diagnostic run, the FC counter file has \textbf{0 lines}; the ReAct arm's has \textbf{788}, all
 carrying the \texttt{react} label, so the provenance is uncontaminated. Three mutually
 independent signals agree --- \texttt{num\_turns} pinned at its minimum of 2, tool time
 exactly 0.00\,s, and a dedicated counter at 0.
 
-\subsection{Why no repaired-FC training arm exists}
+\subsection{Constructing the repaired-FC training arm}
 
-For completeness, the three layers that block the control experiment a reader will ask for
-(\S\ref{sec:rl}, and Limitations item 8):
+The control initially appeared blocked at three layers:
 
 \begin{enumerate}
 \tightlist
@@ -115,24 +128,21 @@ For completeness, the three layers that block the control experiment a reader wi
 \item A verl-side parser we wrote does recover calls, but \textbf{none of them are the tool}:
   36/52 target the task function, 16/52 carry executable code elsewhere in the body. Name
   normalisation cannot repair this, because no call carries code to normalise.
-\item The remedy that works at evaluation time --- forced tool choice or schema-constrained
-  decoding --- is \textbf{not exposed} by verl 0.9.0's vLLM rollout path. Its only
-  \texttt{strict} key belongs to the profiler.
+\item The 1.5B checkpoint emits no correctly named call for that parser to accept, and 7B
+  full-parameter training does not fit a single 80\,GB card.
 \end{enumerate}
 
-This is a property of the training stack's \emph{configuration surface}, not a proof that FC
-is irreparable in principle. We previously named the missing capability as guided decoding;
-\S\ref{sec:rl} corrects that. The repaired arm needs a parser registered in verl's own
-registry that accepts the model's actual output format --- a code change rather than a
-different backend --- and must be run at 7B under parameter-efficient tuning, for the reasons
-given there.
+The first two observations determine the intervention; the third determines the scale and LoRA
+configuration. We registered the parser inside verl and ran the matched 7B pair. Thus the earlier
+statement that no executable repaired-FC arm existed was a description of the configuration
+surface, not a permanent limitation; \S\ref{sec:rl} reports the completed control.
 
-\subsection{The four obstacles to a repaired-FC training arm}
+\subsection{The path to the repaired-FC training arm}
 \label{app:norepair}
 
-We attempted to construct a repaired-FC RL condition and failed at four successive layers. Each
-attempt is a measurement, so we report them; three of the four dissolved on inspection and the
-corrected account is in \S\ref{sec:norepair}.
+We encountered four successive obstacles while constructing the control. Each attempt is a
+measurement, so we retain the record; all were eventually resolved by registering the parser in
+verl and moving to matched 7B LoRA arms.
 
 \textbf{(i) A vLLM parser plugin does not reach the training loop.} verl's AgentLoop performs its
 own tool-call parsing (\texttt{verl/experimental/agent\_loop/tool\_parser.py}, registered as
@@ -161,6 +171,6 @@ the task (15 $\to$ 13), with the count that matters staying at zero
 
 \textbf{(iv) Constrained decoding is unavailable in this stack.} Forcing the tool choice, or
 schema-constrained decoding, is not exposed by verl 0.9.0's vLLM rollout path (its only
-\texttt{strict} key belongs to the profiler). \textbf{This obstacle is real but was the wrong
-diagnosis of what a repaired-FC arm needs}: guided decoding \emph{forces} a format, whereas the
-repair this paper argues for is to accept what the model already emits. See \S\ref{sec:norepair}.
+\texttt{strict} key belongs to the profiler). This remains true but was the wrong diagnosis of
+what the repaired arm needed: guided decoding forces a format, whereas the successful intervention
+accepts the model's existing format. See \S\ref{sec:rl}.

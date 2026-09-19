@@ -1,0 +1,40 @@
+{
+  "audit_date": "2026-09-19",
+  "host": "autodl-container-8e9b40b4bd-146b628a",
+  "schema_version": 1,
+  "method": "analysis/p3_checkpoint_lora_audit.py equivalent; torch.load mmap=True; all .lora_ tensors compared in float32",
+  "pairs": {
+    "broken_120_to_150": {
+      "changed_fraction": 0.563182731727501,
+      "changed_parameters": 45471572,
+      "end_path": "/root/autodl-tmp/runs/p3/p3-formal-20260916-a/broken/ckpt/global_step_150/actor/model_world_size_1_rank_0.pt",
+      "l2_delta": 0.07866827432617095,
+      "l2_end": 45.724181231671054,
+      "l2_start": 45.72368135110252,
+      "lora_parameter_count": 80740352,
+      "lora_tensor_count": 392,
+      "max_abs_delta": 5.7220458984375e-05,
+      "nonzero_end": 80740352,
+      "nonzero_start": 80740352,
+      "sha256_end": "84251925cbf53418e9404869f58cf9f5e80a71d98aace7763273368da2f24217",
+      "sha256_start": "762ff383bd078039ead49f2f18869d6cd5d779b25e4731830600c6c4fccd39c7",
+      "start_path": "/root/autodl-tmp/runs/p3/p3-formal-20260916-a/broken/ckpt/global_step_120/actor/model_world_size_1_rank_0.pt"
+    },
+    "repaired_90_to_150": {
+      "changed_fraction": 0.561008899242847,
+      "changed_parameters": 45296056,
+      "end_path": "/root/autodl-tmp/runs/p3/p3-formal-20260916-a/repaired_resume_00090/ckpt/global_step_150/actor/model_world_size_1_rank_0.pt",
+      "l2_delta": 0.12223752283430568,
+      "l2_end": 45.730307382686426,
+      "l2_start": 45.72979434992587,
+      "lora_parameter_count": 80740352,
+      "lora_tensor_count": 392,
+      "max_abs_delta": 0.00011444091796875,
+      "nonzero_end": 80740352,
+      "nonzero_start": 80740352,
+      "sha256_end": "07a7cd9627798d7e94bba9afe8630b5c0c316b6353a5c34bbb151e9de088c779",
+      "sha256_start": "d07f0b40b993b13cdc9117837fc6f24656af810a3b52b151ace6b072a150bc8c",
+      "start_path": "/root/autodl-tmp/runs/p3/p3-formal-20260916-a/repaired/ckpt/global_step_90/actor/model_world_size_1_rank_0.pt"
+    }
+  }
+}

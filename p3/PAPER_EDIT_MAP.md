@@ -1,5 +1,12 @@
 # P3 结果落地后的论文改动地图（2026-09-03 重写）
 
+> **2026-09-18 final status:** the valid paired run is complete and this map has been executed.
+> Broken FC: 8,689 tight emissions, 10 accepted/executed. Repaired FC: 17,608 tight
+> emissions, 16,912 accepted, 16,844 executed/observed. Held-out rescues remain 12 and
+> final passes move 430/542 to 427/542 (not significant). The authoritative record is
+> `p3/FINAL_RESULT_20260918.md`; historical provisional counts and branch thresholds below are
+> retained only as an audit trail and must not be used in the paper.
+
 > **2026-09-15：暂停执行本地图的统计分支。** 历史 step 0 的 1108 行 multi
 > 数据含重复，20/1108 与相应阈值不能作为独立题目基线；也不能未经审计改为
 > 20/542。以下保留历史记录，不作为运行或改稿指令。两臂须共同重建有效评测；

@@ -1,0 +1,689 @@
+{
+  "evaluation": {
+    "curves": {
+      "broken": {
+        "0": {
+          "multi": {
+            "changed_from_step0": 0,
+            "changed_from_step0_rate": 0.0,
+            "final_gains_from_step0": 0,
+            "final_losses_from_step0": 0,
+            "final_pass": 430,
+            "mean_turns": 1.6457564575645756,
+            "n": 542,
+            "rescued": 12,
+            "turn1_pass": 418
+          },
+          "repair": {
+            "changed_from_step0": 0,
+            "changed_from_step0_rate": 0.0,
+            "final_gains_from_step0": 0,
+            "final_losses_from_step0": 0,
+            "final_pass": 397,
+            "mean_turns": 1.4030837004405285,
+            "n": 454,
+            "rescued": 12,
+            "turn1_pass": 385
+          }
+        },
+        "120": {
+          "multi": {
+            "changed_from_step0": 95,
+            "changed_from_step0_rate": 0.1752767527675277,
+            "final_gains_from_step0": 3,
+            "final_losses_from_step0": 0,
+            "final_pass": 433,
+            "mean_turns": 1.632841328413284,
+            "n": 542,
+            "rescued": 14,
+            "turn1_pass": 419
+          },
+          "repair": {
+            "changed_from_step0": 61,
+            "changed_from_step0_rate": 0.1343612334801762,
+            "final_gains_from_step0": 1,
+            "final_losses_from_step0": 6,
+            "final_pass": 392,
+            "mean_turns": 1.4295154185022025,
+            "n": 454,
+            "rescued": 9,
+            "turn1_pass": 383
+          }
+        },
+        "150": {
+          "multi": {
+            "changed_from_step0": 93,
+            "changed_from_step0_rate": 0.17158671586715868,
+            "final_gains_from_step0": 2,
+            "final_losses_from_step0": 2,
+            "final_pass": 430,
+            "mean_turns": 1.6457564575645756,
+            "n": 542,
+            "rescued": 12,
+            "turn1_pass": 418
+          },
+          "repair": {
+            "changed_from_step0": 51,
+            "changed_from_step0_rate": 0.11233480176211454,
+            "final_gains_from_step0": 0,
+            "final_losses_from_step0": 1,
+            "final_pass": 396,
+            "mean_turns": 1.4052863436123348,
+            "n": 454,
+            "rescued": 10,
+            "turn1_pass": 386
+          }
+        },
+        "30": {
+          "multi": {
+            "changed_from_step0": 83,
+            "changed_from_step0_rate": 0.15313653136531366,
+            "final_gains_from_step0": 1,
+            "final_losses_from_step0": 1,
+            "final_pass": 430,
+            "mean_turns": 1.6457564575645756,
+            "n": 542,
+            "rescued": 12,
+            "turn1_pass": 418
+          },
+          "repair": {
+            "changed_from_step0": 45,
+            "changed_from_step0_rate": 0.09911894273127753,
+            "final_gains_from_step0": 0,
+            "final_losses_from_step0": 2,
+            "final_pass": 395,
+            "mean_turns": 1.4162995594713657,
+            "n": 454,
+            "rescued": 12,
+            "turn1_pass": 383
+          }
+        },
+        "60": {
+          "multi": {
+            "changed_from_step0": 96,
+            "changed_from_step0_rate": 0.17712177121771217,
+            "final_gains_from_step0": 3,
+            "final_losses_from_step0": 0,
+            "final_pass": 433,
+            "mean_turns": 1.6309963099630995,
+            "n": 542,
+            "rescued": 13,
+            "turn1_pass": 420
+          },
+          "repair": {
+            "changed_from_step0": 51,
+            "changed_from_step0_rate": 0.11233480176211454,
+            "final_gains_from_step0": 1,
+            "final_losses_from_step0": 2,
+            "final_pass": 396,
+            "mean_turns": 1.407488986784141,
+            "n": 454,
+            "rescued": 11,
+            "turn1_pass": 385
+          }
+        },
+        "90": {
+          "multi": {
+            "changed_from_step0": 101,
+            "changed_from_step0_rate": 0.1863468634686347,
+            "final_gains_from_step0": 2,
+            "final_losses_from_step0": 0,
+            "final_pass": 432,
+            "mean_turns": 1.6383763837638377,
+            "n": 542,
+            "rescued": 14,
+            "turn1_pass": 418
+          },
+          "repair": {
+            "changed_from_step0": 45,
+            "changed_from_step0_rate": 0.09911894273127753,
+            "final_gains_from_step0": 0,
+            "final_losses_from_step0": 3,
+            "final_pass": 394,
+            "mean_turns": 1.422907488986784,
+            "n": 454,
+            "rescued": 10,
+            "turn1_pass": 384
+          }
+        }
+      },
+      "repaired": {
+        "0": {
+          "multi": {
+            "changed_from_step0": 0,
+            "changed_from_step0_rate": 0.0,
+            "final_gains_from_step0": 0,
+            "final_losses_from_step0": 0,
+            "final_pass": 430,
+            "mean_turns": 1.6457564575645756,
+            "n": 542,
+            "rescued": 12,
+            "turn1_pass": 418
+          },
+          "repair": {
+            "changed_from_step0": 0,
+            "changed_from_step0_rate": 0.0,
+            "final_gains_from_step0": 0,
+            "final_losses_from_step0": 0,
+            "final_pass": 396,
+            "mean_turns": 1.3986784140969164,
+            "n": 454,
+            "rescued": 7,
+            "turn1_pass": 389
+          }
+        },
+        "120": {
+          "multi": {
+            "changed_from_step0": 98,
+            "changed_from_step0_rate": 0.18081180811808117,
+            "final_gains_from_step0": 2,
+            "final_losses_from_step0": 5,
+            "final_pass": 427,
+            "mean_turns": 1.6623616236162362,
+            "n": 542,
+            "rescued": 12,
+            "turn1_pass": 415
+          },
+          "repair": {
+            "changed_from_step0": 60,
+            "changed_from_step0_rate": 0.13215859030837004,
+            "final_gains_from_step0": 3,
+            "final_losses_from_step0": 6,
+            "final_pass": 393,
+            "mean_turns": 1.422907488986784,
+            "n": 454,
+            "rescued": 9,
+            "turn1_pass": 384
+          }
+        },
+        "150": {
+          "multi": {
+            "changed_from_step0": 110,
+            "changed_from_step0_rate": 0.2029520295202952,
+            "final_gains_from_step0": 1,
+            "final_losses_from_step0": 4,
+            "final_pass": 427,
+            "mean_turns": 1.6623616236162362,
+            "n": 542,
+            "rescued": 12,
+            "turn1_pass": 415
+          },
+          "repair": {
+            "changed_from_step0": 55,
+            "changed_from_step0_rate": 0.1211453744493392,
+            "final_gains_from_step0": 1,
+            "final_losses_from_step0": 6,
+            "final_pass": 391,
+            "mean_turns": 1.4383259911894273,
+            "n": 454,
+            "rescued": 10,
+            "turn1_pass": 381
+          }
+        },
+        "30": {
+          "multi": {
+            "changed_from_step0": 99,
+            "changed_from_step0_rate": 0.18265682656826568,
+            "final_gains_from_step0": 2,
+            "final_losses_from_step0": 3,
+            "final_pass": 429,
+            "mean_turns": 1.6494464944649447,
+            "n": 542,
+            "rescued": 11,
+            "turn1_pass": 418
+          },
+          "repair": {
+            "changed_from_step0": 54,
+            "changed_from_step0_rate": 0.11894273127753303,
+            "final_gains_from_step0": 3,
+            "final_losses_from_step0": 4,
+            "final_pass": 395,
+            "mean_turns": 1.4118942731277533,
+            "n": 454,
+            "rescued": 10,
+            "turn1_pass": 385
+          }
+        },
+        "60": {
+          "multi": {
+            "changed_from_step0": 88,
+            "changed_from_step0_rate": 0.16236162361623616,
+            "final_gains_from_step0": 3,
+            "final_losses_from_step0": 2,
+            "final_pass": 431,
+            "mean_turns": 1.6439114391143912,
+            "n": 542,
+            "rescued": 14,
+            "turn1_pass": 417
+          },
+          "repair": {
+            "changed_from_step0": 62,
+            "changed_from_step0_rate": 0.13656387665198239,
+            "final_gains_from_step0": 4,
+            "final_losses_from_step0": 3,
+            "final_pass": 397,
+            "mean_turns": 1.4030837004405285,
+            "n": 454,
+            "rescued": 10,
+            "turn1_pass": 387
+          }
+        },
+        "90": {
+          "multi": {
+            "changed_from_step0": 99,
+            "changed_from_step0_rate": 0.18265682656826568,
+            "final_gains_from_step0": 1,
+            "final_losses_from_step0": 3,
+            "final_pass": 428,
+            "mean_turns": 1.6586715867158672,
+            "n": 542,
+            "rescued": 13,
+            "turn1_pass": 415
+          },
+          "repair": {
+            "changed_from_step0": 48,
+            "changed_from_step0_rate": 0.10572687224669604,
+            "final_gains_from_step0": 2,
+            "final_losses_from_step0": 2,
+            "final_pass": 396,
+            "mean_turns": 1.407488986784141,
+            "n": 454,
+            "rescued": 11,
+            "turn1_pass": 385
+          }
+        }
+      }
+    },
+    "paired_step150": {
+      "all": {
+        "discordant_total": 10,
+        "n": 996,
+        "repaired_gains_vs_broken": 1,
+        "repaired_losses_vs_broken": 9
+      },
+      "multi": {
+        "discordant_total": 3,
+        "n": 542,
+        "repaired_gains_vs_broken": 0,
+        "repaired_losses_vs_broken": 3
+      },
+      "repair": {
+        "discordant_total": 7,
+        "n": 454,
+        "repaired_gains_vs_broken": 1,
+        "repaired_losses_vs_broken": 6
+      }
+    }
+  },
+  "events": {
+    "broken": {
+      "accepted_calls": 10,
+      "accepted_dispatch_join": "counts matched per trajectory; extract lacks per-turn request identity",
+      "accepted_generation_events": 10,
+      "accepted_name_histogram": {
+        "run_tests": 10
+      },
+      "accepted_not_tight": 0,
+      "dispatch_events": 10,
+      "dispatch_execution_observation_join": "unique request_id/assistant_turn within trajectory and run part",
+      "execute_events": 10,
+      "extra_calls_inside_multi_call_events": 0,
+      "generation_events": 19203,
+      "multi_call_generation_events": 0,
+      "neither_tight_nor_accepted": 10514,
+      "observation_events": 10,
+      "tight_and_accepted": 10,
+      "tight_events": 8689,
+      "tight_not_accepted": 8679,
+      "verified_observation_hashes": 20,
+      "verified_text_hashes": 19203
+    },
+    "repaired": {
+      "accepted_calls": 16912,
+      "accepted_dispatch_join": "counts matched per trajectory; extract lacks per-turn request identity",
+      "accepted_generation_events": 16844,
+      "accepted_name_histogram": {
+        "run_tests": 16912
+      },
+      "accepted_not_tight": 521,
+      "dispatch_events": 16844,
+      "dispatch_execution_observation_join": "unique request_id/assistant_turn within trajectory and run part",
+      "execute_events": 16844,
+      "extra_calls_inside_multi_call_events": 68,
+      "generation_events": 33367,
+      "multi_call_generation_events": 40,
+      "neither_tight_nor_accepted": 15238,
+      "observation_events": 16844,
+      "tight_and_accepted": 16323,
+      "tight_events": 17608,
+      "tight_not_accepted": 1285,
+      "verified_observation_hashes": 33688,
+      "verified_text_hashes": 33367
+    }
+  },
+  "file_manifest": {
+    "broken/eval/step_00000.jsonl": {
+      "bytes": 1269222,
+      "native_weight_step": 0,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/broken",
+      "sha256": "f42a601faf7fb365e30cb41a134547349f8c5723ce4efb058bfd97bc89e2f37d"
+    },
+    "broken/eval/step_00030.jsonl": {
+      "bytes": 1271018,
+      "native_weight_step": 30,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/broken",
+      "sha256": "8f010499dc5934ed91419ab656684a9efdac1055904ca6edec9bd6b3b195a868"
+    },
+    "broken/eval/step_00060.jsonl": {
+      "bytes": 1255930,
+      "native_weight_step": 60,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/broken",
+      "sha256": "d0d34558cd7ee3a044ce8c7d4276f07b0b8983caa3c0ef1e5182e9b15df44818"
+    },
+    "broken/eval/step_00090.jsonl": {
+      "bytes": 1267607,
+      "native_weight_step": 90,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/broken",
+      "sha256": "bed6611b1dab7707e0243c7f63a8e0975539bf923d23ba805437f68f3592aead"
+    },
+    "broken/eval/step_00120.jsonl": {
+      "bytes": 1285130,
+      "native_weight_step": 120,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/broken",
+      "sha256": "b0feed05e0e8b3976d66db054ee36b4d06ccac8662a7630a40ad4f3b7a1ae7ac"
+    },
+    "broken/eval/step_00150.jsonl": {
+      "bytes": 1267028,
+      "native_weight_step": 150,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/broken",
+      "sha256": "9dbe7bc9c8dabc971ce924400a03da750728ef3318f73aae2282d7470062bf62"
+    },
+    "broken/events/events.21509.jsonl": {
+      "bytes": 163,
+      "sha256": "2e76674ed9ed986a3c04dc77c5c420287d4ba1a94bc4ef240cbf162c4af4f79d"
+    },
+    "broken/events/events.21523.jsonl": {
+      "bytes": 163,
+      "sha256": "9770a8b6ab2025fe0526833886406fb5af64671ad8685d80434f02afa8c99d28"
+    },
+    "broken/events/events.22681.jsonl": {
+      "bytes": 953,
+      "sha256": "7527d73340c59c9b56e832fcd0ec418be394d45504dcbf953762604bb06e762f"
+    },
+    "broken/events/events.22874.jsonl": {
+      "bytes": 163,
+      "sha256": "1ae5a247c61e700c9aa231273064d3fe660937063818d2be025dbcc1d1256f0f"
+    },
+    "broken/events/events.22996.jsonl": {
+      "bytes": 163,
+      "sha256": "deac05f0a34d41b3fbfeba6fb5d97ae84ac8094de556cd8135d02c63f4f22fb0"
+    },
+    "broken/events/events.23185.jsonl": {
+      "bytes": 163,
+      "sha256": "507729f759c23b3250631903fccb8a5156577c0c684f32a3f6634b2c225b02c2"
+    },
+    "broken/events/events.23354.jsonl": {
+      "bytes": 163,
+      "sha256": "ac8b8b7c893c54eee69443ee0bbd3f99de34e06ba632d9b9537c6dbae42dac05"
+    },
+    "broken/events/events.23355.jsonl": {
+      "bytes": 14526747,
+      "sha256": "9637dd9409ea0ffc1f4a1ba8dfca6f5f77aea340ce861807e81e44045017d25d"
+    },
+    "broken/events/events.23356.jsonl": {
+      "bytes": 14456831,
+      "sha256": "c08a6217e67d697e0a5d3b2c53bfa35f4ed2b2ab3c95bbe44734a281385c2ae0"
+    },
+    "repaired/eval/step_00000.jsonl": {
+      "bytes": 1267471,
+      "native_weight_step": 0,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/repaired",
+      "sha256": "c8b824ec367fa60402fe9b6f0551347283c6ac2fc5465955dae2900e1c88e4d2"
+    },
+    "repaired/eval/step_00030.jsonl": {
+      "bytes": 1273448,
+      "native_weight_step": 30,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/repaired",
+      "sha256": "df37efc3153a8418df3ff4535fec056b5ec036c60d15d46f5070aca7aa7ccb8e"
+    },
+    "repaired/eval/step_00060.jsonl": {
+      "bytes": 1272068,
+      "native_weight_step": 60,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/repaired",
+      "sha256": "44c4740af58eafac2263d7cc772bd03fb42794e02cb81e8516ae807acd0ec332"
+    },
+    "repaired/eval/step_00090.jsonl": {
+      "bytes": 1273058,
+      "native_weight_step": 90,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/repaired",
+      "sha256": "c13a0de7c66448fa7c07f17b88bca0c6d88ca2175d5c258fdb720b501a68f053"
+    },
+    "repaired/events/events.1437.jsonl": {
+      "bytes": 164,
+      "sha256": "0365b6f65cf111939b5d02ef581e371b9ca8ccc9c4c1e33eeef1c394a6e5812d"
+    },
+    "repaired/events/events.1451.jsonl": {
+      "bytes": 164,
+      "sha256": "ef311f0a90997a743d41fdbeac48551df5a2e72adf277c1155fcfe6b6a6bd68a"
+    },
+    "repaired/events/events.2614.jsonl": {
+      "bytes": 961,
+      "sha256": "717e50130e98b508e7e9eb14fe867cbfa4072d557838019f2e811d0073934030"
+    },
+    "repaired/events/events.2805.jsonl": {
+      "bytes": 164,
+      "sha256": "c901ffa64f6e6313ee2f1a2395e4b8350f9d9a7159091a614a8b918fe57a64f9"
+    },
+    "repaired/events/events.2933.jsonl": {
+      "bytes": 164,
+      "sha256": "6d44e3b5302c908237895b940b968bd619c1d954e549ee99673f3c30faddc56e"
+    },
+    "repaired/events/events.3122.jsonl": {
+      "bytes": 164,
+      "sha256": "5c899043046a59753b2d3b201f871a8474a46166bf30455fb62e8ca1c792d26e"
+    },
+    "repaired/events/events.3310.jsonl": {
+      "bytes": 164,
+      "sha256": "6799def11460f1a2fb8bd82094eab2eaae1b8dce58367bc177c972851a20142c"
+    },
+    "repaired/events/events.3311.jsonl": {
+      "bytes": 31916242,
+      "sha256": "7fb63ed7b2fe14bf0304b80eaab640f05b811294b2a9fa39b930eef2d1088f5d"
+    },
+    "repaired/events/events.3312.jsonl": {
+      "bytes": 32450638,
+      "sha256": "5481c7e31c23db56e6deb2602c437fdb6efb256846db3ed323b87b99796ce3d2"
+    },
+    "repaired_resume_00090/eval/step_00120.jsonl": {
+      "bytes": 1274425,
+      "native_weight_step": 120,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/repaired",
+      "sha256": "54743aba0b4ea749f10541b63d4e34020d2ea170c20acd25100a8b8d69c7ea63"
+    },
+    "repaired_resume_00090/eval/step_00150.jsonl": {
+      "bytes": 1288496,
+      "native_weight_step": 150,
+      "rows": 996,
+      "run_id": "p3-formal-20260916-a/repaired",
+      "sha256": "af7b9fe89df63f6ecc7fff4456828fb3d96a3ff5843553bd96e1627c0603f6ee"
+    },
+    "repaired_resume_00090/events/events.1487.jsonl": {
+      "bytes": 164,
+      "sha256": "408dfe22028e8f5b4a56ee40e0187a268c656e4b173ce8507214b0c00a9af0d2"
+    },
+    "repaired_resume_00090/events/events.1499.jsonl": {
+      "bytes": 164,
+      "sha256": "7957310754e0a6597afe0c0849925eb683c04bc3dbe748b00bc3ba6e8fce3126"
+    },
+    "repaired_resume_00090/events/events.2640.jsonl": {
+      "bytes": 961,
+      "sha256": "75f7305c8f77d8eccd2561ec46ed72b3d3e84e0adbd91881ae05e54a909e8d7c"
+    },
+    "repaired_resume_00090/events/events.2831.jsonl": {
+      "bytes": 164,
+      "sha256": "70eaa04e5db8b7e851e36b96c8cf89cf614fe091a7e1e274688c7d27182f51e8"
+    },
+    "repaired_resume_00090/events/events.2956.jsonl": {
+      "bytes": 162,
+      "sha256": "7da663f6eda4bb4aa6d6ae8a1f6ed6d27a3896024ef501c550b36df094a5b0ab"
+    },
+    "repaired_resume_00090/events/events.3146.jsonl": {
+      "bytes": 163,
+      "sha256": "815ced941a241424cf76d1df35189cab2603b99740aecf5af6b9a33ab11810f2"
+    },
+    "repaired_resume_00090/events/events.3353.jsonl": {
+      "bytes": 164,
+      "sha256": "591b634838f25f45f712005d9b1da953fa0c21314f354d04684dbb2a1caae62c"
+    },
+    "repaired_resume_00090/events/events.3354.jsonl": {
+      "bytes": 16142519,
+      "sha256": "a8d3e42b8032f1b1faa3cee33841b6be69de7d94a3489caf99fc6b51ed29acc1"
+    },
+    "repaired_resume_00090/events/events.3355.jsonl": {
+      "bytes": 16271272,
+      "sha256": "0acb4288a2ef8e8bbe50492c8dcae703e179b8dbda2e6d9045096fd44ce6d1e3"
+    }
+  },
+  "final_lineage": {
+    "broken": "steps 1-150 from broken",
+    "excluded": "repaired original steps 91-116 after the interrupted branch",
+    "repaired": "steps 1-90 from repaired plus 91-150 from repaired_resume_00090"
+  },
+  "run_id": "p3-formal-20260916-a",
+  "schema_version": 1,
+  "training_diagnostics": {
+    "broken": {
+      "actor/grad_norm": {
+        "max": 0.025146484375,
+        "mean": 0.018463541666666666,
+        "min": 0.01202392578125,
+        "n": 150
+      },
+      "actor/lr": {
+        "max": 1e-06,
+        "mean": 1e-06,
+        "min": 1e-06,
+        "n": 150
+      },
+      "critic/advantages/max": {
+        "max": 2.4748666286468506,
+        "mean": 2.401636128425598,
+        "min": 1.6201815605163574,
+        "n": 150
+      },
+      "critic/advantages/mean": {
+        "max": 0.24338169395923615,
+        "mean": 0.0893556416609014,
+        "min": -0.057306066155433655,
+        "n": 150
+      },
+      "critic/advantages/min": {
+        "max": -0.933130145072937,
+        "mean": -1.8182901422182718,
+        "min": -2.4748666286468506,
+        "n": 150
+      },
+      "critic/rewards/mean": {
+        "max": 0.46934521198272705,
+        "mean": 0.3163093971212705,
+        "min": 0.15043403208255768,
+        "n": 150
+      },
+      "critic/score/mean": {
+        "max": 0.46934521198272705,
+        "mean": 0.3163093971212705,
+        "min": 0.15043403208255768,
+        "n": 150
+      },
+      "num_turns/mean": {
+        "max": 2.0625,
+        "mean": 2.0010416666666666,
+        "min": 2.0,
+        "n": 150
+      },
+      "step_count": 150,
+      "steps": [
+        1,
+        150
+      ],
+      "timing_s/agent_loop/tool_calls/mean": {
+        "max": 0.020543918770272285,
+        "mean": 0.0003160438674967736,
+        "min": 0.0,
+        "n": 150
+      }
+    },
+    "repaired": {
+      "actor/grad_norm": {
+        "max": 0.0159912109375,
+        "mean": 0.01059326171875,
+        "min": 0.00640869140625,
+        "n": 150
+      },
+      "actor/lr": {
+        "max": 1e-06,
+        "mean": 1e-06,
+        "min": 1e-06,
+        "n": 150
+      },
+      "critic/advantages/max": {
+        "max": 2.4748666286468506,
+        "mean": 2.424555133183797,
+        "min": 1.620164155960083,
+        "n": 150
+      },
+      "critic/advantages/mean": {
+        "max": 0.113711878657341,
+        "mean": -0.09994041115996273,
+        "min": -0.3467707633972168,
+        "n": 150
+      },
+      "critic/advantages/min": {
+        "max": -0.7245674133300781,
+        "mean": -1.6883960970242817,
+        "min": -2.4748666286468506,
+        "n": 150
+      },
+      "critic/rewards/mean": {
+        "max": 0.43459203839302063,
+        "mean": 0.3010609141985575,
+        "min": 0.16796875,
+        "n": 150
+      },
+      "critic/score/mean": {
+        "max": 0.43459203839302063,
+        "mean": 0.3010609141985575,
+        "min": 0.16796875,
+        "n": 150
+      },
+      "num_turns/mean": {
+        "max": 4.484375,
+        "mean": 3.7251,
+        "min": 2.890625,
+        "n": 150
+      },
+      "step_count": 150,
+      "steps": [
+        1,
+        150
+      ],
+      "timing_s/agent_loop/tool_calls/mean": {
+        "max": 1.8385257649060804,
+        "mean": 0.612981153401973,
+        "min": 0.2603357303305529,
+        "n": 150
+      }
+    }
+  }
+}

@@ -95,18 +95,23 @@ run is instead guaranteed externally, by hashing the probe before launch
 \subsection{Third-party component versions}
 
 The Qwen2.5-Coder \texttt{<tools>} parser is taken from
-\texttt{hanXen/vllm-qwen2.5-coder-tool-parser} (Apache~2.0), downloaded 2026-08-31, at the
+\path{hanXen/vllm-qwen2.5-coder-tool-parser} (Apache~2.0), downloaded 2026-08-31, at the
 then-current \texttt{main}:
 
 {\footnotesize
 \begin{verbatim}
-commit 1b921501f30cbfe347dccb1db7de3c82a1d55131  (1b92150, 2026-04-29)
-        "fix: buffer partial <tools> prefix in streaming to prevent tag leak"
+commit 1b921501f30cbfe347dccb1db7de3c82a1d55131
+  (1b92150, 2026-04-29)
+  "fix: buffer partial <tools> prefix in streaming
+   to prevent tag leak"
 
 SHA256 (first 20):
-  c16bb1f88936a2d96c7c  qwen2_5_coder_tool_parser.py               (unmodified)
-  736bd175adbf90942c1d  tool_chat_template_qwen2_5_coder.jinja     (MODIFIED)
-  a95b2a9b91e65b3d452f  tool_chat_template_qwen2_5_coder.jinja.orig (original)
+  c16bb1f88936a2d96c7c  qwen2_5_coder_tool_parser.py
+                      (unmodified)
+  736bd175adbf90942c1d  tool_chat_template_qwen2_5_coder.jinja
+                      (MODIFIED)
+  a95b2a9b91e65b3d452f  tool_chat_template_qwen2_5_coder.jinja.orig
+                      (original)
 \end{verbatim}
 }
 

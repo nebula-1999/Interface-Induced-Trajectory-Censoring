@@ -4,6 +4,7 @@ import json, os, re, sys
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import NullLocator
 
 D = os.path.join(os.path.dirname(__file__), "..", "runs", "final")
 OUT = os.path.dirname(__file__)
@@ -25,19 +26,23 @@ for s in scales:
     parsed.append(c["parsed"]); tight.append(c["tight"])
 
 fig, ax = plt.subplots(figsize=(6.4, 4.1))
-ax.plot(xs, tight, "o-", color="#c0392b", lw=2.2, ms=7, label="Well-formed calls the model actually emits")
+ax.plot(xs, tight, "o-", color="#c0392b", lw=2.2, ms=7, label="Tight-classified call-like emissions")
 ax.plot(xs, parsed, "s--", color="#2c3e50", lw=2.2, ms=7, label="Calls the server (hermes) parses")
 ax.fill_between(xs, parsed, tight, color="#c0392b", alpha=0.12)
 for x, y in zip(xs, tight):
     ax.annotate(str(y), (x, y), textcoords="offset points", xytext=(0, 9), ha="center", fontsize=9)
 ax.set_xscale("log"); ax.set_xticks(xs); ax.set_xticklabels(scales)
+ax.xaxis.set_minor_locator(NullLocator())
 ax.set_xlabel("Qwen2.5-Coder parameters"); ax.set_ylabel("items out of 100")
 ax.set_ylim(-4, 94)
-ax.set_title("Capability silently discarded by interface mismatch grows with scale\n"
+ax.set_title("Qwen2.5-Coder: classified emissions versus server parsing\n"
              "tool_choice=auto, hermes parser, n=100 per scale", fontsize=10.5)
 ax.legend(loc="upper left", frameon=False, fontsize=9)
-ax.text(2.4, 62, "silently discarded", color="#c0392b", fontsize=10, style="italic")
+ax.text(2.4, 62, "observed count gap", color="#c0392b", fontsize=10, style="italic")
 fig.tight_layout(); fig.savefig(os.path.join(OUT, "fig1_intent_parse_gap.png")); plt.close(fig)
+if "--figure1-only" in sys.argv:
+    print("parsed:", parsed, "tight:", tight)
+    sys.exit(0)
 
 # ---------- Fig 2: four-family failure taxonomy ----------
 # Mistral 不设 "best config" 柱：四种配置解析出 2/5/1/2、错误 2/42/3/39，

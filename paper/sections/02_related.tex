@@ -10,6 +10,13 @@ evaluator controls and observe score movement. \textbf{We identify a component o
 apparatus --- the serving stack's tool-call parser --- that can zero out a capability signal
 entirely, without any error, and whose distortion grows with model scale.}
 
+Harness-Bench measures configuration-level harness effects across realistic workflows and argues
+for reporting model--harness configurations \citep{yao2026harnessbench}. We instead isolate a
+serialization--parser contract with component-level interventions and trace it into RL experience.
+Agent-Reactive Bugs finds silent model--harness boundary failures in 255 issue reports
+\citep{chen2026agentreactive}; our evidence comes from controlled paired interventions rather than
+a bug-report taxonomy.
+
 \textbf{Parsing-induced measurement error.} The mechanism has been isolated once before, in
 another domain: \citet{garware2026brokenruler} show that in LLM-based security-log classification
 a strict regular-expression parser reports 0\% threat accuracy while a corrected fuzzy parser
@@ -43,7 +50,8 @@ below it, and is invisible to all of them.}
 
 \textbf{Constrained decoding, protocols, stacks.} \citet{tam2024speakfreely} report that format
 restrictions can degrade reasoning; \S\ref{sec:llama} is a counter-instance, where
-\texttt{strict: true} eliminates a 23\% role-confusion failure and \emph{improves} pass rate, though
+\texttt{strict: true} reduces wrong-tool calls from 22/100 to 0 under the official template and
+\emph{improves} pass rate, though
 we also report the CoT control where added reasoning made matters worse. Guided-decoding machinery
 \citep{willard2023outlines} underlies both \texttt{strict} and vLLM's \texttt{required} mode.
 ReAct \citep{yao2023react} is the text protocol we compare against, and BFCL
