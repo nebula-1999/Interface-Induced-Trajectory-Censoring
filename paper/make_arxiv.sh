@@ -19,7 +19,7 @@ done
 ( cd "$W" && tar czf - . ) > "$OUT"
 echo "[arxiv] 已生成 $OUT  ($(du -h "$OUT" | cut -f1))"
 echo "[arxiv] 包内 tex：$(ls "$W/sections" | wc -l | tr -d ' ') 个分节 + main.tex"
-rm -rf "$W"
+echo "[arxiv] 临时源码保留在 ${W}，可用于独立编译验收"
 echo
 echo "投稿前自查："
 echo "  · 作者块是否还是 Anonymous（arXiv 不能匿名投）"
