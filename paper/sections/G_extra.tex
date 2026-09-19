@@ -224,7 +224,7 @@ Arm & tight (unparsed) & first parsed & any parsed & executed & \textbf{success}
 \begin{center}
 \small
 \captionof{table}{Two quantified failure layers; the full four-family table is Table~\ref{tab:taxonomy_full}.}\label{tab:taxonomy}
-\begin{tabular}{@{}p{2.3cm}p{1.3cm}p{4.2cm}p{3.4cm}p{2.4cm}@{}}
+\begin{tabular}{@{}p{.14\linewidth}p{.10\linewidth}p{.25\linewidth}p{.22\linewidth}p{\dimexpr.29\linewidth-8\tabcolsep\relax}@{}}
 \toprule
 Family & Layer & Symptom & Detectable in advance? & Remedy \\
 \midrule
@@ -242,7 +242,7 @@ Llama-3.1-8B & schema & calls the \emph{task function} as a tool (23\%)
 \begin{center}
 \small
 \captionof{table}{Four families, four layers. Only Mistral's failure announces itself.}\label{tab:taxonomy_full}
-\begin{tabular}{@{}p{2.4cm}p{1.4cm}p{4.0cm}p{3.4cm}p{2.6cm}@{}}
+\begin{tabular}{@{}p{.14\linewidth}p{.10\linewidth}p{.25\linewidth}p{.22\linewidth}p{\dimexpr.29\linewidth-8\tabcolsep\relax}@{}}
 \toprule
 Family & Layer & Symptom & Detectable in advance? & Remedy \\
 \midrule
@@ -271,9 +271,10 @@ and are drawn in orange.}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.72\linewidth]{fig1_intent_parse_gap.png}
-\caption{\textbf{The undercount grows with scale.} Across a 21$\times$ range the server parses
-zero calls at every size, while well-formed calls the model actually emits rise to 80/100 at 32B
-(72 after the correction factor of 0.900, Appendix~\ref{app:humanval}). Same data as
+\caption{Within-family observation under the mismatched interface. Across the five
+Qwen2.5-Coder checkpoints, the server parses zero calls while tight-classified emissions
+rise to 80/100 at 32B (approximately 72 after calibration with tight-stratum precision
+0.900, assuming transfer across sizes; Appendix~\ref{app:humanval}). Same data as
 Table~\ref{tab:scale}.}
 \label{fig:gap}
 \end{figure}
@@ -303,14 +304,14 @@ Mistral-7B-v0.3 & 26 & 33 & N/A & N/A & N/A & N/A & --- \\
 \begin{center}
 \small
 \captionof{table}{Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion.}\label{tab:controls}
-\begin{tabular}{@{}p{4.0cm}p{3.2cm}p{4.0cm}p{2.2cm}@{}}
+\begin{tabular}{@{}p{.27\linewidth}p{.21\linewidth}p{.27\linewidth}p{\dimexpr.25\linewidth-6\tabcolsep\relax}@{}}
 \toprule
 Alternative explanation & Control & Empty-argument rate & Verdict \\
 \midrule
 schema lacks a parameter description & rich vs terse & 23 $\to$ 22 (\emph{p}=1.000) & rejected \\
 ReAct merely adds a reasoning step & FC + Thought scaffold & 23 $\to$ \textbf{59} (\emph{p}\textless0.001, \textbf{worse}) & rejected \\
-server not configured per documentation & + official chat template & 23 $\to$ 22 (\emph{p}=0.125) & rejected \\
-\textbf{schema constraint not enabled} & \textbf{+ \texttt{strict: true}} & \textbf{23 $\to$ 0 (\emph{p}=0.0001)} & \textbf{accepted} \\
+server not configured per documentation & + official chat template & 23 $\to$ 22 (1/0 discordance, \emph{p}=1.000) & rejected \\
+\textbf{schema constraint not enabled} & \textbf{+ \texttt{strict: true} on official template} & \textbf{22 $\to$ 0 (22/0, \emph{p}=4.77$\times10^{-7}$)} & \textbf{accepted} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -395,20 +396,67 @@ mandatory prompt (baseline) & 52 & \textbf{0} & 15 \\
 \end{tabular}
 \end{center}
 
-\subsection{The sufficiency arm, tabulated}
+\subsection{Formal 7B checkpoint curve and final-lineage audit}
+\label{app:p3curve}
+
+All checkpoint evaluations use the same 542-item multi-turn manifest, have zero request failures,
+and attest the indicated native weight step. The accepted curve uses the original repaired steps
+0--90 and resumed steps 120--150; the abandoned original steps 91--116 are excluded. The repeated
+step-90 evaluation after resumption gave 415/426/11 rather than 415/428/13 and is retained as
+test--retest evidence, not substituted into the formal curve.
+
+\begin{center}
+\small
+\captionof{table}{Complete formal 7B held-out curve. Each cell is turn-1 pass / final pass / rescued after turn 1, with $n=542$.}\label{tab:p3curve}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+step & broken FC & repaired FC \\
+\midrule
+0   & 418 / 430 / 12 & 418 / 430 / 12 \\
+30  & 418 / 430 / 12 & 418 / 429 / 11 \\
+60  & 420 / 433 / 13 & 417 / 431 / 14 \\
+90  & 418 / 432 / 14 & 415 / 428 / 13 \\
+120 & 419 / 433 / 14 & 415 / 427 / 12 \\
+150 & 418 / 430 / 12 & 415 / 427 / 12 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The policies did update. The accepted logs contain all 150 steps with non-zero actor gradient
+norms: 0.0120--0.0251 for broken and 0.00641--0.01599 for repaired; mean training rewards span
+0.150--0.469 and 0.168--0.435, respectively. A direct checkpoint audit over all 392 LoRA tensors
+(80{,}740{,}352 parameters) finds 45{,}471{,}572 values changed from broken step 120 to 150
+(56.3\%, $\ell_2$ delta 0.0787) and 45{,}296{,}056 from repaired step 90 to resumed step 150
+(56.1\%, $\ell_2$ delta 0.1222). These comparisons establish updates to saved LoRA weights
+over the retained intervals; evaluation completion records separately attest the native weight step.
+
+The event join also resolves the funnel's apparent gaps. Broken FC has 19{,}203 generation events,
+8{,}689 tight emissions and 10 accepted/executed/observed calls. Repaired FC has 33{,}367
+generation events, 17{,}608 tight emissions, and 16{,}912 accepted calls in 16{,}844 accepted
+generation events. Forty generations contain multiple calls, producing exactly the 68-call surplus;
+all 16{,}844 dispatches join to executions and observations by request ID and assistant turn.
+Extraction records lack those identifiers; accepted-generation and dispatch counts match per
+trajectory, rather than through a per-generation join. Tight and accepted are different tests:
+16{,}323 events satisfy both, 1{,}285 are tight but unaccepted, and 521 are accepted but not tight.
+The repository's \texttt{analysis/p3\_final\_evidence.py} verifies all evaluation and event hashes,
+reconstructs the final lineage, and emits the per-file manifest; the server-side checkpoint audit is
+reproducible with \texttt{analysis/p3\_checkpoint\_lora\_audit.py}.
+
+\subsection{Historical ReAct positive control, tabulated}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig3_training_causal.png}
-\caption{\textbf{RL training rollouts.} Under function calling the tool is never successfully
-called; \texttt{num\_turns} stays pinned at its minimum of 2 and tool time is exactly zero.
-Prompt strength is matched across arms (both mandatory); step counts are not (10 vs 3).}
+\caption{\textbf{Historical 1.5B RL diagnostic.} Under function calling the tool is never
+successfully called; \texttt{num\_turns} stays pinned at its minimum of 2 and tool time is exactly
+zero. Prompt strength is matched across arms (both mandatory); step counts are not (10 vs 3).
+The formal 7B parser control is reported separately in Table~\ref{tab:p3formal}.}
 \label{fig:train}
 \end{figure}
 
 \begin{center}
 \small
-\captionof{table}{ReAct training with a working tool channel, 23{,}676 executed calls. Rescues by turn $\geq$2 do not move. The three historical FC runs, in which \textbf{zero} tool calls executed, give rescue sequences $[7,9,6,6,7,6,10,8,9,8,6]$, $[8,7,6,7,7,7,7,5,6,6,8]$ and $[7,5,7,5,7,8,9,9,8,9]$ --- the two conditions are indistinguishable on this metric.}\label{tab:sufficiency}
+\captionof{table}{Historical ReAct training with a working tool channel, 23{,}676 executed calls. Rescues by turn $\geq$2 do not move. The three historical 1.5B FC runs, in which \textbf{zero} tool calls executed, give rescue sequences $[7,9,6,6,7,6,10,8,9,8,6]$, $[8,7,6,7,7,7,7,5,6,6,8]$ and $[7,5,7,5,7,8,9,9,8,9]$. This is supporting evidence only; Table~\ref{tab:p3formal} is the single-variable control.}\label{tab:sufficiency}
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
 step & turn-1 & final & \textbf{rescued by turn $\geq$2} & repair channel \\
@@ -429,7 +477,7 @@ Llama-3.1-8B, \texttt{temperature=0.6}, n=100 $\times$ 3 seeds.
 
 \begin{center}
 \small
-\captionof{table}{Sampling variance. FC seed 3 is inadmissible (a parallel tool call vLLM rejects), leaving two arms --- too few for a standard deviation, so only the interval is reported.}\label{tab:variance}
+\captionof{table}{Sampling variance. FC seed 3 contains one rejected parallel-call request. We report its complete-denominator endpoint, and treat the two clean arms separately; an SD from two clean seeds would be too unstable to summarize variation reliably.}\label{tab:variance}
 \begin{tabular}{@{}lllll@{}}
 \toprule
 & seed 1 & seed 2 & seed 3 & admissible \\
@@ -437,16 +485,17 @@ Llama-3.1-8B, \texttt{temperature=0.6}, n=100 $\times$ 3 seeds.
 ReAct turn-1 & 53 & 56 & 43 & 3/3 \\
 ReAct final & 72 & 72 & 72 & 3/3 \\
 FC turn-1 & 44 & 44 & 45 & --- \\
-FC final & 62 & 66 & \sout{57} & \textbf{2/3} \\
+FC final & 62 & 66 & 57$^{\dagger}$ & \textbf{2 clean / 3 end-to-end} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 FC seed 3 contains one request error --- the model emitted parallel tool calls and vLLM returned
-\emph{``This model only supports single tool-calls at once''} --- so it is inadmissible by
-\S\ref{sec:gating}. With two admissible FC arms we report the interval [62, 66] and \textbf{no
-standard deviation}. Worst case: ReAct's lowest (72) versus FC's highest (66) = \textbf{+6}; the
-direction is consistent across all admissible repetitions.
+\emph{``This model only supports single tool-calls at once''}. The end-to-end endpoint therefore
+retains that task as a failure and is 57/100; the prespecified clean-arm analysis excludes the seed
+and reports [62, 66]. An SD can be computed from two clean seeds, but would be an unstable estimate,
+so we do not use it to characterize sampling variation. Worst case among clean arms: ReAct's
+lowest (72) versus FC's highest (66) = \textbf{+6}.
 
 \textbf{Inverted noise structure.} ReAct's turn-1 varies widely (43--56, sd 6.8) while its final
 converges; FC's turn-1 is nearly constant (44--45, sd 0.58) while its final disperses. The
@@ -483,23 +532,18 @@ the aggregate is invariant --- only that it is far less sensitive than its compo
 The GRPO reward is outcome-only: it extracts the last submitted program, runs the item's own
 \texttt{pytest} suite in the sandbox, and returns the pass ratio (\texttt{reward\_code.py}). Three
 reward-hacking routes are closed by construction --- a run in which no test executes scores 0
-rather than 1, a timeout scores 0, and an item with no test string scores 0. Two seams remain.
-\emph{(i)} The summary parser searches \texttt{(\textbackslash d+) passed} over the merged
-stdout/stderr buffer and takes the first match, so a program that itself prints a pytest-like line
-could be scored on its own output --- this needs no understanding of the harness and could fire by
-accident. \emph{(ii)} \texttt{skipped} and \texttt{xfail} are not counted in the denominator, so a
-rollout that skips the hard tests is scored on the subset it did not skip. Solutions execute at
-import time under the double-file layout, so both are reachable in principle. We therefore audited:
+rather than 1, a timeout scores 0, and an item with no test string scores 0. The historical
+verifier nevertheless had two seams. \emph{(i)} Its summary parser searched
+\texttt{(\textbackslash d+) passed} over merged stdout/stderr and took the first match, so model
+stdout could imitate pytest's summary. \emph{(ii)} \texttt{skipped} and \texttt{xfail} were not
+counted in the denominator. Both were reachable in principle. We therefore audited:
 across the five training logs that retain generated code there are \textbf{zero} occurrences of a
 printed \texttt{``N passed''}, of \texttt{pytest.skip}/\texttt{allow\_module\_level}, or of
 \texttt{sys.exit}/\texttt{os.\_exit}, and \texttt{critic/rewards/mean} oscillates in 0.46--0.73
-without the step change a discovered exploit produces. \textbf{The audit's own limit is that full
-rollout text was not retained}, so it covers the code fragments those logs happen to carry, not the
-entire corpus. Neither seam can reach the reported pass rates, which use a stricter path
-(\texttt{mode="script"}, exit code only, \texttt{all\_passed} additionally requiring
-\texttt{status=="ok"}). Before further training we would anchor the regex to \texttt{pytest}'s own
-summary line, count \texttt{skipped} and \texttt{xfail}, and separate model stdout from harness
-output; we do not change it now because doing so would make future runs incomparable to those
-reported here.
-
-
+without the step change a discovered exploit produces. The audit's own limit is that historical
+full rollout text was not retained, so it covers only the fragments those logs carry. Before the
+formal 7B control we anchored the regex to pytest's summary, included
+\texttt{skipped}/\texttt{xfailed}/\texttt{xpassed} in the denominator, and retained every rollout
+in full with a SHA-256 digest. Both P3 arms use this fixed verifier. Neither verifier path is used
+for the reported held-out pass rates, which require \texttt{mode="script"}, a zero exit code and
+\texttt{status=="ok"}.

@@ -48,7 +48,7 @@ disagreeing with the classifier.
 
 \begin{center}
 \small
-\captionof{table}{Inter-annotator reliability. Restricting to items where both annotators read identical bytes is not a convenience: 11 of the 12 raw disagreements are items the first pack truncated, where A1 answered ``no call'' because the call had been cut from their copy.}\label{tab:interannotator}
+\captionof{table}{Inter-annotator reliability. Of 98 sampled items, 97 have complete paired A1/A2 records. The identical-byte subset removes a presentation confound introduced by the first pack's 2,400-character cap.}\label{tab:interannotator}
 \begin{tabular}{@{}lcc@{}}
 \toprule
 Cohen's $\kappa$ (95\% CI, bootstrap) & all items ($n$=97) & \textbf{identical bytes ($n$=62)} \\
@@ -60,10 +60,11 @@ A1 vs.\ classifier           & 0.712 [0.559, 0.847] & 0.934 [0.834, 1.000] \\
 \end{tabular}
 \end{center}
 
-\textbf{The apparent unreliability was the instrument, not the raters.} Of the 12 items where
-the two annotators disagree, \textbf{11 have full text exceeding 2400 characters}, and in every
-one A1 answered \texttt{N} while A2 answered \texttt{Y}. On the 62 items where both read
-identical bytes the two agree on 61, and \textbf{inter-annotator $\kappa$ = 0.967}.
+Of the 12 paired disagreements, 11 have full text exceeding 2,400 characters and A1 saw a
+different presentation from A2; the first-round audit attributed most errors to reading order and
+one to evidence actually omitted by truncation. We therefore do not assign all 11 to one cause.
+On the 62 items where both read identical bytes the two agree on 61, and
+\textbf{inter-annotator $\kappa$ = 0.967}.
 
 \textbf{Third-party adjudication, and the final labels.} Fifteen items were not unanimous across
 A1, A2 and the classifier. All fifteen went to a third adjudicator under the pre-registered rule
@@ -73,17 +74,19 @@ classifier on 9, and with A1 on 6, and \textbf{moved away from the classifier on
 last number is the check that matters: the first round's adjudication moved away from the
 classifier zero times out of thirteen, which is what an outcome looks like when the selection
 rule has already decided it. Combining the 83 unanimous items with the 15 adjudicated ones gives
-a gold standard that at no point consulted the classifier.
+a 98-item gold standard. The third adjudicator was blind to classifier and annotator labels; the
+classifier nevertheless affected the original stratified sample and which non-unanimous items
+required adjudication, so we do not call the gold set classifier-independent.
 
 \begin{center}
 \small
-\captionof{table}{Validation against the adjudicated gold standard. The inter-annotator column is restricted to items where both annotators read identical bytes; the classifier and the gold standard are unaffected by that truncation and are scored on the full sample.}\label{tab:validation2}
-\begin{tabular}{@{}lcc@{}}
+\captionof{table}{Validation against the adjudicated gold standard. Pairwise denominators differ because one sampled item lacks a complete A1/A2 pair; classifier--gold uses all 98 items.}\label{tab:validation2}
+\begin{tabular}{@{}lccc@{}}
 \toprule
-Cohen's $\kappa$ (95\% CI, bootstrap) & full sample ($n$=97) & identical bytes ($n$=62) \\
+Cohen's $\kappa$ (95\% CI, bootstrap) & full $n$ & full sample & identical bytes ($n$=62) \\
 \midrule
-A1 vs.\ A2 (inter-annotator) & 0.736 [0.595, 0.866] & \textbf{0.967 [0.893, 1.000]} \\
-Classifier vs.\ gold standard & \textbf{0.871 [0.756, 0.958]} & 0.934 [0.829, 1.000] \\
+A1 vs.\ A2 (inter-annotator) & 97 & 0.736 [0.595, 0.866] & \textbf{0.967 [0.893, 1.000]} \\
+Classifier vs.\ gold standard & 98 & \textbf{0.871 [0.756, 0.958]} & 0.934 [0.829, 1.000] \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -106,5 +109,10 @@ is built from a rule fixed before the labels were seen.
 output per item; 10 of the 98 sampled outputs reach that ceiling, and one grey-zone item is a
 call truncated by it. The classifier and both annotators read identical bytes, which is what
 agreement requires, but a call emitted beyond character 4000 is invisible to all three.
-Emitted-call counts are accordingly a \textbf{lower bound} --- conservative for our claim, since
-it can only understate the censoring we report.
+All ten cap hits occur in the 32B subset of this stratified sample: by increasing scale the
+hit counts are 0/6, 0/13, 0/15, 0/24, and 10/40. These are sample diagnostics, not population
+truncation rates, but they show that the uncertainty is concentrated at the headline rung.
+The cap therefore creates downward pressure through false negatives. Because the classifier also
+has false positives (tight precision 0.900), however, the net bias of the raw count is not known;
+we report both the uncorrected count and the adjudication-based calibration rather than calling
+the total a strict lower bound.

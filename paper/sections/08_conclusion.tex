@@ -2,16 +2,17 @@
 
 Tool-call interfaces censor agent trajectories, silently and per checkpoint; within Qwen2.5-Coder
 the absolute undercount rises monotonically with checkpoint size, which we report as a
-within-family observation rather than a general law. In reinforcement learning the same mismatch
-leaves the sampled experience distribution with no tool-mediated trajectories --- 45 of 115
-generations inside the training loop carry a complete call and none becomes an action --- so the
-tool-using branch receives no direct on-policy gradient signal under the observed rollout
-distribution. Repairing the interface restores the mechanism but recovers only part of the outcome
-gap.
+within-family observation rather than a general law. In a 150-step RL control differing only in
+verl's parser registry, the mismatched arm turns 8{,}689 tight-classified call-like emissions into 10 executions,
+whereas the repaired arm executes and observes 16{,}844 calls. The intervention therefore restores
+the tool-mediated experience distribution. We detect no held-out improvement: rescues remain 12
+and final passes move from 430/542 to 427/542. Access to a trajectory and learning from it are
+separate empirical questions.
 
 Two controls fix what the effect is a property of. A $2\times2$ over chat template and parser on a
-public benchmark finds both main effects exactly zero, with the entire 0.00-to-0.96 swing in their
-interaction; and a ladder under a \emph{matched} interface holds the silent fraction at 0--2 across
+public benchmark finds zero recovery from either one-component replacement at the documented
+baseline and 196/200 parses under joint replacement; and a supporting ladder under a
+\emph{matched} interface holds the silent fraction at 0--2 across
 a comparable span of scale, where the mismatched interface takes it to 80. \textbf{What the serving
 layer removes is not a property of the model, nor of the parser, but of the contract between them.}
 

@@ -1,14 +1,9 @@
-\begin{thebibliography}{28}
+\begin{thebibliography}{31}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
-
-\bibitem[kod(2025)]{kodcode2025}
-Kodcode: A diverse, challenging, and verifiable synthetic dataset for coding.
-\newblock \url{https://huggingface.co/datasets/KodCode/KodCode-Light-RL-10K},
-  2025.
 
 \bibitem[ver(2025)]{verl_issue_4124}
 Agentic rl training example: Keyerror: 'solve\_equation'.
@@ -62,6 +57,14 @@ Vishvesh Bhat, Jay Vaghasiya, Muhammad~Ahmed Mohsin, and Asad Aali.
 \newblock \emph{arXiv preprint arXiv:2607.02577}, 2026.
 \newblock Submitted 2026-06-30.
 
+\bibitem[Chen et~al.(2026)Chen, Chen, Zhu, Cao, Shen, and
+  Cheung]{chen2026agentreactive}
+Jingyi Chen, Songqiang Chen, Hengcheng Zhu, Jialun Cao, Jiasi Shen, and
+  Shing-Chi Cheung.
+\newblock Understanding agent-reactive bugs at the model-harness boundary: An
+  empirical study of llm agent issue reports.
+\newblock \emph{arXiv preprint arXiv:2607.15684}, 2026.
+
 \bibitem[Dehghani et~al.(2021)Dehghani, Tay, Gritsenko, Zhao, Houlsby, Diaz,
   Metzler, and Vinyals]{dehghani2021benchmarklottery}
 Mostafa Dehghani, Yi~Tay, Alexey~A. Gritsenko, Zhe Zhao, Neil Houlsby, Fernando
@@ -81,6 +84,14 @@ hanXen.
 \newblock Feature request: dedicated tool parser for qwen2.5-coder models.
 \newblock vLLM issue \#32926, opened 2026-01-23, closed as not planned, 2026.
 \newblock \url{https://github.com/vllm-project/vllm/issues/32926}.
+
+\bibitem[Hu et~al.(2022)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and
+  Chen]{hu2022lora}
+Edward~J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean
+  Wang, Lu~Wang, and Weizhu Chen.
+\newblock {LoRA}: Low-rank adaptation of large language models.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2022.
 
 \bibitem[Kwon et~al.(2023)Kwon, Li, Zhuang, Sheng, Zheng, Yu, Gonzalez, Zhang,
   and Stoica]{kwon2023vllm}
@@ -201,6 +212,14 @@ Brandon~T. Willard and R{\'e}mi Louf.
 \newblock Efficient guided generation for large language models.
 \newblock \emph{arXiv preprint arXiv:2307.09702}, 2023.
 
+\bibitem[Xu et~al.(2025)Xu, Liu, Yin, Zhou, and Poovendran]{kodcode2025}
+Zhangchen Xu, Yang Liu, Yueqin Yin, Mingyuan Zhou, and Radha Poovendran.
+\newblock Kodcode: A diverse, challenging, and verifiable synthetic dataset for
+  coding.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  ACL 2025}, pages 6980--7008, 2025.
+\newblock \doi{10.18653/v1/2025.findings-acl.365}.
+
 \bibitem[Yao et~al.(2023)Yao, Zhao, Yu, Du, Shafran, Narasimhan, and
   Cao]{yao2023react}
 Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan,
@@ -215,5 +234,14 @@ Shunyu Yao, Noah Shinn, Pedram Razavi, and Karthik Narasimhan.
   real-world domains.
 \newblock In \emph{International Conference on Learning Representations
   (ICLR)}, 2025.
+
+\bibitem[Yao et~al.(2026)Yao, Tan, Liu, Li, Wang, Yu, Tan, Tian, Zhao, Sun,
+  Zhang, and Yang]{yao2026harnessbench}
+Yilun Yao, Xinyu Tan, Chao-Hsuan Liu, Yaoming Li, Zhengyang Wang, Wenhan Yu,
+  Zhewen Tan, Yuxuan Tian, Guangxiang Zhao, Lin Sun, Xiangzheng Zhang, and Tong
+  Yang.
+\newblock Harness-bench: Measuring harness effects across models in realistic
+  agent workflows.
+\newblock \emph{arXiv preprint arXiv:2605.27922}, 2026.
 
 \end{thebibliography}

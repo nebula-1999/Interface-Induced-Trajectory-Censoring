@@ -13,7 +13,8 @@ terse (bare \texttt{\{"type":"string"\}}), rich (description,
 counter-example, code sample), strict (\texttt{strict: true},
 \texttt{additionalProperties: false}).
 
-We train with GRPO \citep{shao2024deepseekmath} and RLOO \citep{ahmadian2024rloo}.
+We train with GRPO \citep{shao2024deepseekmath} and RLOO \citep{ahmadian2024rloo}; the formal 7B
+control uses matched rank-32 LoRA arms \citep{hu2022lora}.
 
 \textbf{Serving.} vLLM 0.27.1 \citep{kwon2023vllm,vllm_toolcalling_docs}, per-family parser
 and chat template as documented. \texttt{temperature=0} is greedy but not bit-wise
@@ -55,8 +56,9 @@ corrects to $\approx$72; we report uncorrected counts throughout with this facto
 stated rather than rescaling silently, and applying it uniformly leaves the trend unchanged
 ($0, 3.6, 18.9, 32.4, 72$ against a server-side zero at every size). \textbf{(iii)} The probe
 stores at most 4000 characters of raw output per item and 10 of the 98 sampled outputs reach
-that ceiling, so \textbf{emitted-call counts are a lower bound} --- conservative for our
-claim, since it can only understate the censoring we report.
+that ceiling, creating downward pressure from false negatives. Since precision is 0.900 and thus
+also reveals false positives, the net bias is not identified; we report raw and calibrated counts
+rather than calling the total a strict lower bound.
 
 \subsection{Positive control: the pipeline works}
 \label{sec:control}
@@ -82,3 +84,14 @@ p-value is computed for them}. \textbf{This rule is enforced in code}
 (\texttt{validate\_arms.py}, \texttt{final\_table.py}), not by convention: an earlier draft
 computed \emph{p}=0.648 on such an arm, and that number is retracted
 (Appendix~\ref{app:errata}).
+
+For paired binary outcomes we use exact two-sided McNemar tests and report both discordant counts.
+For the formal RL endpoint we also report the paired risk difference with an approximate Wald
+interval using the variance of the within-item difference. With roughly twelve McNemar tests, the
+conservative Bonferroni threshold is $0.05/12\approx0.0042$; nominal contrasts that do not clear it
+are labeled as such.
+
+Historical 1.5B curves exclude two verified EvalPlus defects (\texttt{HumanEval/32} and
+\texttt{Mbpp/599}) and use $n=540$. The preregistered 7B control retains all 542 items and counts
+those two as failures in both arms. They lower absolute rates but do not enter the paired
+discordances used for the arm comparison.

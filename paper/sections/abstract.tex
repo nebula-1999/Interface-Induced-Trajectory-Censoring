@@ -5,23 +5,25 @@ anything downstream sees it}.
 On BFCL~v4's own data, executor and scorer, holding weights, cases, decoding and seeds fixed and
 changing only the serving adapter configuration, the same model scores \textbf{0.00} or
 \textbf{0.96} / \textbf{0.19} (\texttt{simple\_python} / \texttt{multi\_turn\_base}). A $2\times2$
-over chat template and parser locates the effect exactly: \textbf{both main effects are exactly
-zero and all of it sits in the interaction} --- no component is defective, and repairing one side
-of the contract buys precisely nothing. On $\tau$-bench's 115 interactive \texttt{retail} tasks
+over chat template and parser shows strong complementarity: \textbf{from the documented baseline,
+neither one-component replacement recovers a call, whereas replacing both recovers 196/200}.
+This statement concerns parsing; BFCL scores were computed for the two end-to-end corner
+configurations. On $\tau$-bench's 115 interactive \texttt{retail} tasks
 the same swap moves server-parsed calls from \textbf{0 to 636} and tasks reaching any tool
 execution from \textbf{0 to 103}. Our own probe reproduces the funnel across a 21$\times$
 scale range of Qwen2.5-Coder: the server parses \textbf{0/100} at every size while well-formed
 emitted calls rise to \textbf{80/100} at 32B ($\approx$72 after calibration against a third-party
-adjudicated gold standard). Under a \emph{matched} envelope, across a comparable span of scale,
-the silent fraction instead stays at \textbf{0--2} --- a prediction committed to the repository
-before the run. Llama-3.1-8B's 23\% rate of calling \emph{the task function itself} as a tool
-falls to \textbf{0} under one \texttt{strict: true} flag.
+adjudicated gold standard). Under a \emph{matched} envelope, the supporting ladder through 8B
+keeps the silent fraction at \textbf{0--2} --- a prediction committed to the repository
+before the run. On Llama-3.1-8B, adding \texttt{strict: true} to the official-template arm reduces
+wrong-tool calls from \textbf{22/100 to 0/100}.
 
-The mismatch reaches inside the training loop, and its consequence is scale-dependent: in verl's
-AgentLoop at 7B, \textbf{45 of 115 generations carry a complete call; 0 are accepted, 0 execute,
-0 return an observation}, while at 1.5B the same zero is over-determined, so we report the two
-scales separately. \textbf{At evaluation time}, repairing the adapter restores the mechanism but
-not a significant outcome gain --- parsing $0\to84$, rescues $0\to9$, pass rate 53$\to$62 (n.s.).
-We release a 98-line preflight check that catches
-every silent failure reported here. \textbf{The observed tool-call rate is not a property of the model alone; it
-is a property of the model--interface stack that measures it.}
+The mismatch also changes the experience collected for RL. In a preregistered 150-step 7B LoRA
+control whose arms differ only in verl's parser registry, the mismatched arm accepts and executes
+\textbf{10} calls despite \textbf{8{,}689} tight-classified call emissions; the repaired arm executes and
+returns observations for \textbf{16{,}844}. Yet held-out multi-turn rescues are \textbf{12} in
+both arms and final passes are 430/542 versus 427/542 ($p=0.25$): repairing the channel restores the
+experience mechanism, but we detect no held-out improvement at this scale, budget and seed. We
+release a 98-line preflight check that catches every silent failure reported here.
+\textbf{The observed tool-call rate is not a property of the model alone; it is a property of the
+model--interface stack that measures it.}

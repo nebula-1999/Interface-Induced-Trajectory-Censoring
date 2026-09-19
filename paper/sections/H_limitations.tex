@@ -15,8 +15,8 @@ whether the undercount's growth with checkpoint size is a property of the interf
 code-shaped payloads (\S\ref{sec:future}). The latter we do not expect to close: the reward is a
 \texttt{pytest} pass ratio, so porting it changes environment, reward and task at once. Multi-tool
 schemas and tool selection among alternatives remain untested throughout; a single-tool schema is
-the \emph{easiest} case for a parser, which if anything makes the measured censoring a lower bound
---- but that is an argument, not a measurement.
+an easy parser case, but we treat that only as motivation for broader tests, not as a quantitative
+lower-bound argument.
 \emph{(2) Item sampling.} The 50 full-length arms use 100 items taken as \texttt{clean[:100]},
 \textbf{not a random sample}; pairing across arms is exact, so within-study comparisons are sound.
 Generalisation rests on a replication on a random 300-item sample (seed 20260901): server-parsed
@@ -37,10 +37,13 @@ intervention; \textbf{Mistral has no admissible 100-item FC comparison at all}; 
 template check with little quantification.
 \emph{(5) Single-sample headline arms.} Table~\ref{tab:repair} and the ladders are one sample at
 \texttt{temperature}=0. Variance is estimated only on Llama-3.1-8B, and there only 2 of 3 FC arms
-are admissible --- too few for a standard deviation (\S\ref{sec:variance}).
+are clean. A standard deviation from two seeds is defined but too unstable to summarize sampling
+variation reliably; the complete-denominator endpoint for the error-bearing seed is still
+reported (\S\ref{sec:variance}).
 \emph{(6) Multiple comparisons.} Roughly a dozen McNemar tests; the Bonferroni threshold at that
-family size is $\approx$0.0042. Surviving it: the \texttt{strict: true} intervention
-($p$=0.0001), the protocol gap on 300 random items ($p$=3.1$\times$10$^{-6}$), and the main
+family size is $\approx$0.0042. Surviving it: the official-template \texttt{strict: true}
+intervention on wrong-tool labels ($p=4.77\times10^{-7}$) and final pass
+($p=7.63\times10^{-5}$), the protocol gap on 300 random items ($p$=3.1$\times$10$^{-6}$), and the main
 effects of order $10^{-3}$. \textbf{Not surviving it}: the repair-loop pass gain ($p$=0.093 at
 $n$=100, $p$=0.0385 at $n$=300), the Llama protocol contrast at $n$=300 ($p$=0.0352), and the
 residual-gap estimates ($p$=0.118, 0.125). We rest no claim on the latter group, and report the
@@ -49,58 +52,49 @@ claimed.
 \emph{(7) Model scale stops at 32B}, on a single A800; no frontier models.
 
 \textbf{Threats to the causal reading.}
-\emph{(8) There is no clean repaired-FC training control.} The training evidence compares FC
-against ReAct, changing protocol and interface together; ReAct is a positive-control interaction
-channel, not a parser-repair control. We previously attributed the arm's absence to verl 0.9.0
-lacking guided decoding. \textbf{That was wrong}: the registry is extensible and we have since
-installed code in it, and what actually blocks the arm is scale (\S\ref{sec:norepair}).
-Consequently we claim that interface censoring can be observed directly inside rollout collection
-and eliminates tool-mediated samples; we do \textbf{not} claim to have causally proven that it
-prevents RL from learning multi-turn repair.
+\emph{(8) The clean repaired-FC control has one seed and one budget.} The completed 7B experiment
+holds model, LoRA configuration, data, prompt, decoding, verifier, seed and 150-step budget fixed,
+changing only the parser registered in verl. It therefore identifies the interface effect on the
+sampled experience distribution in this setting. Its null held-out result does not establish that
+a working channel is generally insufficient, and its LoRA training is not strictly comparable to
+the historical 1.5B full-parameter runs.
 \emph{(9) Conditioning on a successful parse is post-treatment conditioning.} Whether an item
 parses is determined by the interface under test, so the both-parsed subset is not a random
 subsample and its contrast is not a clean causal estimate. On Qwen the residual is $+8.4$\,pp,
 95\% CI $[-0.5,+17.4]$, $p$=0.118: \textbf{we do not detect a residual difference, which is not
 the same as establishing there is none}.
-\emph{(10) Observed zero is not zero probability.} Our instrumentation records zero
-parser-accepted tool executions across every step of the FC arm --- a statement about the sampled
-experience distribution, not the support of the policy, since entropy and off-branch updates could
-in principle carry the model into parser-compatible output. We therefore say the branch receives
-no direct on-policy gradient signal under the observed rollout distribution and is effectively
-inaccessible in this cold-start regime, not mathematically unreachable.
-\emph{(11) Zero executions is not zero attempts.} The FC training arm did not save raw rollout
-text, so we cannot separate ``never attempted'' from ``attempted and discarded''. The probe
-replication at the same scale and prompt finds no output naming \texttt{run\_tests}, which makes
-``nothing well-formed to censor'' the most likely reading \emph{at 1.5B} --- but it is a
-replication, not the training run itself. Retaining rollout text is a change we would make before
-any further training.
-\emph{(12) Opening the channel is tested only through ReAct.} The 75-step arm executing 23{,}676
-calls shows a working channel does not by itself move multi-turn rescues, but because it is not a
-parser-repair control it cannot separate ``a working channel is insufficient'' from ``ReAct in
-particular is insufficient'', and it is 75 steps on one seed at 1.5B against 150-step historical
-baselines.
+\emph{(10) Near-zero observed frequency is not zero probability.} The broken 7B arm executes 10
+calls rather than none; its instrumentation describes a sampled distribution, not the support of
+the policy. We therefore report a nearly closed channel (10 executions from 8{,}689 tight-classified
+emissions), not a mathematically unreachable action.
+\emph{(11) Attempts and discards are separated only in the new run.} The formal 7B arms retain
+complete rollout text with hashes, parser verdicts, execution events and returned observations, so
+8{,}689 emitted attempts and 10 accepted actions are directly distinguished. The historical 1.5B
+run did not retain full text. Its same-prompt replication finds no correctly named call, but that
+cannot retroactively identify what every historical rollout emitted.
+\emph{(12) The null learning observation is setting-specific.} Parser repair restores 16{,}844 executed
+and observed calls over 150 steps without moving held-out rescues from 12. This is the requested
+single-variable control, but it is one seed, 7B, LoRA, one code task and one training horizon.
+The earlier ReAct arm (23{,}676 calls, flat rescues) is directionally consistent but remains
+confounded by its protocol change.
 \emph{(13) Human validation covers one criterion on one sample.} Two blind annotators on 98
 stratified items give inter-annotator $\kappa$ = 0.967 on the 62 items where both read identical
 bytes, and classifier-vs-gold-standard $\kappa$ = 0.871 after third-party adjudication
 (Appendix~\ref{app:humanval}). Two residual limits: the sample is stratified by classifier
 verdict, so it estimates per-stratum precision and recall, not a population rate; and stored raw
 output is capped at 4000 characters, so a call emitted past that point is invisible to classifier
-and annotators alike, making emitted-call counts a lower bound. The \emph{first} round's apparent
+and annotators alike, creating false negatives. Because the classifier also has false positives,
+the net bias of the raw emitted-call count is not identified. The \emph{first} round's apparent
 unreliability ($\kappa$=0.713) was an artefact of a 2400-character truncation in the annotation
 pack, not of the raters; that pack is superseded.
-\emph{(14) The training verifier has two exploitable seams, which we audited rather than assumed
-away.} The GRPO reward is outcome-only --- last submitted program, item's own \texttt{pytest}
-suite, pass ratio --- and closes three reward-hacking routes by construction (no test executed,
-timeout, and no test string all score 0). Two seams remain: the summary parser takes the first
-\texttt{(\textbackslash d+) passed} match over merged stdout/stderr, so a program printing a
-pytest-like line could be scored on its own output; and \texttt{skipped}/\texttt{xfail} are not in
-the denominator, so a rollout that skips the hard tests is scored on what it did not skip. Both
-are reachable in principle, so we audited: across the five training logs that retain generated
-code there are \textbf{zero} occurrences of a printed \texttt{``N passed''}, of
-\texttt{pytest.skip}, or of \texttt{sys.exit}, and \texttt{critic/rewards/mean} oscillates in
-0.46--0.73 without the step change a discovered exploit produces. \textbf{The audit's own limit is
-that full rollout text was not retained}, so it covers only the fragments those logs carry.
-Neither seam can reach the reported pass rates, which use a stricter path. Full detail and the fixes we would apply before further training are in \S\ref{app:verifier}.
+\emph{(14) The historical training verifier had two exploitable seams.} Its summary parser used
+the first unanchored \texttt{(\textbackslash d+) passed} match and omitted
+\texttt{skipped}/\texttt{xfail} from the denominator. We found no exploit signature in the five
+historical logs that retain generated code, but those logs do not contain every full rollout. For
+the formal 7B control we anchored the regex to pytest's summary, included skipped, xfailed and
+xpassed outcomes in the denominator, and retained every rollout in full with a hash. Both arms use
+the identical fixed verifier, so it cannot explain their contrast. Neither verifier version is
+used for the separately reported held-out pass rates (\S\ref{app:verifier}).
 
 \textbf{Environment dependence and provenance.}
 \emph{(15) Serving-stack version dependence.} Every measurement is against vLLM 0.27.1 and verl
@@ -121,15 +115,11 @@ are enumerated in Appendix~\ref{app:errata}. None is silently absorbed into a re
 \subsection*{What would change our conclusions (restated)}
 
 We name these so the claims are falsifiable rather than merely hedged.
-\emph{A broken-FC versus repaired-FC RL comparison}, everything else fixed. The repaired arm
-requires registering a parser that accepts the model's actual output format in verl's own
-registry --- a code change, not a different backend. It must be run at \textbf{7B}, because the
-1.5B checkpoint emits no well-formed call for a repaired parser to accept, and therefore under
-parameter-efficient tuning, because 7B full-parameter RL does not fit our single card: two arms
-differing only in that registration. \textbf{If repaired-FC recovers multi-turn learning, our
-sufficiency claim in \S\ref{sec:sufficiency} is wrong}; if it does not, the ``bottleneck is not
-singular'' reading strengthens from one arm to two, the second being single-variable. This is the
-experiment most likely to overturn something we have written, which is why we name it precisely.
+\emph{Replications or a longer repaired-FC budget.} The requested broken-versus-repaired
+single-variable control is now complete: parser repair restores 16{,}844 tool interactions and
+does not increase held-out rescues. A consistent rescue gain over additional seeds or a longer
+preregistered horizon would narrow the scope of this 150-step, single-seed observation; continued
+nulls would strengthen it within, but not beyond, the tested model, task and optimiser setting.
 \emph{A second family's scale ladder}, with a working test executor: if the undercount does not
 grow with checkpoint size in another family, \S\ref{sec:scale}'s scale claim is a
 Qwen-plus-\texttt{hermes} fact rather than a scaling phenomenon.
