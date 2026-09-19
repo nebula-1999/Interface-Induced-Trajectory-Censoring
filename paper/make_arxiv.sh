@@ -16,7 +16,7 @@ cp main.tex main.bbl ./*.png "$W/"
 for f in $(grep -oE 'sections/[A-Za-z0-9_]+' main.tex | sort -u); do
   [ -f "$f.tex" ] && cp "$f.tex" "$W/sections/"
 done
-( cd "$W" && tar czf - . ) > "$OUT"
+( cd "$W" && COPYFILE_DISABLE=1 tar czf - . ) > "$OUT"
 echo "[arxiv] 已生成 $OUT  ($(du -h "$OUT" | cut -f1))"
 echo "[arxiv] 包内 tex：$(ls "$W/sections" | wc -l | tr -d ' ') 个分节 + main.tex"
 echo "[arxiv] 临时源码保留在 ${W}，可用于独立编译验收"
