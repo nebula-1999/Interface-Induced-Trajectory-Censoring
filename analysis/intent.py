@@ -5,11 +5,11 @@ Three earlier counts (manual 18 / tight criterion 21 / trajectory labels 23)
 came from temporary scripts written at different stages. This module defines
 three evidence levels; every report must state which level it uses:
 
-  tight   Strict criterion: {"name":"run_tests", ... "arguments" ...
-          "code":"<a string literal containing real Python>"}. It excludes
-          two contaminants: (1) repetition of the injected schema (with
-          parameters/description but no arguments), and (2) illustrative
-          pseudocode where "code" is a variable name rather than a string.
+  tight   Regex-positive call-shaped emission: name=run_tests, a quoted code
+          field after arguments, and Python-like lexical markers. No JSON or
+          Python parser is run; syntactic validity/executability is not proved.
+          This filters some schema echoes and unquoted placeholders, not every
+          semantically invalid or illustrative call.
   strong  Broader strong evidence: trajectory _fc_intent is labelled
           json_named_call or xml_tool_call.
   weak    Weak heuristic: only a JSON structure (json_arguments or

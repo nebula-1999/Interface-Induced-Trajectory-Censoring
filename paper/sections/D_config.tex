@@ -88,7 +88,15 @@ turn; generated code is executed against EvalPlus tests and the observation is a
 message. Native RPC metadata must match the expected global weight step. The sole arm
 difference is \texttt{multi\_turn.format=hermes} versus the registered
 \texttt{qwen2\_5\_coder} parser. Full-parameter 7B RL did not fit the single 80\,GB card, so both
-arms use the same parameter-efficient configuration; this preserves the arm contrast but prevents
+arms use the same parameter-efficient configuration. Logged training settings are learning rate
+$10^{-6}$, temperature 1.0, top-$p=1$, top-$k=-1$, prompt budget 2,048 and response budget 6,144
+tokens, at most five assistant turns, a 1,200-token tool-response cap and one dispatched tool
+call per generation. These are
+training budgets, distinct from the four-turn, 1,024-token-per-turn held-out evaluation.
+Decontamination uses question n-grams 8/5 and solution n-grams 10/6, with a five-gram minimum;
+containment is intersection divided by the smaller set, and the clean-ID selection threshold
+is 0.10. These checks do not rule out semantic overlap or pretraining contamination.
+This preserves the arm contrast but prevents
 a strict comparison to the historical full-parameter curves.
 
 \subsection{Tool-call instrumentation}

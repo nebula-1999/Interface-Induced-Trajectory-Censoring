@@ -34,7 +34,8 @@ below the 1,920-character field limit.
 
 ## Page accounting
 
-The 2026-09-19 verified build has 28 total pages. The page-limit accounting is:
+The 2026-09-21 verified build has 30 pages including references and appendices;
+the main text ends on page 8. The page-limit accounting is:
 
 | material | pages | counted toward 9-page limit |
 |---|---:|---:|
@@ -44,8 +45,8 @@ The 2026-09-19 verified build has 28 total pages. The page-limit accounting is:
 | Results | 4--7 | yes |
 | Implications, limitations, conclusion | 7--8 | yes |
 | AI-use + reproducibility statements | 8 | no (per ICLR 2027 template) |
-| References | 8--9 | no |
-| Appendices | 10--28 | no |
+| References | 9--10 | no |
+| Appendices (including retrospective statistical inventory) | 10--30 | no |
 
 The main text therefore ends on **page 8**, leaving one page of safety margin.
 The added P3 evidence and corrected statistical/methodological descriptions

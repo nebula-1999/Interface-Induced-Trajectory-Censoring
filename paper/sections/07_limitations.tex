@@ -27,10 +27,11 @@ item parses is determined by the interface under test, so the both-parsed subset
 subsample. On Qwen the residual is $+8.4$\,pp, 95\% CI $[-0.5,+17.4]$, $p$=0.118: \textbf{we do
 not detect a residual difference, which is not the same as establishing there is none.}
 
-\textbf{Multiple comparisons} (item~6). Roughly a dozen McNemar tests; the Bonferroni threshold is
-$\approx$0.0042. Surviving it: the official-template \texttt{strict: true} intervention on
+\textbf{Multiple comparisons} (item~6). The explicit 27-test retrospective family in Appendix~\ref{app:statistics} uses
+$0.05/27\approx0.00185$. This reporting rule was not preregistered. Surviving it: the official-template \texttt{strict: true} intervention on
 wrong-tool labels ($p=4.77\times10^{-7}$), its final-pass contrast ($p=7.63\times10^{-5}$), and the
-protocol gap on 300 random items ($p$=3.1$\times$10$^{-6}$). \textbf{Not surviving it}: the
+protocol gap on 300 random items ($p$=3.1$\times$10$^{-6}$). \textbf{Not surviving it}: the Llama strict-to-ReAct contrast ($p=0.0019$),
+the both-parsed Llama contrast ($p=0.0021$), the
 repair-loop pass gain ($p$=0.093 at $n$=100, $p$=0.0385 at $n$=300), the Llama protocol contrast
 at $n$=300 ($p$=0.0352), the $\tau$-bench outcome difference ($p$=0.25), and the residual-gap
 estimates ($p$=0.118, 0.125). We rest no claim on the latter group.

@@ -51,3 +51,4 @@ paper/**/*.fdb_latexmk
 paper/**/*.xdv
 # Extracted evidence duplicates the committed, checksummed archive.
 p3/results/formal_20260916_a/raw/
+submission_packages/

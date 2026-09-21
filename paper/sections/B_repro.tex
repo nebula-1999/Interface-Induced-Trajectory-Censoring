@@ -1,5 +1,13 @@
 \section{Reproducibility}
 \label{app:repro}
+
+The formal 7B configuration and shared held-out protocol are in Appendix~\ref{app:config};
+the complete 0/30/60/90/120/150 multi-turn curve and accepted resume lineage are in
+Appendix~\ref{app:p3curve}. Appendix~\ref{app:statistics} defines the risk-difference interval
+and all tests. The anonymous supplementary package provides \texttt{submission\_statistics.py},
+its machine-readable output and inputs for the audited Llama controls, plus a training-config
+summary and aggregate P3 evidence. It does not include the full raw rollout archive or heavy
+checkpoints; reproducing the raw-event audit requires those separately retained records.
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# analysis and figures (no GPU)}

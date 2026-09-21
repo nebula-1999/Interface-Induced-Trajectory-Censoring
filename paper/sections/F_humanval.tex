@@ -91,13 +91,13 @@ Classifier vs.\ gold standard & 98 & \textbf{0.871 [0.756, 0.958]} & 0.934 [0.82
 \end{tabular}
 \end{center}
 
-\textbf{Correction factor.} Against the gold standard the \texttt{tight} stratum's precision is
-36/40 = \textbf{0.900}, so \S\ref{sec:scale}'s headline 80/100 at 32B corrects to
-\textbf{$\approx$72}. The criterion errs in both directions --- 4 over-counts against 2 calls it
-misses entirely, a net over-count of 2 --- so the correction is smaller than the precision figure
-alone suggests. \textbf{The trend is unaffected}: applying 0.900 uniformly gives
-$0, 3.6, 18.9, 32.4, 72$ against a server-side zero at every size. We report uncorrected
-classifier counts in all tables with this factor stated, rather than rescaling silently.
+\textbf{Sensitivity estimate, not a corrected population total.} Tight-stratum precision is
+36/40=0.900. If this precision transfers to the 32B arm, multiplying 80 by 0.900 gives
+approximately 72 classifier-positive outputs expected to satisfy the gold criterion. This does
+not restore false negatives and is not an estimate of all true calls. The stratified gold sample
+contains 4 false positives and 2 false negatives; their unweighted difference is not a population
+bias estimate. Uniformly applying 0.900 yields $0,3.6,18.9,32.4,72$ by construction, but
+scale-specific precision is unmeasured, so this calculation does not independently validate the trend.
 
 For the record, this number moved twice as the validation improved, and we report the trajectory
 rather than only its endpoint: \textbf{0.950} under the first, one-sided adjudication;
@@ -114,5 +114,5 @@ hit counts are 0/6, 0/13, 0/15, 0/24, and 10/40. These are sample diagnostics, n
 truncation rates, but they show that the uncertainty is concentrated at the headline rung.
 The cap therefore creates downward pressure through false negatives. Because the classifier also
 has false positives (tight precision 0.900), however, the net bias of the raw count is not known;
-we report both the uncorrected count and the adjudication-based calibration rather than calling
+we report both the uncorrected count and the assumption-dependent sensitivity estimate rather than calling
 the total a strict lower bound.

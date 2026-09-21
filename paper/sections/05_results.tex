@@ -244,16 +244,16 @@ parse goes \textbf{0$\to$84}, items reaching a second turn \textbf{0$\to$37} and
 arms have identical aggregate turn-1 pass, 53 vs 53. Because the evaluation adapter changes
 parser, template and few-shot together, equality of this aggregate does not establish identical
 first-turn generations and cannot by itself locate the failure layer. Llama's generation-time
-constraint does move turn-1 pass (34$\to$46), but we use fixed-output replay and per-event tracing,
+constraint does move turn-1 pass on the official template (33$\to$46), but we use fixed-output replay and per-event tracing,
 not the direction of aggregate score movement, to localize both mechanisms.
 
 The pass-rate gain is \emph{not} significant (53$\to$62, \emph{p}=0.093). A pre-planned replication
 on a random 300-item sample reproduces the direction (160/300$\to$178/300, 43 discordant against
-25, \emph{p}=0.0385) --- nominally below 0.05, but this paper runs roughly a dozen McNemar tests
-and the Bonferroni threshold is $\approx$0.0042, so \textbf{the repair gain still does not survive
+25, \emph{p}=0.0385) --- nominally below 0.05, but the explicit retrospective family contains 27 tests
+and its Bonferroni threshold is $\approx$0.00185, so \textbf{the repair gain still does not survive
 correction and we rest no claim on it.} The protocol gap on the same 300 items
-(178/300$\to$219/300, \emph{p}=3.1$\times$10$^{-6}$) clears it by three orders of magnitude.
-Restricting to items both arms parsed, the residual protocol gap holds on Llama (\emph{p}=0.0021)
+(178/300$\to$219/300, \emph{p}=3.1$\times$10$^{-6}$) clears that threshold.
+Restricting to items both arms parsed, the descriptive residual on Llama is nominally significant (\emph{p}=0.0021) but does not clear that threshold
 and is not detected on Qwen: $+8.4$\,pp, 95\% CI $[-0.5,+17.4]$, \emph{p}=0.118. \textbf{We do not
 read $p>0.05$ as evidence of no effect} --- that interval admits a residual larger than the effect
 we detect on Llama --- so the residual is established on one family and undetermined on the other
@@ -277,7 +277,7 @@ observations were retained.
 
 \begin{center}
 \small
-\captionof{table}{Formal 7B RL control. Event counts exclude held-out evaluation; outcome counts use the paired 542-item multi-turn split.}\label{tab:p3formal}
+\captionof{table}{Formal 7B RL control. Tight counts generation events, accepted counts parsed calls, and executed/observed counts tool invocations. Training counts exclude held-out evaluation; outcomes count items in the common 542-item split.}\label{tab:p3formal}
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
 arm & tight emissions & accepted & executed/observed & final, step 0$\to$150 & rescues, 0$\to$150 \\
@@ -289,24 +289,27 @@ repaired FC & 17{,}608 & 16{,}912 & 16{,}844 & 430$\to$427 & 12$\to$12 \\
 \end{center}
 
 The 16{,}912 accepted calls occur in 16{,}844 assistant-generation events: 40 generations contain
-multiple calls and contribute 68 calls beyond the first. The AgentLoop dispatches one event per
-generation; all 16{,}844 dispatches execute and return an observation. The tight classifier and
+multiple calls and contribute 68 calls beyond the first. With \texttt{max\_parallel\_calls=1}, the AgentLoop selects the first parser-returned call;
+additional calls are left undispatched, not merged into one invocation. All 16{,}844 dispatches
+join to executions and observations; extraction-to-dispatch counts are matched per trajectory,
+not through a per-call identity. The tight classifier and
 parser acceptance are not nested sets, so their marginal totals should not be read as a sequential
 drop of 696 calls; Appendix~\ref{app:p3curve} gives the event-level cross-tabulation.
 
-The broken channel is therefore \emph{nearly}, not literally, closed: only 10 of 8{,}689
-tight-classified call emissions become actions. Parser repair changes the sampled experience by
+The broken channel is therefore \emph{nearly}, not literally, closed: 8{,}689
+tight-classified generation events and only 10 executions are recorded. Parser repair changes the sampled experience by
 more than three orders
 of magnitude and returns an observation for every executed call, while holding the learning
 problem fixed. This is direct causal evidence that the interface determines which emitted
 behaviour enters RL experience; it supersedes the earlier, confounded ReAct comparison for that
 claim.
 
-It does not yield an outcome gain. Repaired FC ends at 415/542 turn-1 passes and 427/542 final
+Under a shared parser-independent evaluation that automatically executes generated code and
+returns test feedback, no held-out outcome improvement is detected. Repaired FC ends at 415/542 turn-1 passes and 427/542 final
 passes, versus 418/542 and 430/542 for broken FC; all three missing final passes are discordant in
-the repaired-to-broken direction (paired difference $-0.55$ percentage points; approximate paired
-95\% CI $[-1.18,0.07]$; exact McNemar $p=0.25$). Relative to its own step 0, repaired FC
-has one gain and four losses ($p=0.375$), and multi-turn rescues remain exactly 12. We do not read
+the repaired-to-broken direction (paired difference $-0.55$ percentage points; conservative paired
+95\% CI $[-1.79,0.72]$; exact McNemar $p=0.25$). Relative to its own step 0, repaired FC
+has one gain and four losses ($p=0.375$), and multi-turn rescues are 12 at initialization and at the endpoint, with variation in between. We do not read
 either non-significant difference as harm. \textbf{At this model scale, 150-step budget and single
 seed, repairing the parser restores tool-mediated experience, but we detect no improvement in
 held-out success or rescue counts.} The earlier 75-step ReAct arm points in the

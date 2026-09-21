@@ -1,16 +1,20 @@
 \section{Supplementary results}
 \label{app:extra}
 
-\subsection{The anomaly that motivated the study}
+\subsection{Historical observations that motivated the study}
+
+Historical 1.5B runs showed numerical pass gains of 2.6--2.8 points ($p=0.064/0.078/0.077$),
+not statistically significant. Of newly passing items, 91--94\% passed on turn 1; multi-turn
+rescues ranged from 6 to 9 out of 540. These small exploratory counts prompted the investigation
+but do not identify an interface effect or independently establish absence of learning.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig4_training_curves.png}
 \caption{Left: pass@1 rises over 150 steps on all three runs, driven by first drafts (dashed)
-rather than final answers. \textbf{Centre: the count of items rescued by turn 2 or later never
-moves} --- 6--9 out of 540 from step 0 to step 150, across two algorithms and two seeds. Right:
+rather than final answers. Centre: multi-turn rescues range from 6--9 out of 540 across checkpoints, algorithms and seeds. Right:
 the seeded-bug repair channel does improve, confirming the model is learning something about
-fixing code; it simply never does so \emph{across turns}. \S\ref{sec:rl} shows the tool was
+fixing code; no clear increase in multi-turn rescue counts was detected in these historical runs. \S\ref{sec:rl} shows the tool was
 never successfully called in any of these runs.}
 \label{fig:training_curves}
 \end{figure}
@@ -273,7 +277,7 @@ and are drawn in orange.}
 \includegraphics[width=0.72\linewidth]{fig1_intent_parse_gap.png}
 \caption{Within-family observation under the mismatched interface. Across the five
 Qwen2.5-Coder checkpoints, the server parses zero calls while tight-classified emissions
-rise to 80/100 at 32B (approximately 72 after calibration with tight-stratum precision
+rise to 80/100 at 32B (approximately 72 as a sensitivity estimate using tight-stratum precision
 0.900, assuming transfer across sizes; Appendix~\ref{app:humanval}). Same data as
 Table~\ref{tab:scale}.}
 \label{fig:gap}
@@ -321,12 +325,12 @@ server not configured per documentation & + official chat template & 23 $\to$ 22
 
 \begin{center}
 \small
-\captionof{table}{Conditioning on items where both protocols parsed successfully. The residual protocol gap holds on Llama and does not reach significance on Qwen --- the honest reading is one family out of two, not a general law.}\label{tab:conditioned}
+\captionof{table}{Conditioning on items where both protocols parsed successfully. These are descriptive post-treatment subsets; neither nominal test clears the 27-test Bonferroni threshold.}\label{tab:conditioned}
 \begin{tabular}{@{}llllll@{}}
 \toprule
 Family & Items both parsed & ReAct & FC & b/c & \emph{p} \\
 \midrule
-Qwen2.5-Coder-7B & 83 & 63 & 56 & 11/4 & \textbf{0.119 (n.s.)} \\
+Qwen2.5-Coder-7B & 83 & 63 & 56 & 11/4 & \textbf{0.118 (n.s.)} \\
 Llama-3.1-8B & 96 & 78 & 60 & 25/7 & \textbf{0.0021} \\
 \bottomrule
 \end{tabular}
@@ -334,7 +338,7 @@ Llama-3.1-8B & 96 & 78 & 60 & 25/7 & \textbf{0.0021} \\
 
 \begin{center}
 \small
-\captionof{table}{Repair success given that feedback was actually received. Conditioned this way the two protocols are much closer, which locates the gap in \emph{how often feedback arrives} rather than in what the model does with it. On Qwen this difference is within the non-significant band above, so we state it as an observation, not a result.}\label{tab:given_feedback}
+\captionof{table}{Descriptive repair success among items receiving feedback. The subset is selected after treatment; these rates do not localize or causally decompose the protocol gap.}\label{tab:given_feedback}
 \begin{tabular}{@{}llll@{}}
 \toprule
 Arm & Reached turn $\geq$2 & Rescued & Repair success given feedback \\
@@ -434,7 +438,9 @@ The event join also resolves the funnel's apparent gaps. Broken FC has 19{,}203 
 8{,}689 tight emissions and 10 accepted/executed/observed calls. Repaired FC has 33{,}367
 generation events, 17{,}608 tight emissions, and 16{,}912 accepted calls in 16{,}844 accepted
 generation events. Forty generations contain multiple calls, producing exactly the 68-call surplus;
-all 16{,}844 dispatches join to executions and observations by request ID and assistant turn.
+the configured \texttt{max\_parallel\_calls=1} selects the first returned call and leaves
+subsequent calls undispatched (neither merged nor queued by this loop). This accounts for the
+68-call difference. All 16{,}844 dispatches join to executions and observations by request ID and assistant turn.
 Extraction records lack those identifiers; accepted-generation and dispatch counts match per
 trajectory, rather than through a per-generation join. Tight and accepted are different tests:
 16{,}323 events satisfy both, 1{,}285 are tight but unaccepted, and 521 are accepted but not tight.

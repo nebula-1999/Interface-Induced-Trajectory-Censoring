@@ -21,13 +21,10 @@ once the server has moved a successful call into \texttt{tool\_calls}.}
 \label{fig:funnel}
 \end{figure}
 
-This problem first appeared as a puzzling RL run: reward rose, but almost all new passes occurred
-on turn 1 and multi-turn rescues stayed at 6--9 of 540. What we found was that the tool was never
-successfully called in those historical 1.5B rollouts. That observation alone was over-determined:
-a same-prompt probe found no correctly named call at that checkpoint, and the historical run did
-not retain full generations. We therefore separate what the model emits from what each downstream
-layer observes, and later construct a 7B single-variable training control that does retain the
-full evidence chain.
+Historical 1.5B runs motivated the investigation, but their ambiguous zero-execution result
+does not identify parser masking (Appendix~\ref{app:extra}). We instead organize the evidence
+around benchmark measurement, component interventions and the formal 7B control of training
+experience, with explicit limits on what each observation identifies.
 
 The individual Qwen incompatibility was reported previously in vLLM issue \#32926
 \citep{vllm_issue_32926}. Our contribution is to quantify it as an evaluation-validity failure,
@@ -100,8 +97,8 @@ and a fixed rejection boundary. Across a comparable scale span, our preregistere
 under a matched envelope does not show the same growth. This supporting cross-family observation
 does not isolate family from envelope and is not a strict scale counterfactual. Third, in RL the parser
 changes the sampled experience distribution before a policy-gradient estimator sees it. Restoring
-actions and observations is therefore a causal claim about gradient \emph{availability}, not about
-eventual learning. The formal 7B control tests the two claims separately: event counts identify
+actions and observations establishes access to tool-mediated experience, not a measured
+gradient contribution or eventual learning. The formal 7B control tests the two claims separately: event counts identify
 experience access, while held-out checkpoints test whether that access changes behavior.
 
 \section{Measurement Setup}
@@ -120,9 +117,9 @@ paired arm differences.
 
 Serving uses vLLM 0.27.1~\citep{kwon2023vllm}. Server-parsed calls are insufficient for the
 question under study. One shared classifier marks a
-generation \emph{tight} only when it contains a JSON object naming \texttt{run\_tests} and a
-literal Python program in \texttt{arguments.code}; schema echoes and placeholder identifiers are
-excluded. Against a third-party-adjudicated gold standard its $\kappa$ is 0.871, and tight-stratum
+generation \emph{tight} using a regex for a call-shaped payload naming \texttt{run\_tests},
+a quoted \texttt{arguments.code} field and Python-like lexical markers. This heuristic rejects
+some schema echoes and placeholders but does not validate JSON syntax or Python executability. Against a third-party-adjudicated gold standard its $\kappa$ is 0.871, and tight-stratum
 precision is 36/40=0.900. Two annotators achieve $\kappa=0.967$ on the 62 items presented with
 identical bytes. Stored evaluation outputs have a 4,000-character cap, which creates false
 negatives, while 0.900 precision establishes false positives; the net bias is therefore not
@@ -137,9 +134,10 @@ items, exit code 0, zero request errors, and matching provenance; this gate is e
 Appendix~\ref{app:errata} records an earlier invalid $p=0.648$ that this rule forced us to withdraw.
 
 For paired binary outcomes we use exact two-sided McNemar tests and report both discordant counts;
-for the formal RL endpoint we additionally report the paired risk difference with an approximate
-Wald interval using the variance of the within-item difference.
-With roughly twelve tests, the conservative Bonferroni threshold is $0.05/12\approx0.0042$. We
+for the formal RL endpoint we report a conservative finite-sample 95\% paired-risk interval
+formed from exact binomial bounds on the two discordance probabilities. It reflects item-pair
+uncertainty, not seed or inference-retest variation. Our explicit retrospective family has 27 tests
+($0.05/27\approx0.00185$; Appendix~\ref{app:statistics}); this policy was not preregistered. We
 distinguish a mechanism count (parse, execution, observation) from a task outcome throughout: a
 large deterministic movement in the former does not license a performance claim when the paired
 outcome test is null. BFCL scores come from its official scorer; $\tau$-bench outcomes come from
@@ -219,8 +217,8 @@ $\tau$-bench tasks solved & 7 & 10 \\
 
 Under the documented Hermes interface, the Qwen2.5-Coder server reports zero calls at all five
 sizes while tight-classified emissions rise monotonically from 0 to 80/100
-(Table~\ref{tab:ladders}). The calibrated 32B estimate is approximately 72 if tight-stratum
-precision transfers across sizes. A random 300-item
+(Table~\ref{tab:ladders}). A sensitivity estimate is approximately 72 if tight-stratum
+precision transfers across sizes; this does not restore false negatives or estimate all true calls. A random 300-item
 replication gives 0, 4, 30, 40, and 81 per 100: the 7B rung moves from 21 to 30, but direction and
 monotonicity remain. This is a within-family observation under one mismatch, not a scaling law;
 the server column is constant, so the slope comes entirely from increasingly frequent or regular
@@ -238,7 +236,7 @@ An attempted Granite rescue produced no calls under either Hermes or its native 
 uninformative, not confirmatory.
 
 \begin{table}[H]
-\caption{Scale ladders. ``Silent'' is a tight call emission not observed as a structured call.}
+\caption{Scale ladders. Tight counts concern unparsed outputs only (including Qwen3); they are not total emitted-call counts. ``Silent'' denotes these classifier-positive, unparsed outputs.}
 \label{tab:ladders}
 \label{tab:scale}
 \centering
@@ -336,11 +334,11 @@ official template + strict & \textbf{0} & \textbf{$4.77\times10^{-7}$ (official)
 On Qwen2.5-Coder-7B, changing only the evaluation adapter moves parses 0$\rightarrow$84, items
 reaching a second turn 0$\rightarrow$37, rescues 0$\rightarrow$9, and final pass
 53$\rightarrow$62. Aggregate turn-1 pass is 53 in both arms, while Llama's schema intervention
-moves turn-1 pass from 34 to 46. Because the Qwen adapter also changes template and few-shot, this
+moves turn-1 pass from 33 to 46 on the official template. Because the Qwen adapter also changes template and few-shot, this
 aggregate pattern is descriptive rather than a failure-layer locator; fixed-output replay and
 event tracing provide that localization. The Qwen final gain is not significant at
 $n=100$ ($p=0.093$) or after the random $n=300$ replication and a Bonferroni threshold of
-approximately 0.0042 ($160\rightarrow178$, nominal $p=0.0385$). Repair restores the mechanism;
+approximately 0.00185 ($160\rightarrow178$, nominal $p=0.0385$). Repair restores the mechanism;
 we do not claim an evaluation outcome effect (Table~\ref{tab:repair_main}).
 
 \begin{table}[H]
@@ -364,7 +362,9 @@ ReAct reference & 95 & 40 & 57/74 & 17 \\
 \label{sec:norepair}
 \label{sec:sufficiency}
 
-The RL experiment is a preregistered single-variable 150-step 7B GRPO comparison. Both arms use the same
+The RL experiment is a preregistered single-variable 150-step 7B GRPO comparison. Both arms
+are evaluated by the same parser-independent protocol, which automatically executes generated
+code and supplies test feedback; this is not an evaluation of voluntary tool initiation. Both arms use the same
 LoRA rank 32, data, mandatory prompt, seed, decoding, verifier, evaluation, and training budget;
 the sole intervention is verl's registered parser. Full emissions, parser verdicts, executions,
 observations, and hashes are retained. Table~\ref{tab:p3formal} excludes held-out evaluation from
@@ -373,7 +373,7 @@ step-0 evaluations use the same base checkpoint and evaluator; their equal aggre
 an observation, not evidence from which we infer the evaluation design.
 
 \begin{table}[H]
-\caption{Formal 7B RL control. ``Exec.'' calls all return an observation.}
+\caption{Formal 7B RL control. Tight counts generation events; accepted counts parsed calls; exec. counts tool invocations, all observed. Final/rescues count evaluation items.}
 \label{tab:p3formal}
 \centering
 \small
@@ -388,15 +388,17 @@ repaired FC & 17,608 & 16,912 & 16,844 & 430$\to$427 / 12$\to$12 \\
 \end{table}
 
 The 16,912 accepted calls occur in 16,844 generation events: 40 generations contain multiple
-calls and contribute 68 calls beyond the first. All 16,844 dispatches execute and return an
-observation; the complete cross-tabulation is in Appendix~\ref{app:p3curve}.
+calls and contribute 68 calls beyond the first. The configured one-call cap selects the first
+parser-returned call and leaves the remaining calls undispatched, not merged. All 16,844
+dispatches join to executions and observations. Extraction-to-dispatch counts match per trajectory,
+not through per-call IDs; Appendix~\ref{app:p3curve} details this audit boundary.
 
-The broken channel is nearly, not literally, closed: 10 of 8,689 tight-classified emissions become
-actions. Repair changes sampled tool experience by more than three orders of magnitude and returns
-an observation for every execution. It does not improve held-out outcomes: repaired FC ends at
-427/542 versus 430/542 for broken FC (paired difference $-0.55$ percentage points; approximate
-paired 95\% CI $[-1.18,0.07]$; all three discordances favor broken; exact McNemar $p=0.25$), and
-rescues remain 12. Relative to its own initialization, repaired FC has one gain and four losses
+The broken channel is nearly, not literally, closed: 8,689 tight-classified generation events and
+only 10 executions are recorded. Repair changes sampled tool experience by more than three orders of magnitude and returns
+an observation for every execution. Under the common programmatic-feedback evaluation, no held-out improvement is detected: repaired FC ends at
+427/542 versus 430/542 for broken FC (paired difference $-0.55$ percentage points; conservative
+paired 95\% CI $[-1.79,0.72]$; all three discordances favor broken; exact McNemar $p=0.25$), and
+rescues are 12 at both initialization and the endpoint; intermediate checkpoints vary. Relative to its own initialization, repaired FC has one gain and four losses
 ($p=0.375$). We do not interpret these non-significant contrasts as harm. At this scale, budget,
 and single seed, parser repair restores tool-mediated experience, but we detect no improvement in
 held-out success or rescue counts. Held-out evaluation is identical across arms and deliberately
@@ -444,8 +446,8 @@ model--interface measurement card, making silent zeros auditable and adapter cha
 \paragraph{Interpretation limits.} The scale and RL results use one code task and one tool; only
 the envelope mechanism is replicated on a non-code benchmark. The scale trend is one family under
 one mismatch, with single-sample headline arms and a 32B ceiling. The RL result is one 7B LoRA seed
-and budget, and near-zero samples do not establish zero policy probability. Roughly twelve McNemar
-tests imply a Bonferroni threshold near 0.0042; only the strongest interventions survive it, and we
+and budget, and near-zero samples do not establish zero policy probability. The 27-test retrospective family
+has a Bonferroni threshold of 0.00185; only the strongest interventions survive it, and we
 rest no claim on the nominal or null contrasts. A historical verifier used an unanchored pytest
 regex and omitted skipped/expected-failure outcomes; the formal arms use the same repaired verifier
 and retain full rollouts, so that flaw cannot explain their contrast. Results depend on vLLM 0.27.1,

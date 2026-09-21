@@ -1,0 +1,78 @@
+\section{Statistical estimands and retrospective test family}
+\label{app:statistics}
+
+\subsection{Finite-sample interval for the formal RL endpoint}
+Let $p_+$ denote the probability that an evaluation item passes only under repaired FC and
+$p_-$ the probability that it passes only under broken FC. The paired risk difference is
+$\Delta=p_+-p_-$. At step 150, the counts are $(n_+,n_-,n)=(0,3,542)$.
+For each discordance probability we invert the binomial distribution to obtain a two-sided
+97.5\% Clopper--Pearson interval, denoted $[L_+,U_+]$ and $[L_-,U_-]$.
+The union bound gives at least 95\% coverage for
+$[L_+-U_-,\,U_+-L_-]$ under independent evaluation-item pairs. This conservative construction
+does not rely on a normal approximation with three discordant pairs. The point difference is
+$-0.55$ percentage points and the interval is $[-1.79,0.72]$ percentage points.
+For repaired step 0 versus 150, $(1,4,542)$ gives $[-2.06,1.01]$ percentage points.
+These are unadjusted endpoint intervals, not simultaneous intervals for the whole test family.
+They quantify item-pair uncertainty under an independence assumption, not training-seed,
+inference-retest, benchmark-selection or task-cluster uncertainty.
+
+\subsection{Explicit reporting family}
+This is a retrospective reporting audit, not a preregistered multiplicity policy.
+The family includes all 15 metrics in the five audited Llama control contrasts, even when only
+one metric is highlighted, plus the 12 distinct comparisons below. Repeated appearances of the
+same contrast count once. Nominal $p$ values are exact two-sided McNemar tests;
+adjusted $p=\min(1,27p)$, with threshold $0.05/27=0.00185185$.
+Historical 1.5B motivating runs and abandoned/invalid runs are not confirmatory evidence and
+are outside this family; their original disclosures remain in the historical audit.
+The two both-parsed contrasts are retained in the family but remain post-treatment descriptive
+comparisons, not causal effects. This explicit family replaces the earlier approximate count of
+twelve; in particular, the Llama strict-to-ReAct and both-parsed contrasts no longer clear
+the corrected threshold.
+
+\begin{center}
+\scriptsize
+\begin{longtable}{@{}lp{.49\linewidth}rrr@{}}
+\caption{Retrospective test inventory. G/L are later-arm gains/losses in the named binary metric;
+for wrong-tool metrics a gain means more wrong-tool calls, not an improvement. A star marks
+$p\leq0.05/27$.}\label{tab:testfamily}\\
+\toprule
+ID & Contrast and metric & $n$ & G/L & nominal $p$\\
+\midrule
+\endfirsthead
+\toprule ID & Contrast and metric & $n$ & G/L & nominal $p$\\ \midrule
+\endhead
+T01 & Llama terse to rich: wrong\_tool & 100 & 5/6 & 1.00 \\
+T02 & Llama terse to rich: turn1\_pass & 100 & 4/6 & 0.754 \\
+T03 & Llama terse to rich: final\_pass & 100 & 10/10 & 1.00 \\
+T04 & Llama terse to thought: wrong\_tool & 100 & 37/1 & 2.84e-10* \\
+T05 & Llama terse to thought: turn1\_pass & 100 & 1/23 & 0.00000298* \\
+T06 & Llama terse to thought: final\_pass & 100 & 4/29 & 0.0000109* \\
+T07 & Llama terse to official: wrong\_tool & 100 & 0/1 & 1.00 \\
+T08 & Llama terse to official: turn1\_pass & 100 & 0/1 & 1.00 \\
+T09 & Llama terse to official: final\_pass & 100 & 1/6 & 0.125 \\
+T10 & Llama terse to strict: wrong\_tool & 100 & 0/23 & 2.38e-7* \\
+T11 & Llama terse to strict: turn1\_pass & 100 & 13/1 & 0.00183* \\
+T12 & Llama terse to strict: final\_pass & 100 & 15/3 & 0.00754 \\
+T13 & Llama official to strict: wrong\_tool & 100 & 0/22 & 4.77e-7* \\
+T14 & Llama official to strict: turn1\_pass & 100 & 14/1 & 0.000977* \\
+T15 & Llama official to strict: final\_pass & 100 & 18/1 & 0.0000763* \\
+T16 & Llama strict to ReAct final & 100 & 27/8 & 0.00188 \\
+T17 & Llama terse to ReAct final & 100 & 38/7 & 0.00000312* \\
+T18 & Qwen Hermes to adapter final & 100 & 16/7 & 0.0931 \\
+T19 & Qwen adapter to ReAct final & 100 & 17/5 & 0.0169 \\
+T20 & Qwen Hermes to adapter final (random) & 300 & 43/25 & 0.0385 \\
+T21 & Qwen adapter to ReAct final (random) & 300 & 59/18 & 0.00000306* \\
+T22 & Llama strict to ReAct final (random) & 300 & 51/31 & 0.0352 \\
+T23 & Qwen both-parsed FC to ReAct final & 83 & 11/4 & 0.118 \\
+T24 & Llama both-parsed FC to ReAct final & 96 & 25/7 & 0.00210 \\
+T25 & tau documented to repaired success & 115 & 3/0 & 0.250 \\
+T26 & P3 broken to repaired final at step150 & 542 & 0/3 & 0.250 \\
+T27 & P3 repaired step0 to step150 final & 542 & 1/4 & 0.375 \\
+\bottomrule
+\end{longtable}
+\end{center}
+The accompanying \texttt{submission\_statistics.py} recomputes the 15 Llama tests from
+item-level records and the remaining tests from the explicit paired counts, with their sources
+identified in \texttt{submission\_statistics.json}. Thus nominal and adjusted values can be
+reproduced without GPUs. The latter count-based recomputation is not a new item-level audit
+of every historical comparison.

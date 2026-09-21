@@ -1,16 +1,12 @@
 \section{Introduction}
 \label{sec:intro}
 
-We set out to train a multi-turn code agent with RL and could not explain our own training curve.
-Over 150 GRPO steps on Qwen2.5-Coder-1.5B, pass@1 on a held-out EvalPlus split rose 2.6--2.8
-points across three independent runs (\emph{p} = 0.064 / 0.078 / 0.077 --- none significant at
-$\alpha$ = .05; the evidence is the consistent direction across two algorithms and two seeds, not
-any single test). But \textbf{91--94\% of newly-passing items passed on the first turn}, and items
-rescued by turn 2 or later stayed flat at \textbf{6--9 out of 540} from step 0 to step 150
-(Appendix~\ref{app:extra}). The natural reading is that a 1.5B model cannot learn multi-turn
-repair. \textbf{What we found instead was that the tool was never successfully called in those
-historical 1.5B rollouts.} And nothing in the stack said so: the server returned HTTP 200, \texttt{tool\_calls} was an
-empty array, and the training loop recorded a well-formed single-turn trajectory.
+Tool-use evaluation observes a model through a serving interface. Under selected BFCL v4
+subsets, the same model receives official scores of 0.00 or 0.96 / 0.19 depending on its
+serving adapter. We investigate how serialization contracts alter observed actions and the
+experience available for training. Historical 1.5B runs motivated the investigation, but their
+non-significant gains and ambiguous zero-execution mechanism are supporting observations,
+not the basis of the formal 7B result (Appendix~\ref{app:extra}).
 
 \begin{figure}[t]
 \centering
@@ -75,6 +71,6 @@ rising to 80 (\S\ref{sec:scale}). Four families failing at template, parser, sch
 layers motivate a layered taxonomy on deliberately asymmetric evidence (\S\ref{sec:families}). And
 we follow the distortion into training. A preregistered 150-step 7B LoRA control changes only the
 parser registered inside verl: the mismatched arm executes 10 calls, versus 16{,}844 under the
-repaired parser, while held-out rescues remain 12 in both arms. The intervention therefore
+repaired parser, while held-out rescues are 12 at both endpoints in both arms. The intervention therefore
 isolates a large change in the sampled experience distribution without turning that mechanistic
 repair into a learning claim (\S\ref{sec:rl}).

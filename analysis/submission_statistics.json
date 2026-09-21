@@ -1,0 +1,328 @@
+{
+  "policy": "Retrospective reporting family, not preregistered; historical motivating runs excluded as exploratory",
+  "family_size": 27,
+  "threshold": 0.001851851851851852,
+  "tests": [
+    {
+      "comparison": "Llama terse to rich: wrong_tool",
+      "n": 100,
+      "gains": 5,
+      "losses": 6,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T01",
+      "p": 1.0,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Llama terse to rich: turn1_pass",
+      "n": 100,
+      "gains": 4,
+      "losses": 6,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T02",
+      "p": 0.75390625,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Llama terse to rich: final_pass",
+      "n": 100,
+      "gains": 10,
+      "losses": 10,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T03",
+      "p": 1.0,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Llama terse to thought: wrong_tool",
+      "n": 100,
+      "gains": 37,
+      "losses": 1,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T04",
+      "p": 2.837623469531536e-10,
+      "bonferroni_p": 7.661583367735147e-09,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Llama terse to thought: turn1_pass",
+      "n": 100,
+      "gains": 1,
+      "losses": 23,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T05",
+      "p": 2.9802322387695312e-06,
+      "bonferroni_p": 8.046627044677734e-05,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Llama terse to thought: final_pass",
+      "n": 100,
+      "gains": 4,
+      "losses": 29,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T06",
+      "p": 1.0928604751825333e-05,
+      "bonferroni_p": 0.000295072328299284,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Llama terse to official: wrong_tool",
+      "n": 100,
+      "gains": 0,
+      "losses": 1,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T07",
+      "p": 1.0,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Llama terse to official: turn1_pass",
+      "n": 100,
+      "gains": 0,
+      "losses": 1,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T08",
+      "p": 1.0,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Llama terse to official: final_pass",
+      "n": 100,
+      "gains": 1,
+      "losses": 6,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T09",
+      "p": 0.125,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Llama terse to strict: wrong_tool",
+      "n": 100,
+      "gains": 0,
+      "losses": 23,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T10",
+      "p": 2.384185791015625e-07,
+      "bonferroni_p": 6.4373016357421875e-06,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Llama terse to strict: turn1_pass",
+      "n": 100,
+      "gains": 13,
+      "losses": 1,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T11",
+      "p": 0.0018310546875,
+      "bonferroni_p": 0.0494384765625,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Llama terse to strict: final_pass",
+      "n": 100,
+      "gains": 15,
+      "losses": 3,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T12",
+      "p": 0.007537841796875,
+      "bonferroni_p": 0.203521728515625,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Llama official to strict: wrong_tool",
+      "n": 100,
+      "gains": 0,
+      "losses": 22,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T13",
+      "p": 4.76837158203125e-07,
+      "bonferroni_p": 1.2874603271484375e-05,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Llama official to strict: turn1_pass",
+      "n": 100,
+      "gains": 14,
+      "losses": 1,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T14",
+      "p": 0.0009765625,
+      "bonferroni_p": 0.0263671875,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Llama official to strict: final_pass",
+      "n": 100,
+      "gains": 18,
+      "losses": 1,
+      "provenance": "item-level runs/final; llama_paired_audit.py",
+      "id": "T15",
+      "p": 7.62939453125e-05,
+      "bonferroni_p": 0.0020599365234375,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Llama strict to ReAct final",
+      "n": 100,
+      "gains": 27,
+      "losses": 8,
+      "provenance": "G decomposition",
+      "id": "T16",
+      "p": 0.001878225477412343,
+      "bonferroni_p": 0.05071208789013326,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Llama terse to ReAct final",
+      "n": 100,
+      "gains": 38,
+      "losses": 7,
+      "provenance": "G decomposition",
+      "id": "T17",
+      "p": 3.1213096463034162e-06,
+      "bonferroni_p": 8.427536045019224e-05,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Qwen Hermes to adapter final",
+      "n": 100,
+      "gains": 16,
+      "losses": 7,
+      "provenance": "repair loop",
+      "id": "T18",
+      "p": 0.0931396484375,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Qwen adapter to ReAct final",
+      "n": 100,
+      "gains": 17,
+      "losses": 5,
+      "provenance": "G main table",
+      "id": "T19",
+      "p": 0.01690053939819336,
+      "bonferroni_p": 0.4563145637512207,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Qwen Hermes to adapter final (random)",
+      "n": 300,
+      "gains": 43,
+      "losses": 25,
+      "provenance": "runs/p0/RESULT.md",
+      "id": "T20",
+      "p": 0.038460053348927506,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Qwen adapter to ReAct final (random)",
+      "n": 300,
+      "gains": 59,
+      "losses": 18,
+      "provenance": "runs/p0/RESULT.md",
+      "id": "T21",
+      "p": 3.0550570254445797e-06,
+      "bonferroni_p": 8.248653968700365e-05,
+      "reject_fwer_05": true
+    },
+    {
+      "comparison": "Llama strict to ReAct final (random)",
+      "n": 300,
+      "gains": 51,
+      "losses": 31,
+      "provenance": "runs/p0/RESULT.md",
+      "id": "T22",
+      "p": 0.03524144017874745,
+      "bonferroni_p": 0.9515188848261812,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Qwen both-parsed FC to ReAct final",
+      "n": 83,
+      "gains": 11,
+      "losses": 4,
+      "provenance": "G conditioned table; descriptive subset",
+      "id": "T23",
+      "p": 0.11846923828125,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "Llama both-parsed FC to ReAct final",
+      "n": 96,
+      "gains": 25,
+      "losses": 7,
+      "provenance": "G conditioned table; descriptive subset",
+      "id": "T24",
+      "p": 0.0021024015732109547,
+      "bonferroni_p": 0.056764842476695776,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "tau documented to repaired success",
+      "n": 115,
+      "gains": 3,
+      "losses": 0,
+      "provenance": "G tau table",
+      "id": "T25",
+      "p": 0.25,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "P3 broken to repaired final at step150",
+      "n": 542,
+      "gains": 0,
+      "losses": 3,
+      "provenance": "final-lineage audit.json",
+      "id": "T26",
+      "p": 0.25,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    },
+    {
+      "comparison": "P3 repaired step0 to step150 final",
+      "n": 542,
+      "gains": 1,
+      "losses": 4,
+      "provenance": "final-lineage audit.json",
+      "id": "T27",
+      "p": 0.375,
+      "bonferroni_p": 1.0,
+      "reject_fwer_05": false
+    }
+  ],
+  "rl_endpoint": {
+    "n": 542,
+    "gains": 0,
+    "losses": 3,
+    "difference": -0.005535055350553505,
+    "ci95": [
+      -0.017857666978232774,
+      0.007176369797655216
+    ],
+    "method": "Bonferroni combination of two 97.5% Clopper-Pearson intervals",
+    "mcnemar_p": 0.25
+  },
+  "rl_within_repaired": {
+    "n": 542,
+    "gains": 1,
+    "losses": 4,
+    "difference": -0.005535055350553505,
+    "ci95": [
+      -0.020647632279573537,
+      0.010087606019247382
+    ],
+    "method": "Bonferroni combination of two 97.5% Clopper-Pearson intervals",
+    "mcnemar_p": 0.375
+  }
+}

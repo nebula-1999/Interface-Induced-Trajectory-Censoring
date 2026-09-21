@@ -33,12 +33,11 @@ is in Appendix~\ref{app:arms}.
 Reporting only server-parsed calls is the practice under examination, so we need an
 independent measure of what the model emitted. A single classifier
 (\texttt{analysis/intent.py}) is shared by all text, tables and figures, with three
-\textbf{nested-not-exclusive} tiers: tight --- a JSON object naming
-\texttt{run\_tests} whose \texttt{arguments.code} is a string literal containing real Python,
-excluding two contaminants we observed (echoing the injected schema; illustrative pseudo-code
-such as \texttt{\{"code": test\_code\}}, an identifier rather than a string);
-strong $\supseteq$ tight --- trajectory tag \texttt{json\_named\_call} or
-\texttt{xml\_tool\_call}; and weak, disjoint from both --- JSON-shaped fragments not
+operational tiers: tight is a regex match for a call-shaped payload naming
+\texttt{run\_tests}, with quoted \texttt{arguments.code} and Python-like lexical markers.
+It does not parse JSON or establish executable Python, though it excludes some schema echoes
+and unquoted placeholders. Strong uses the trajectory tags \texttt{json\_named\_call} or
+\texttt{xml\_tool\_call}; weak uses tags for JSON-shaped fragments not
 naming the tool, which at 1.5B are almost entirely false positives and are reported
 separately rather than merged. Every prompt, schema and tier definition is reproduced
 verbatim in Appendix~\ref{app:prompts}.
@@ -52,12 +51,12 @@ with the classifier --- the classifier scores $\kappa$ = 0.871 [0.756, 0.958], a
 two blind annotators reach inter-annotator $\kappa$ = 0.967 on the 62 items where
 both read identical bytes. \textbf{(ii)} The \texttt{tight} stratum's precision against that
 gold standard is 36/40 = 0.900, so \S\ref{sec:scale}'s headline 80/100 at 32B
-corrects to $\approx$72; we report uncorrected counts throughout with this factor
-stated rather than rescaling silently, and applying it uniformly leaves the trend unchanged
-($0, 3.6, 18.9, 32.4, 72$ against a server-side zero at every size). \textbf{(iii)} The probe
+gives a sensitivity estimate of $\approx$72 under transferable precision. It does not recover
+false negatives or estimate all true calls; applying a constant factor preserves the trend by
+construction, not by independently validating scale-specific precision. \textbf{(iii)} The probe
 stores at most 4000 characters of raw output per item and 10 of the 98 sampled outputs reach
 that ceiling, creating downward pressure from false negatives. Since precision is 0.900 and thus
-also reveals false positives, the net bias is not identified; we report raw and calibrated counts
+also reveals false positives, the net bias is not identified; we report raw counts and the sensitivity estimate
 rather than calling the total a strict lower bound.
 
 \subsection{Positive control: the pipeline works}
@@ -86,10 +85,11 @@ computed \emph{p}=0.648 on such an arm, and that number is retracted
 (Appendix~\ref{app:errata}).
 
 For paired binary outcomes we use exact two-sided McNemar tests and report both discordant counts.
-For the formal RL endpoint we also report the paired risk difference with an approximate Wald
-interval using the variance of the within-item difference. With roughly twelve McNemar tests, the
-conservative Bonferroni threshold is $0.05/12\approx0.0042$; nominal contrasts that do not clear it
-are labeled as such.
+For the formal RL endpoint we report a conservative finite-sample 95\% paired-risk interval
+from exact binomial bounds on gain/loss probabilities. It describes item-pair uncertainty,
+not training-seed or inference-retest variation. Appendix~\ref{app:statistics} enumerates a
+27-test retrospective family, with Bonferroni threshold $0.05/27\approx0.00185$; this reporting
+policy was not preregistered. Historical motivating runs remain exploratory.
 
 Historical 1.5B curves exclude two verified EvalPlus defects (\texttt{HumanEval/32} and
 \texttt{Mbpp/599}) and use $n=540$. The preregistered 7B control retains all 542 items and counts

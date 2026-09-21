@@ -1,4 +1,4 @@
-# Public preprint update — 2026-09-19
+# Public preprint update — 2026-09-21
 
 Upload `arxiv_submission.tar.gz` as the source package for the existing preprint
 `2609.03966`. This prepares a replacement version; it does not submit it.

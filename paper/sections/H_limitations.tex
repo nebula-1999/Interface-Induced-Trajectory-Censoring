@@ -40,11 +40,11 @@ template check with little quantification.
 are clean. A standard deviation from two seeds is defined but too unstable to summarize sampling
 variation reliably; the complete-denominator endpoint for the error-bearing seed is still
 reported (\S\ref{sec:variance}).
-\emph{(6) Multiple comparisons.} Roughly a dozen McNemar tests; the Bonferroni threshold at that
-family size is $\approx$0.0042. Surviving it: the official-template \texttt{strict: true}
+\emph{(6) Multiple comparisons.} The explicit 27-test retrospective family in Appendix~\ref{app:statistics} uses
+$0.05/27\approx0.00185$. This reporting rule was not preregistered. Surviving it: the official-template \texttt{strict: true}
 intervention on wrong-tool labels ($p=4.77\times10^{-7}$) and final pass
-($p=7.63\times10^{-5}$), the protocol gap on 300 random items ($p$=3.1$\times$10$^{-6}$), and the main
-effects of order $10^{-3}$. \textbf{Not surviving it}: the repair-loop pass gain ($p$=0.093 at
+($p=7.63\times10^{-5}$), the protocol gap on 300 random items ($p$=3.1$\times$10$^{-6}$), and the official-template strict turn-1 contrast ($p=0.000977$). \textbf{Not surviving it}: the Llama strict-to-ReAct contrast ($p=0.0019$),
+the both-parsed Llama contrast ($p=0.0021$), the repair-loop pass gain ($p$=0.093 at
 $n$=100, $p$=0.0385 at $n$=300), the Llama protocol contrast at $n$=300 ($p$=0.0352), and the
 residual-gap estimates ($p$=0.118, 0.125). We rest no claim on the latter group, and report the
 $n$=300 values precisely so a reader can see the direction is stable where significance is not
@@ -65,28 +65,29 @@ subsample and its contrast is not a clean causal estimate. On Qwen the residual 
 the same as establishing there is none}.
 \emph{(10) Near-zero observed frequency is not zero probability.} The broken 7B arm executes 10
 calls rather than none; its instrumentation describes a sampled distribution, not the support of
-the policy. We therefore report a nearly closed channel (10 executions from 8{,}689 tight-classified
-emissions), not a mathematically unreachable action.
+the policy. We therefore report a nearly closed channel (10 executions alongside 8{,}689 tight-classified
+generation events), not a mathematically unreachable action.
 \emph{(11) Attempts and discards are separated only in the new run.} The formal 7B arms retain
 complete rollout text with hashes, parser verdicts, execution events and returned observations, so
-8{,}689 emitted attempts and 10 accepted actions are directly distinguished. The historical 1.5B
+8{,}689 regex-positive emissions and 10 accepted actions are separately recorded; the classifier
+is not a semantic-validity oracle and its link to dispatch is a trajectory-level count check. The historical 1.5B
 run did not retain full text. Its same-prompt replication finds no correctly named call, but that
 cannot retroactively identify what every historical rollout emitted.
 \emph{(12) The null learning observation is setting-specific.} Parser repair restores 16{,}844 executed
-and observed calls over 150 steps without moving held-out rescues from 12. This is the requested
+and observed calls over 150 steps with 12 held-out rescues at both endpoints (intermediate checkpoints vary). This is the requested
 single-variable control, but it is one seed, 7B, LoRA, one code task and one training horizon.
 The earlier ReAct arm (23{,}676 calls, flat rescues) is directionally consistent but remains
 confounded by its protocol change.
-\emph{(13) Human validation covers one criterion on one sample.} Two blind annotators on 98
-stratified items give inter-annotator $\kappa$ = 0.967 on the 62 items where both read identical
+\emph{(13) Human validation covers one criterion on one sample.} The 98-item stratified sample has 97 complete paired annotator records; these give inter-annotator $\kappa$ = 0.967 on the 62 items where both read identical
 bytes, and classifier-vs-gold-standard $\kappa$ = 0.871 after third-party adjudication
 (Appendix~\ref{app:humanval}). Two residual limits: the sample is stratified by classifier
-verdict, so it estimates per-stratum precision and recall, not a population rate; and stored raw
+verdict, so the unweighted sample metrics are not population precision or recall; and stored raw
 output is capped at 4000 characters, so a call emitted past that point is invisible to classifier
 and annotators alike, creating false negatives. Because the classifier also has false positives,
 the net bias of the raw emitted-call count is not identified. The \emph{first} round's apparent
-unreliability ($\kappa$=0.713) was an artefact of a 2400-character truncation in the annotation
-pack, not of the raters; that pack is superseded.
+unreliability ($\kappa$=0.713) was confounded by 2400-character truncation in the annotation
+pack and by selective adjudication; the identical-byte analysis removes the presentation confound
+but does not establish that every disagreement was an instrument error.
 \emph{(14) The historical training verifier had two exploitable seams.} Its summary parser used
 the first unanchored \texttt{(\textbackslash d+) passed} match and omitted
 \texttt{skipped}/\texttt{xfail} from the denominator. We found no exploit signature in the five
