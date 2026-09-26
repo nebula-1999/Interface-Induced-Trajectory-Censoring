@@ -1,4 +1,4 @@
-# Public preprint update — 2026-09-21
+# Public preprint update — 2026-09-26
 
 Upload `arxiv_submission.tar.gz` as the source package for the existing preprint
 `2609.03966`. This prepares a replacement version; it does not submit it.
@@ -20,7 +20,7 @@ remains anonymous and is not included in this package.
   Live's bundled Fandol files, not machine-specific macOS fonts.
 - Paste `abstract_arxiv.txt` into the abstract field: ASCII-only and under
   1,920 characters. It incorporates the corrected BFCL interpretation and the
-  completed formal P3 comparison; do not reuse the previous abstract.
+  completed formal P3 comparison and post-hoc native FC evaluation; do not reuse the previous abstract.
 - `main.pdf` is the locally verified preview, not included in the source archive.
 
 After upload, review arXiv's compiled preview, author order, affiliations, abstract,

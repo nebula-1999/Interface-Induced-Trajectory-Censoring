@@ -9,6 +9,8 @@ Sampling is seeded and the annotator saw only the raw output, never the classifi
 We report \textbf{two rounds}, because the first is itself a finding.
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Human validation of the intent criterion, round 1 and its adjudication. The classifier is used only to count what the server discarded, so its recall matters more than its precision.}\label{tab:validation}
 \begin{tabular}{@{}lllllll@{}}
@@ -19,6 +21,7 @@ Round 1 (raw output only) & 86.7\% & 0.713 & 70.0\% & 96.6\% & 12 & 1 \\
 After adjudication & \textbf{96.9\%} & \textbf{0.936} & \textbf{95.0\%} & 97.4\% & 2 & 1 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 The 12 round-1 false positives split into two causes, and the second is ours, not the
@@ -47,22 +50,27 @@ rule was fixed in advance to review \emph{all} three-way disagreements rather th
 disagreeing with the classifier.
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Inter-annotator reliability. Of 98 sampled items, 97 have complete paired A1/A2 records. The identical-byte subset removes a presentation confound introduced by the first pack's 2,400-character cap.}\label{tab:interannotator}
 \begin{tabular}{@{}lcc@{}}
 \toprule
 Cohen's $\kappa$ (95\% CI, bootstrap) & all items ($n$=97) & \textbf{identical bytes ($n$=62)} \\
 \midrule
-A1 vs.\ A2 (inter-annotator) & 0.736 [0.590, 0.863] & \textbf{0.967 [0.897, 1.000]} \\
-A2 vs.\ classifier           & 0.936 [0.855, 1.000] & \textbf{0.967 [0.897, 1.000]} \\
-A1 vs.\ classifier           & 0.712 [0.559, 0.847] & 0.934 [0.834, 1.000] \\
+A1 vs.\ A2 (inter-annotator) & 0.736 [0.595, 0.866] & \textbf{0.967 [0.893, 1.000]} \\
+A2 vs.\ classifier           & 0.936 [0.852, 1.000] & \textbf{0.967 [0.896, 1.000]} \\
+A1 vs.\ classifier           & 0.712 [0.564, 0.849] & 0.934 [0.829, 1.000] \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 Of the 12 paired disagreements, 11 have full text exceeding 2,400 characters and A1 saw a
 different presentation from A2; the first-round audit attributed most errors to reading order and
 one to evidence actually omitted by truncation. We therefore do not assign all 11 to one cause.
+Repeated A1--A2 intervals use 5,000 bootstrap resamples, seed 7 and sorted item IDs;
+earlier differing bounds reflected inconsistent bootstrap inputs/order, not different annotators.
 On the 62 items where both read identical bytes the two agree on 61, and
 \textbf{inter-annotator $\kappa$ = 0.967}.
 
@@ -79,6 +87,8 @@ classifier nevertheless affected the original stratified sample and which non-un
 required adjudication, so we do not call the gold set classifier-independent.
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Validation against the adjudicated gold standard. Pairwise denominators differ because one sampled item lacks a complete A1/A2 pair; classifier--gold uses all 98 items.}\label{tab:validation2}
 \begin{tabular}{@{}lccc@{}}
@@ -89,6 +99,7 @@ A1 vs.\ A2 (inter-annotator) & 97 & 0.736 [0.595, 0.866] & \textbf{0.967 [0.893,
 Classifier vs.\ gold standard & 98 & \textbf{0.871 [0.756, 0.958]} & 0.934 [0.829, 1.000] \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \textbf{Sensitivity estimate, not a corrected population total.} Tight-stratum precision is

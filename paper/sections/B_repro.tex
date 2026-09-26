@@ -2,35 +2,66 @@
 \label{app:repro}
 
 The formal 7B configuration and shared held-out protocol are in Appendix~\ref{app:config};
-the complete 0/30/60/90/120/150 multi-turn curve and accepted resume lineage are in
-Appendix~\ref{app:p3curve}. Appendix~\ref{app:statistics} defines the risk-difference interval
-and all tests. The anonymous supplementary package provides \texttt{submission\_statistics.py},
-its machine-readable output and inputs for the audited Llama controls, plus a training-config
-summary and aggregate P3 evidence. It does not include the full raw rollout archive or heavy
-checkpoints; reproducing the raw-event audit requires those separately retained records.
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# analysis and figures (no GPU)}
-\ExtensionTok{pip}\NormalTok{ install }\AttributeTok{{-}r}\NormalTok{ requirements.txt}
-\ExtensionTok{python}\NormalTok{ analysis/intent.py          }\CommentTok{\# the single intent criterion, all four counts}
-\ExtensionTok{python}\NormalTok{ runs/final/final\_table.py   }\CommentTok{\# main / variance / error{-}rate tables (N/A enforced)}
-\ExtensionTok{python}\NormalTok{ figures/make\_figs.py}
+the checkpoint curve and accepted resume lineage are in Appendix~\ref{app:p3curve}.
+Appendix~\ref{app:statistics} defines the interval and retrospective test family.
+The anonymous package contains reduced Llama outcomes, 11{,}952 reduced 7B evaluation
+records, compact events including excluded segments, lineage metadata and verification
+scripts. It also includes a small raw-content mechanism archive: 800 first responses from
+the BFCL factorial, 100 documented and 100 repaired single-turn BFCL records with request
+schemas and official-scoring inputs, all 230 $\tau$-bench task trajectories, and ten
+deterministically selected step-1 RL trajectories per arm. The full training rollout archive,
+original evaluation programs, training logs and heavy checkpoints are not included.
 
-\CommentTok{\# probe (needs a vLLM server)}
-\ExtensionTok{python}\NormalTok{ probe\_react\_full.py }\AttributeTok{{-}{-}model} \OperatorTok{\textless{}}\NormalTok{path}\OperatorTok{\textgreater{}}\NormalTok{ {-}{-}port 8000 }\AttributeTok{{-}{-}n}\NormalTok{ 100 }\DataTypeTok{\textbackslash{}}
-  \AttributeTok{{-}{-}protocol} \DataTypeTok{\{react}\OperatorTok{,}\DataTypeTok{fc\}} \AttributeTok{{-}{-}strength} \DataTypeTok{\{optional}\OperatorTok{,}\DataTypeTok{mandatory\}} \DataTypeTok{\textbackslash{}}
-  \AttributeTok{{-}{-}fc{-}schema} \DataTypeTok{\{terse}\OperatorTok{,}\DataTypeTok{rich}\OperatorTok{,}\DataTypeTok{strict\}} \AttributeTok{{-}{-}parser{-}adapter}\NormalTok{ cross\_family }\DataTypeTok{\textbackslash{}}
-  \AttributeTok{{-}{-}temperature}\NormalTok{ 0.0 }\AttributeTok{{-}{-}seed}\NormalTok{ 0 }\AttributeTok{{-}{-}out}\NormalTok{ traj.jsonl}
-\ExtensionTok{python}\NormalTok{ validate\_arms.py            }\CommentTok{\# per{-}arm admissibility: lines / rc / n\_err / provenance / script hash}
-\end{Highlighting}
-\end{Shaded}
+\begin{center}
+\small
+\begin{tabular}{@{}p{0.70\linewidth}p{0.23\linewidth}@{}}
+\toprule
+Verification target & Package support \\
+\midrule
+Llama paired tests from reduced item records & Yes \\
+Other historical tests from stated discordances & Yes, counts only \\
+7B checkpoint outcomes and endpoint pairing & Yes \\
+7B recorded funnel and accepted resume segments & Yes \\
+Inspect/replay supplied BFCL raw outputs & Yes \\
+Inspect $\tau$-bench and sampled RL raw contents & Yes \\
+Reclassify every training emission & No \\
+Verify checkpoint weights or raw text hashes & No \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-Model snapshots must be pinned: \texttt{tokenizer\_config.json} inheritance is the mechanism
-behind \S\ref{sec:families}'s false-positive capability check, so a family's behaviour can change with a
-repository revision. Every model path, its HF revision, and the serving flags used are
-recorded per arm in the trajectory provenance and in \texttt{runs/final/by\_config/README.md}.
+From the extracted package root, run:
+\begin{verbatim}
+python3 analysis/verify_supplement.py
+python3 analysis/submission_statistics.py --output /tmp/stats.json
+python3 analysis/bfcl_fixed_replay.py \
+  --bundle mechanism_evidence/bfcl
+\end{verbatim}
+The event verifier uses the Python standard library and reconstructs inclusion from
+segment/step ranges. Dispatch, execution and observation can be uniquely joined.
+Extraction lacks per-turn request identity, so accepted-to-dispatch matching is only
+at trajectory-count granularity. Sampled RL events preserve raw emissions and recorded
+observations, but omit training task inputs and executable tests: they support text inspection,
+not independent environment re-execution. BFCL request fields come from its inference log,
+not a byte-for-byte HTTP request capture. Hashes do not substitute for file contents.
 
-Trajectories for all 50 full-length arms, the training logs, the errata, and the
-per-configuration index are in \texttt{runs/final/}. Third-party parser: hanXen
-(\texttt{1b92150}, Apache 2.0), few-shot examples rewritten from \texttt{get\_weather} to \texttt{run\_tests};
-original retained with both hashes recorded.
+Full-archive-only procedures include \texttt{analysis/p3\_final\_evidence.py},
+\texttt{analysis/intent.py}, \texttt{runs/final/final\_table.py}, checkpoint audits
+and historical figure regeneration. They require data not supplied in the anonymous
+package and are not its default verification workflow. Historical trajectories and
+their configuration index reside under \texttt{runs/final/} in the full research
+archive; formal 7B records are retained separately. Only explicitly listed reductions and
+raw-content subsets are provided in the package.
+
+Model snapshots and serving configurations must be pinned because template inheritance
+can change with revision. The third-party parser is hanXen (\texttt{1b92150}, Apache 2.0);
+paired few-shot examples were rewritten from \texttt{get\_weather} to \texttt{run\_tests}.
+Original and adapted hashes are retained in the full archive.
+
+The post-hoc native FC evaluation adds \texttt{native\_fc/outcomes.json}
+(1,626 reduced item records), \texttt{native\_fc/statistics.json}, and
+\texttt{analysis/native\_fc\_results.py}. From the package root run
+\texttt{python3 analysis/native\_fc\_results.py --outcomes native\_fc/outcomes.json}
+\texttt{--out /tmp/native-fc-recheck}. This reproduces paired contrasts and the
+timeout inventory; it does not re-execute generated programs. Full raw conversations
+and GPU loading receipts are retained separately, not promised as part of this reduction.

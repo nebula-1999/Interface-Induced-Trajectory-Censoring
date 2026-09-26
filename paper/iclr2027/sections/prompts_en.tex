@@ -97,7 +97,23 @@ final pass falls from 15 to 13.
 
 \subsection{Intent criterion}
 
-Every emitted-call count uses one implementation without per-arm tuning:
+Emission indicators are benchmark-specific and held fixed across arms within each benchmark.
+For KodCode, the regex below targets \texttt{run\_tests} and a quoted code payload with
+Python-like lexical markers. It rejects some schema echoes and placeholders but does not
+establish JSON validity, Python executability, or semantic intent. Strong and weak use
+disjoint trajectory-label sets; tight is computed independently.
+
+For BFCL, the JSON-call indicator detects an embedded decodable JSON object naming a tool
+offered in the request and containing object-valued arguments, including arguments encoded
+as a JSON string. Format-marker and JSON-marker indicators are independent broader checks;
+they overlap and must not be summed. Counts refer to unparsed first-request responses,
+with at most one count per response for each indicator.
+
+For $\tau$-bench, the unparsed call-shaped indicator detects a generic named-call pattern
+or a Hermes tool-call marker in assistant messages without structured tool calls. It does
+not validate membership in the offered tool set or guarantee syntactic validity.
+KodCode annotation precision is not assumed to transfer to either external benchmark.
+
 
 \begin{Verbatim}[fontsize=\small,breaklines=true,breakanywhere=true]
 TIGHT = re.compile(
@@ -110,8 +126,6 @@ def is_tight_call(raw):
     return bool(m and REAL.search(m.group(1)))
 \end{Verbatim}
 
-The criterion requires the tool name, an \texttt{arguments} object, and a string-valued
-\texttt{code} field containing Python-like material. It excludes schema echoes, identifiers passed
-instead of strings, and placeholders. The strong tier drops the payload requirement; the weak tier
-counts JSON-shaped fragments without the tool name and is disjoint from both. Validation is in
-Appendix~\ref{app:humanval}.
+The regex requires \texttt{name} before \texttt{arguments} and a closing argument brace
+after the quoted code field; valid alternative key orders may be missed.
+KodCode human validation is reported in Appendix~\ref{app:humanval}.

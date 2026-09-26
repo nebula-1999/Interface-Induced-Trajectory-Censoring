@@ -8,7 +8,7 @@ repaired 臂真的调用工具，对话更长、请求更多。直接比 `解析
 
 判据复用 analysis/failure_layer.py：assistant 消息里 tool_calls 非空即
 「服务端已解析」；tool_calls 为空但 content 里有调用形状的载荷即
-「发出了但未被解析」。全文所有意图判据出自同一处，此处不另起炉灶。
+「发出了但未被解析」。此处使用任务特定的通用调用正则，不等同于 KodCode 的 tight 分类器。
 
 **归因来源。** 逐题数据全部取自 τ-bench 自己写出的结果 JSON——每条记录自带
 `task_id` 与完整 `traj`。**本脚本不读记录代理的日志**，因此不存在「按串行顺序把

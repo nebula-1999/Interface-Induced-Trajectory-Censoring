@@ -3,6 +3,17 @@
 
 \subsection{Per-family serving flags}
 
+\paragraph{Baseline provenance and scope.}
+The vLLM 0.27.1 tool-calling documentation, under ``Qwen Models'', lists
+\texttt{Qwen/Qwen2.5-*} with the \texttt{hermes} parser
+(\url{https://docs.vllm.ai/en/v0.27.1/features/tool_calling/#qwen-models};
+checked 23 September 2026). Our Coder baseline applies this family-level guidance;
+the passage does not separately validate a Coder checkpoint. Thus ``documented'' denotes
+the origin of the configuration choice, not a Coder-specific compatibility guarantee or
+evidence of its prevalence in deployment. Issue \#32926 already described this mismatch
+before our experiments. Our contribution is its controlled measurement and downstream
+consequences, not discovery of the incompatibility or invention of the community repair.
+
 These are the configurations under test, including documented serving flags and the
 adapter/schema interventions identified in our experiments. The rightmost column summarizes
 observed limitations or failure symptoms; it is not a uniform flag-omission ablation.
@@ -20,9 +31,8 @@ Family & Flags / intervention & Observed symptom \\
 \midrule
 \endhead
 all & \texttt{-{}-enable-auto-tool-choice} & HTTP 400 if omitted \\
-Qwen2.5 (Instruct) & \texttt{-{}-tool-call-parser hermes} & silent empty \texttt{tool\_calls} \\
-Qwen2.5-Coder & \emph{no working stock configuration}; we install the community
-  \texttt{<tools>} parser plus its chat template & silent, at every scale \\
+Qwen2.5 (Instruct) & \texttt{-{}-tool-call-parser hermes} & 1--88/100 parsed across sizes; unparsed outputs include payload failures \\
+Qwen2.5-Coder & Baseline: \texttt{hermes}; repair: community parser plus paired template & baseline 0 parsed across sizes; joint adapter 196/200 on BFCL \\
 Llama 3.1 / 3.2 & \texttt{-{}-tool-call-parser llama3\_json} \newline
   \texttt{-{}-chat-template} \path{tool_chat_template_llama3.1_json.jinja} \newline
   plus \texttt{"strict": true} in the schema & malformed arguments; without
@@ -68,8 +78,8 @@ Trajectories per step & \texttt{train\_batch\_size} 16 $\times$ \texttt{rollout.
 Steps & 150 for the historical runs and formal 7B control; 10 / 3 / 75 for the historical
 diagnostic arms in Appendix~\ref{app:extra} \\
 Training data & KodCode, decontaminated pool of 7669 items \\
-Held-out evaluation & EvalPlus: HumanEval+ 319, MBPP+ 677 \\
-Denominators & 540 (multi channel), 454 (repair channel), after removing 2 known-defective items \\
+Held-out evaluation & Multi: 164 HumanEval+, 378 MBPP+; repair: 155 HumanEval+, 299 MBPP+ \\
+Denominators & Formal: 542 multi + 454 repair records; historical multi: 540 after excluding two defective items \\
 Agent loop & \texttt{tool\_agent} (FC) or \texttt{react\_agent} (ReAct) \\
 Tool & \texttt{run\_tests}, single \texttt{code} argument, sandboxed \texttt{pytest} \\
 System prompt & \texttt{FC\_MANDATORY} / ReAct mandatory --- matched strength (Appendix~C) \\
@@ -160,8 +170,10 @@ training --- a distinction worth stating because the two look identical from the
 
 \textbf{(ii) A verl-side parser recovers calls, but none of them are the tool.} We implemented a
 \texttt{qwen2\_5\_coder} parser inside verl's registry accepting \texttt{<tools>} tags,
-\texttt{json} fenced blocks and bare JSON. On the exact training condition (1.5B, mandatory
-prompt, $n{=}100$) it lifts recoverable calls from \textbf{0/100 (hermes) to 52/100}. Of those 52,
+\texttt{json} fenced blocks and bare JSON. In the historical 1.5B diagnostic with a recorded
+mandatory-prompt file override ($n{=}100$), it lifts recoverable calls from
+\textbf{0/100 (hermes) to 52/100}. The original override file is unavailable locally,
+so exact prompt-byte equivalence to training cannot be verified (Appendix~\ref{app:arms}). Of those 52,
 \textbf{zero name} \texttt{run\_tests} (Table~\ref{tab:probe_categories}). Every call targets the
 function the task asks the model to \emph{write} --- \texttt{can\_form\_word(\{"tiles", "word"\})},
 \texttt{check\_password\_strength(\{"password"\})} --- the same signature as Llama's failure in
@@ -179,6 +191,7 @@ the task (15 $\to$ 13), with the count that matters staying at zero
 
 \textbf{(iv) Constrained decoding is unavailable in this stack.} Forcing the tool choice, or
 schema-constrained decoding, is not exposed by verl 0.9.0's vLLM rollout path (its only
-\texttt{strict} key belongs to the profiler). This remains true but was the wrong diagnosis of
-what the repaired arm needed: guided decoding forces a format, whereas the successful intervention
-accepts the model's existing format. See \S\ref{sec:rl}.
+\texttt{strict} key belongs to the profiler). This is a limitation of the tested rollout path, not an argument against constrained decoding.
+Parser repair accepts existing emissions, whereas generation constraints alter the output
+distribution. The latter is a distinct potential remedy for serialization or allowed-name
+violations; neither remedy by itself establishes correct arguments or successful task behavior.

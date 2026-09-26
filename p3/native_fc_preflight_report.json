@@ -1,0 +1,43 @@
+{
+  "status": "NOT_READY_FOR_GPU",
+  "evaluation_manifest_sha256": "17d4fc01000e556ad82546942c25cffbbbda85bebc5ab853e59edab2c2cbcb20",
+  "evaluation_manifest_file_sha256": "1d5973b43256e77b3d965ff2d0f49e9b5f66d6bbac57f8b831782ef5f878e8de",
+  "held_out_tasks": 542,
+  "repair_tasks": 454,
+  "historical_protocol": "programmatic_feedback",
+  "historical_both_channel_seconds": {
+    "base": 454.5,
+    "broken": 480.6,
+    "repaired": 548.0
+  },
+  "endpoints": {
+    "broken": {
+      "path": "/root/autodl-tmp/runs/p3/p3-formal-20260916-a/broken/ckpt/global_step_150/actor/model_world_size_1_rank_0.pt",
+      "exists_on_this_host": false,
+      "expected_lora_sha256": "84251925cbf53418e9404869f58cf9f5e80a71d98aace7763273368da2f24217",
+      "historical_audit_date": "2026-09-19",
+      "verified_now": false
+    },
+    "repaired": {
+      "path": "/root/autodl-tmp/runs/p3/p3-formal-20260916-a/repaired_resume_00090/ckpt/global_step_150/actor/model_world_size_1_rank_0.pt",
+      "exists_on_this_host": false,
+      "expected_lora_sha256": "07a7cd9627798d7e94bba9afe8630b5c0c316b6353a5c34bbb151e9de088c779",
+      "historical_audit_date": "2026-09-19",
+      "verified_now": false
+    }
+  },
+  "source_sha256": {
+    "qwen_tools_parser.py": "494b2c77d72a7351f6becfb1ae45e0e92e619b1f5f47de7f70a725b1837199c2",
+    "chat_policy.py": "057e325bd267ba639dde73f69c6300e9970fd9e6e72a047be9562623a76f55d0",
+    "code_eval_hook.py": "afcf7b5c63fb6a6e9854c149e5f7af908252ca11b4f5b748de9ae220b6868cf8",
+    "code_tool.py": "b3b4368ea99988885569c935bc65e7f9f14def3f3064a253ecf28ee524914e69",
+    "sandbox.py": "de5130504bd54df033b108e4b177c4fc37435eca142ca4ab690b9c46a468c666"
+  },
+  "blockers": [
+    "Endpoint files must be reverified on their storage host.",
+    "CPU export of LoRA/config and verified serving load path are not implemented.",
+    "Native FC evaluator with tools and tool-role observations is not implemented.",
+    "Runtime attestation plus parser/executor smoke test must pass before a full run."
+  ],
+  "safety": "No SSH, server startup, model execution, checkpoint deletion or training performed."
+}

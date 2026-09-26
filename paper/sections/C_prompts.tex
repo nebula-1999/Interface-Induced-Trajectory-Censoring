@@ -187,8 +187,23 @@ more fluent at emitting the wrong call.
 
 \subsection{The intent criterion}
 
-Every emitted-call count in this paper comes from one function, applied identically to every
-arm. There is no per-arm tuning.
+Emission indicators are benchmark-specific and held fixed across arms within each benchmark.
+For KodCode, the regex below targets \texttt{run\_tests} and a quoted code payload with
+Python-like lexical markers. It rejects some schema echoes and placeholders but does not
+establish JSON validity, Python executability, or semantic intent. Strong and weak use
+disjoint trajectory-label sets; tight is computed independently.
+
+For BFCL, the JSON-call indicator detects an embedded decodable JSON object naming a tool
+offered in the request and containing object-valued arguments, including arguments encoded
+as a JSON string. Format-marker and JSON-marker indicators are independent broader checks;
+they overlap and must not be summed. Counts refer to unparsed first-request responses,
+with at most one count per response for each indicator.
+
+For $\tau$-bench, the unparsed call-shaped indicator detects a generic named-call pattern
+or a Hermes tool-call marker in assistant messages without structured tool calls. It does
+not validate membership in the offered tool set or guarantee syntactic validity.
+KodCode annotation precision is not assumed to transfer to either external benchmark.
+
 
 {\footnotesize
 \begin{verbatim}
@@ -204,14 +219,7 @@ def is_tight_call(raw):
 \end{verbatim}
 }
 
-\texttt{TIGHT} requires the name, an \texttt{arguments} object, and a \texttt{code} key whose
-value is a \emph{string literal}; \texttt{REAL} then requires that literal to contain actual
-Python. Together they exclude schema echo (\texttt{parameters}/\texttt{description} present,
-\texttt{arguments} absent), identifiers passed instead of strings
-(\texttt{"code": test\_code}), and placeholders (\texttt{"<your code here>"}).
-
-The \texttt{strong} tier drops the payload requirement (name present, or an XML tool tag);
-\texttt{weak} counts JSON structure with no \texttt{run\_tests} name and is disjoint from
-both. Tiers are nested, not mutually exclusive, and the paper states which tier each number
-uses. Human validation of this criterion is in \S\ref{sec:humanval}; two independent blind annotators give
-inter-annotator $\kappa$ = 0.967 on items where both read identical bytes.
+The regex requires \texttt{name} before \texttt{arguments} and a closing argument brace
+after the quoted code field; valid alternative key orders may be missed.
+KodCode human validation is in \S\ref{sec:humanval}. Inter-annotator $\kappa=0.967$
+is restricted to items presented as identical bytes.

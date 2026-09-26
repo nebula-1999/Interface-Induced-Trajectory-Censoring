@@ -15,8 +15,8 @@ Four tiers:
 
 ``server_parsed``  The server parsed it. Not a loss.
 ``no_envelope``    No ``<tool_call>`` tag in the output. hermes not seeing a call here is
-                   **correct behaviour**, not a bug. Every Qwen2.5-Coder size lands here:
-                   the payload is valid JSON, what is missing is the envelope.
+                   **correct behaviour**, not a bug. This is a first-failure category:
+                   payload validity is not checked when the envelope is absent.
 ``bad_payload``    Envelope present, but the payload is not valid JSON and lenient decoding
                    cannot recover it either. The usual cause is Python source dropped into a
                    JSON string unescaped: docstring ``\"\"\"``, raw newlines, bad escapes.

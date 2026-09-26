@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The **single** intent criterion used by all prose, tables, and figures.
+"""KodCode emission indicators; BFCL and tau-bench use benchmark-specific rules.
 
 Three earlier counts (manual 18 / tight criterion 21 / trajectory labels 23)
 came from temporary scripts written at different stages. This module defines

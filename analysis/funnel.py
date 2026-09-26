@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""五层漏斗：意图 → 服务端解析 → 工具执行 → Observation 回流 → 多轮救回。
+"""Measured milestones: emission, parsing, execution, second test, and rescue.
+
+The fourth milestone counts n_turns >= 2 (code-bearing tested steps), not
+assistant records or returned observations. An unparsed reply can add an
+assistant record without adding a test.
 
 两处必须协议感知，否则会造出误导性的 0：
   · ①「模型产出合格调用」只能在**服务端解析失败**时测量 —— 解析成功时
@@ -26,7 +30,7 @@ def funnel(fname, proto):
         tight=tight,                                                     # None = 不可测
         parsed=parsed,
         executed=sum(1 for t in first if t.get("parse_mode") == mode and t.get("total")),
-        obs=sum(1 for r in R if len(r["turns"]) >= 2),
+        tested_steps_ge2=sum(1 for r in R if r["n_turns"] >= 2),
         rescue=sum(1 for r in R if r["final_ok"] and not r["first_ok"]),
         final=sum(r["final_ok"] for r in R),
         fallback=sum(1 for t in first
@@ -50,8 +54,8 @@ if __name__ == "__main__":
               open(os.path.join(os.path.dirname(__file__), "funnel_data.json"), "w"),
               indent=1, ensure_ascii=False)
 
-    layers = ["emitted", "parsed", "executed", "Observation", "rescued"]
-    keys = ["tight", "parsed", "executed", "obs", "rescue"]
+    layers = ["emitted", "parsed", "executed", "≥2 tested steps", "rescued"]
+    keys = ["tight", "parsed", "executed", "tested_steps_ge2", "rescue"]
     fig, axes = plt.subplots(1, 4, figsize=(13.2, 4.4), sharey=True)
     for ax, (f, p, lab) in zip(axes, ARMS):
         d = data[lab]
@@ -70,7 +74,7 @@ if __name__ == "__main__":
         ax.grid(axis="y", alpha=0.3)
         ax.text(4.35, 112, f"final pass {d['final']}", fontsize=8, color="#555", ha="right")
     axes[0].set_ylabel("items out of 100")
-    fig.suptitle("Where the agent trajectory is censored: emitted → parsed → executed → observed → rescued"
+    fig.suptitle("Measured trajectory milestones: emitted → parsed → executed → ≥2 tested steps → rescued"
                  "   (n=100 per arm)", fontsize=11)
     fig.text(0.005, 0.015,
              "† Emitted-call count is measurable only when the server parses nothing: a successful parse "

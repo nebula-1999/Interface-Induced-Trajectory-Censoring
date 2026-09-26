@@ -15,8 +15,14 @@ failure that announces itself, and template inspection alone is insufficient
 \emph{and} a server-parsed call under \texttt{tool\_choice: required} --- as a required pre-flight
 for any FC experiment, shipped as a 98-line script (\texttt{preflight\_toolcall.py}) that issues
 one canonical request, asserts \texttt{tool\_calls} is non-empty with the expected \texttt{name}
-and parseable \texttt{arguments}, then repeats under \texttt{required} as a positive control. It
-runs in seconds and would have caught every silent failure in this paper.
+and parseable \texttt{arguments}, then repeats under \texttt{required} as a positive control.
+This screening check flags configurations that fail to return an expected tool call;
+it does not by itself identify the underlying failure mechanism.
+
+Generation constraints are a distinct potential remedy: they change the emission distribution
+rather than accept already emitted bytes. Our strict-schema control supports studying this
+option, not dismissing it. Syntax or allowed-name constraints alone do not establish correct
+arguments, successful task behavior or compatibility of the entire serving stack.
 
 \textbf{The guidance for this flag lives in the wrong place.} We surveyed the HuggingFace model
 cards of nine families for any mention of \texttt{-\/-tool-call-parser}. Of the eight reachable
@@ -29,7 +35,7 @@ piece of configuration that can silently zero a capability measurement is docume
 party at the point of use.}
 
 \textbf{Interface repair precedes protocol comparison.} On Llama the ReAct-vs-FC gap was 31 points
-before the \texttt{strict} fix and 19 after, both components separately significant. On Qwen,
+before the \texttt{strict} fix and 19 after, both component contrasts descriptive under the retrospective multiplicity correction. On Qwen,
 conditioning on parsed items, we do not detect a residual (\emph{p}=0.118) --- but that interval is
 wide enough to contain effects as large as the unconditioned gap, so it is evidence of
 \emph{insufficient resolution}, not equivalence. \textbf{Comparisons of agent protocols that do not

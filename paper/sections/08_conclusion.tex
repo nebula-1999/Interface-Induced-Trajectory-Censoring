@@ -3,10 +3,12 @@
 Tool-call interfaces censor agent trajectories, silently and per checkpoint; within Qwen2.5-Coder
 the absolute undercount rises monotonically with checkpoint size, which we report as a
 within-family observation rather than a general law. In a 150-step RL control differing only in
-verl's parser registry, the mismatched arm turns 8{,}689 tight-classified call-like emissions into 10 executions,
+verl's parser registry, the mismatched arm records 8{,}689 tight-classified call-like emissions but only 10 executions,
 whereas the repaired arm executes and observes 16{,}844 calls. The intervention therefore restores
 the tool-mediated experience distribution. We detect no held-out improvement: rescues are 12 at both endpoints
-and final passes move from 430/542 to 427/542. Access to a trajectory and learning from it are
+and final passes move from 430/542 to 427/542 under programmatic feedback. A post-hoc
+common native FC evaluation likewise detects no repaired-versus-broken success gain
+(248/542 each, with different passing sets). Access to a trajectory and learning from it are
 separate empirical questions.
 
 Two controls fix what the effect is a property of. A $2\times2$ over chat template and parser on a

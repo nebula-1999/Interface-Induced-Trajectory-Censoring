@@ -49,7 +49,7 @@ if "--figure1-only" in sys.argv:
 # 解析最多的那个恰是崩掉 42% 请求的那个。用阴影柱+注记如实表示"无可用配置"。
 fams = ["DeepSeek-Coder\ntemplate omits tools", "Qwen2.5-Coder\nparser mismatch",
         "Llama-3.1-8B\nschema hallucination", "Mistral-7B\ntoken-level repeat"]
-before = [0, 0, 74, 2]     # default config, parsed calls per 100
+before = [0, 0, 97, 2]     # default config, parsed calls per 100
 after  = [0, 84, 98, 5]    # best-known config (Mistral: highest-parse config = official template)
 err_after = [0, 0, 0, 42]  # request errors in that config
 fix = ["no remedy", "adapter\n0 -> 84", "strict:true\n23 -> 0", "no usable config"]
@@ -67,7 +67,7 @@ ax.annotate("all 4 configs error\n(2-42 failed requests / 100)",
             arrowprops=dict(arrowstyle="->", color="#e67e22", lw=1.2))
 ax.set_xticks(list(x)); ax.set_xticklabels(fams, fontsize=8.5)
 ax.set_ylabel("tool calls parsed by server / 100 items"); ax.set_ylim(-26, 116)
-ax.set_title("Four families, four failure layers, different remedies", fontsize=11)
+ax.set_title("Serving diagnostics: two quantified cases and two scope checks", fontsize=11)
 ax.legend(frameon=False, loc="upper left", fontsize=9)
 fig.tight_layout(); fig.savefig(os.path.join(OUT, "fig2_family_taxonomy.png")); plt.close(fig)
 

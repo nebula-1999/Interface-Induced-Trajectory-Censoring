@@ -13,8 +13,9 @@ decompose to 100\% envelope-layer with zero parser loss, reproducing the code re
 contamination} result. The former is a real gap --- the same ladder on a non-code task would test
 whether the undercount's growth with checkpoint size is a property of the interface or of
 code-shaped payloads (\S\ref{sec:future}). The latter we do not expect to close: the reward is a
-\texttt{pytest} pass ratio, so porting it changes environment, reward and task at once. Multi-tool
-schemas and tool selection among alternatives remain untested throughout; a single-tool schema is
+\texttt{pytest} pass ratio, so porting it changes environment, reward and task at once. The controlled
+scale and RL experiments use a single-tool schema and do not isolate tool selection among
+alternatives. A single-tool schema is
 an easy parser case, but we treat that only as motivation for broader tests, not as a quantitative
 lower-bound argument.
 \emph{(2) Item sampling.} The 50 full-length arms use 100 items taken as \texttt{clean[:100]},
@@ -78,6 +79,22 @@ and observed calls over 150 steps with 12 held-out rescues at both endpoints (in
 single-variable control, but it is one seed, 7B, LoRA, one code task and one training horizon.
 The earlier ReAct arm (23{,}676 calls, flat rescues) is directionally consistent but remains
 confounded by its protocol change.
+
+The shared evaluation deliberately avoids both training parsers, but changes structured tool-role
+feedback to user-message feedback. It measures transfer to this programmatic-feedback protocol,
+not native FC behavior. Formatting shift, limited adaptation budget/capacity and multi-turn
+credit assignment are plausible explanations for absent transfer; these data do not separate them.
+The evaluator extracts the last decodable \texttt{<tool\_call>} code argument when present,
+otherwise the last code fence or the raw text. This is not a general decoder for every tool syntax.
+The post-hoc common native FC evaluation (Appendix~\ref{app:nativefc}) additionally
+uses voluntary calls and tool-role feedback: repaired and broken both pass 248/542,
+with 16 discordances each way. This addresses the missing initiation measurement,
+not all distribution shift: held-out tasks use script-mode tests, the controller
+re-renders history, and only one training seed is available. It is not a byte-identical
+training rollout or an equivalence test. The new rescue definition requires an actual
+failed tool test and must not be pooled with programmatic-feedback rescues.
+
+
 \emph{(13) Human validation covers one criterion on one sample.} The 98-item stratified sample has 97 complete paired annotator records; these give inter-annotator $\kappa$ = 0.967 on the 62 items where both read identical
 bytes, and classifier-vs-gold-standard $\kappa$ = 0.871 after third-party adjudication
 (Appendix~\ref{app:humanval}). Two residual limits: the sample is stratified by classifier

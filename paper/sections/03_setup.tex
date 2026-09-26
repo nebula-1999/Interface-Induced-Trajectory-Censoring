@@ -31,7 +31,7 @@ is in Appendix~\ref{app:arms}.
 \label{sec:humanval}
 
 Reporting only server-parsed calls is the practice under examination, so we need an
-independent measure of what the model emitted. A single classifier
+independent measure of what the model emitted. For the KodCode probe, a shared classifier
 (\texttt{analysis/intent.py}) is shared by all text, tables and figures, with three
 operational tiers: tight is a regex match for a call-shaped payload naming
 \texttt{run\_tests}, with quoted \texttt{arguments.code} and Python-like lexical markers.

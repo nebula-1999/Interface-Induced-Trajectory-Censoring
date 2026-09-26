@@ -32,13 +32,12 @@ dedicated parser & \textbf{0/200} & 196/200 \\
 0/200 calls, whereas replacing both components recovers 196/200.} These are simple effects at a
 specified baseline, not zero marginal main effects. The $2\times2$ establishes strong
 complementarity in parsing; BFCL scores were computed only for the two end-to-end corner
-configurations, so the score swing itself is not decomposed over all four cells. Under the documented template the model writes a bare call inside a
-\texttt{```json} fence; under the dedicated template it writes the same payload, byte for byte,
-inside \texttt{<tools>} tags. Each parser behaves correctly for the envelope it is defined to
-accept, so no component is defective and repairing one side of the contract buys exactly nothing.
+configurations, so the score swing itself is not decomposed over all four cells. The templates
+induce different output conventions; the experiment does not hold payload bytes fixed across
+templates. The two one-component substitutions recover no calls at this baseline.
 The funnel behind those scores: the documented arm parses \textbf{0 of 200} first requests with
-zero HTTP errors, while \textbf{166} of those same responses carry a call meeting the strict
-criterion; the repaired arm parses 196, executes 98 of 100 \texttt{multi\_turn\_base} cases and
+zero HTTP errors, while \textbf{166/200 responses satisfy the BFCL JSON-call criterion};
+the repaired arm parses 196, executes 98 of 100 \texttt{multi\_turn\_base} cases and
 succeeds on \textbf{19}, against 0 executed and 0 succeeded for \texttt{hermes}, whose zero is
 therefore \emph{by construction rather than by capability}
 (Tables~\ref{tab:bfclfunnel}--\ref{tab:bfcl5}). \textbf{A published benchmark number for this
@@ -52,6 +51,13 @@ BFCL's shipped handler for local Qwen models bypasses the serving parser entirel
 BFCL's own OpenAI handler through \texttt{/v1/chat/completions}, adding only
 \texttt{tool\_choice: auto} and trace headers; dataset loading, execution and scoring remain
 BFCL's code and \texttt{bfcl\_eval}'s files are byte-identical (Appendix~\ref{app:bfcl}).
+
+``Documented'' denotes application of Qwen2.5 family-level guidance, not a Coder-specific
+compatibility guarantee (Appendix~\ref{app:config}). In a separate answer-blind offline analysis,
+a permissive JSON extractor recovers 97 structurally schema-compliant calls from the original
+100 \texttt{simple\_python} responses; 92 pass the pinned official AST checker without changing
+the emitted bytes. This extractor is not the deployed dedicated parser, which requires
+\texttt{<tools>} tags absent from all 100 responses (Appendix~\ref{app:fixedreplay}).
 
 \subsection{$\tau$-bench: the mechanism survives a simulated user and a stateful environment}
 \label{sec:tau}
@@ -72,23 +78,19 @@ scores are not comparable to the $\tau$-bench leaderboard} and only the between-
 claimed; and the arms differ in conversation length by construction, which is why every quantity
 is per task and not per request.
 
-\paragraph{The envelope layer is domain-invariant; the payload layer is not.}
+\paragraph{The missing-envelope signature also appears in a non-code domain.}
 $\tau$-bench also lets us ask whether the \emph{failure layer} travels across domains, because
 its arguments are short scalars (\texttt{\{"order\_id": "W123"\}}) where our own task passes a
 whole program as a string. Replaying vLLM's extractor over the documented arm's 789
-emitted-but-unparsed assistant turns puts \textbf{789 of 789 (100\%) at the envelope layer}, with
-\textbf{0} malformed payloads, \textbf{0} recoverable by lenient decoding, and --- as everywhere
-else in this paper --- \textbf{0 genuine parser losses}. The emissions carry the same signature as
-the code task: a bare call inside a \texttt{```json} fence, never the \texttt{<tool\_call>}
-envelope. This matters in two directions. The layer that carries our headline result is
-\textbf{unchanged by the domain}, and the running total of first turns in which the server
-discarded a call its own extractor would have accepted stays at zero across code and non-code
-alike. But the \emph{other} layer moves: Qwen2.5-Instruct loses 41\% of its unparsed items to
-malformed payloads on the code task (Table~\ref{tab:layer}), almost always by leaving docstring
-quotes or raw newlines unescaped inside a \texttt{code} string --- a failure mode that short
-scalar arguments cannot produce. \textbf{We therefore expect the envelope-layer result to
-generalise and the payload-layer proportions not to}, and we state that as a prediction rather
-than a measurement, having tested one non-code domain and not a sample of them.
+emitted-but-unparsed assistant turns assigns \textbf{789 of 789 (100\%) to the missing-envelope
+category}. None reaches the payload-validation stage, and none is accepted by the configured
+extractor. This first-failure classification establishes neither payload validity nor
+recoverability under a different decoding rule. It reproduces the missing-envelope signature
+in one non-code domain, not domain invariance. For comparison, Qwen2.5-Instruct has 41\% of
+its unparsed code-task items assigned to malformed payloads after the envelope check
+(Table~\ref{tab:layer}). Because the $\tau$-bench items do not reach that check, these data
+do not identify a cross-domain difference in payload validity. Whether payload-error
+proportions change with argument type remains an open question.
 
 \subsection{Censoring against scale, and the same scale under a matched interface}
 \label{sec:scale}
@@ -101,7 +103,7 @@ Our own probe, across the Qwen2.5-Coder ladder under \texttt{tool\_choice: auto}
 \captionof{table}{Qwen2.5-Coder under the documented \texttt{hermes} configuration, n=100 per size.}\label{tab:scale}
 \begin{tabular}{@{}llllll@{}}
 \toprule
-Size & Server-parsed & \textbf{tight} & strong ($\supseteq$ tight) & weak (disjoint) & Final pass \\
+Size & Server-parsed & \textbf{tight} & strong labels & weak labels & Final pass \\
 \midrule
 1.5B & 0 & 0 & 0 & 27* & 31 \\
 3B & 0 & 4 & 5 & 28 & 37 \\
@@ -199,8 +201,9 @@ single-variable final change is +17 (Table~\ref{tab:llama_arms}). The ReAct deco
 uses terse FC (49) as its baseline and official-template-plus-strict (61) as the repaired endpoint,
 so its broader interface-bundle contribution is \textbf{+12} (\emph{p}=0.0075), followed by
 \textbf{protocol, +19}
-(\emph{p}=0.0019), against +31 for both (Table~\ref{tab:decomposition}) --- \textbf{roughly two
-fifths of what looked like a protocol effect was an interface effect}. With \texttt{strict} the two
+(\emph{p}=0.0019), against +31 for both (Table~\ref{tab:decomposition}). The +12 and +19
+contrasts are descriptive: neither survives the retrospective family-wise correction.
+The official-template strict final-pass comparison does survive that correction. With \texttt{strict} the two
 protocols have identical execution mechanics (98 calls, 0 wrong-tool, 97 executed on both sides)
 yet turn-1 differs 46 vs 61, so what remains is first-draft code quality under the protocol, not
 tool-use mechanics. The defensible statement is narrower than either ``model defect'' or
@@ -265,7 +268,8 @@ we detect on Llama --- so the residual is established on one family and undeterm
 \label{sec:sufficiency}
 
 The historical 1.5B result is over-determined: zero calls executed, but a replication under the
-same mandatory prompt finds no well-formed call naming \texttt{run\_tests}. At 7B, by contrast, a
+recorded mandatory-prompt override finds no correctly named call; exact historical prompt bytes
+are unavailable (Appendix~\ref{app:arms}). At 7B, by contrast, a
 probe inside verl's AgentLoop records 45 complete bare-JSON calls in 115 generations, of which
 \texttt{hermes} accepts none; its actor update then OOMs, so that
 probe establishes the failure layer but not a learning effect. We therefore ran the missing
@@ -321,7 +325,24 @@ held-out evaluation is identical across arms and bypasses both training parsers:
 rollout RPC queries the current LoRA at temperature 0 for up to four 1,024-token
 programmatic-feedback turns on the same 542 EvalPlus items, then appends sandboxed test output as
 a user message. Each request attests the loaded global weight step, explaining why the
-broken-training arm can still exhibit 12 evaluation rescues. The repaired process was interrupted
+broken-training arm can still exhibit 12 evaluation rescues.
+The shared evaluation deliberately avoids both training parsers, but changes structured tool-role
+feedback to user-message feedback. It measures transfer to this programmatic-feedback protocol,
+not native FC behavior. Formatting shift, limited adaptation budget/capacity and multi-turn
+credit assignment are plausible explanations for absent transfer; these data do not separate them.
+The evaluator extracts the last decodable \texttt{<tool\_call>} code argument when present,
+otherwise the last code fence or the raw text. This is not a general decoder for every tool syntax.
+
+A separate post-hoc common native FC evaluation now measures voluntary initiation
+with the same working parser across base and both endpoint weights. Final successes
+are 239/542, 248/542 and 248/542; repaired versus broken has 16 discordances in each
+direction (0-point difference; conservative paired 95\% CI $[-3.47,3.47]$; $p=1$).
+Initiation counts are 46/50/47 and rescues 2/1/1. Thus neither shared evaluation
+detects a success gain from repair; equal totals do not establish equivalent policies.
+Appendix~\ref{app:nativefc} gives the protocol, timeout audit and full outcomes.
+
+
+The repaired process was interrupted
 after step 116 and resumed from the step-90 checkpoint; before
 resumption we verified model, optimizer, scheduler, RNG and dataloader state, source and
 configuration hashes, and native checkpoint weight steps. The repeated step-90 evaluation differs

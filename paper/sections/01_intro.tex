@@ -11,9 +11,11 @@ not the basis of the formal 7B result (Appendix~\ref{app:extra}).
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig0_funnel.png}
-\caption{\textbf{Where the agent trajectory is censored.} Five layers, $n{=}100$ per arm. The two
-left panels (documented default configuration) show a tall first bar and a cliff to zero: the
-model emits well-formed calls and nothing downstream happens. Emitted-call counts are measurable
+\caption{\textbf{Measured tool-use milestones.} $n{=}100$ per arm. The two left panels show
+classifier-positive call-shaped emissions but no parsed tool calls. The fourth bar counts tasks
+reaching at least two code-bearing tested steps (37 repaired; 40 ReAct), not returned observations;
+the decline from executions to second tests does not measure feedback-return failures.
+Emitted-call counts are measurable
 only where the server parses nothing --- a successful parse moves the call into
 \texttt{tool\_calls} and empties \texttt{content} --- so those cells are N/A, not zero.}
 \label{fig:funnel}

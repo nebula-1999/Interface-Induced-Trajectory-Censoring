@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build a local anonymous submission package from an explicit allowlist.
 
-No raw rollout archive, checkpoints, git metadata, launch logs or public author
-source is copied. This is an aggregate/statistical supplement, not the full archive.
+No full rollout archive, checkpoints, git metadata, launch logs or public author
+source is copied. Explicit raw-content subsets complement the statistical reduction.
 """
 import json
 from pathlib import Path
@@ -28,13 +28,18 @@ def main():
     for p in sorted((ROOT/'paper').glob('*.png')): add(str(p.relative_to(ROOT)),p.relative_to(ROOT))
     add('paper/refs.bib','paper/refs.bib')
     for name in ['submission_statistics.py','submission_statistics.json','llama_paired_audit.py',
-                 'test_submission_statistics.py']:
+                 'test_submission_statistics.py', 'verify_supplement.py',
+                 'bfcl_fixed_replay.py', 'test_bfcl_fixed_replay.py', 'verify_mechanism_evidence.py',
+                 'native_fc_results.py']:
         add('analysis/'+name,'analysis/'+name)
     for p in sorted((ROOT/'p4').glob('PREREGISTRATION*.md')):
         add(str(p.relative_to(ROOT)),p.relative_to(ROOT))
     add('p3/PREREG_AMENDMENT_20260903.md','p3/PREREG_AMENDMENT_20260903.md')
     # The public abstract is not an input to the anonymous main file.
     files.pop('paper/sections/abstract.tex',None)
+    # These appendices now have ICLR-specific revisions; exclude unused public copies.
+    files.pop('paper/sections/G_extra.tex',None)
+    files.pop('paper/sections/H_limitations.tex',None)
     # Only the outcome fields used by the test are included, not task/model text.
     for filename in FILES.values():
         clean=[]
@@ -57,6 +62,16 @@ def main():
         decontamination=dict(text_ngrams=[8,5],code_ngrams=[10,6],minimum_grams=5,
             keep_when_max_containment_below=0.10))
     files['p3/configuration_summary.json']=(json.dumps(config,indent=2)+'\n').encode()
+    for name in ('evaluation_outcomes.jsonl','events_compact.jsonl.gz','lineage.json','expected.json'):
+        add('p3/compact/'+name,Path('submission_packages/p3_compact')/name)
+    assert 'p3/compact/events_compact.jsonl.gz' in files, 'Run build_p3_supplement.py first'
+    add('VERIFICATION_SCOPE.md','analysis/VERIFICATION_SCOPE.md')
+    for name in ['outcomes.json','statistics.json','configurations.json']:
+        add('native_fc/'+name,Path('submission_packages/native_fc')/name)
+    add('mechanism_evidence/README.md','analysis/MECHANISM_EVIDENCE.md')
+    for p in sorted((OUT/'mechanism_evidence').rglob('*')):
+        if p.is_file() and '__pycache__' not in p.parts:
+            add(str(p.relative_to(OUT)),p.relative_to(ROOT))
     files['README.md']=b'''# Anonymous submission materials
 
 Compile paper/iclr2027/main.tex using pdfLaTeX (latexmk -pdf).
@@ -65,21 +80,39 @@ The included PDF is the local candidate; the submission portal has not been upda
 Run from this directory:
 python3 analysis/submission_statistics.py --output /tmp/recomputed_statistics.json
 Compare that output with analysis/submission_statistics.json.
+python3 analysis/verify_supplement.py
+python3 analysis/verify_mechanism_evidence.py
+python3 analysis/bfcl_fixed_replay.py --bundle mechanism_evidence/bfcl
+python3 analysis/native_fc_results.py --outcomes native_fc/outcomes.json --out /tmp/native-fc-recheck
 
 Contents: anonymous paper and sources, exact statistical code and outputs, reduced
-outcome inputs for the 15 Llama tests, P3 aggregate checkpoint/event/log diagnostics,
+outcome inputs for the 15 Llama tests, P3 reduced per-item outcomes and compact event records,
+P3 aggregate checkpoint/event/log diagnostics,
 and a configuration summary. Preregistration documents are retained with their
 original predictions, amendments and commit identifiers. Historical other tests are recomputed from explicitly
 listed discordant counts, not re-audited here from their raw trajectories.
 
 Data boundary: reduced Llama records omit prompts and outputs but preserve all
-fields read by the statistical script. P3 raw rollout text, evaluation rows,
+fields read by the statistical script. The raw-content mechanism subset includes
+BFCL response/schema/scoring records, all tau-bench task trajectories and twenty
+deterministically sampled RL trajectories. See mechanism_evidence/README.md.
+The complete P3 raw rollout archive, unreduced evaluation rows,
 original source manifests and heavy checkpoints are NOT included. This supplement
-reproduces the reported statistical calculations, not training or the complete
-raw-event/checkpoint audit. Full records remain retained separately. No inference
+reproduces statistics, recorded event totals and the accepted resume lineage,
+not training or the complete raw-event/checkpoint audit. Only supplied raw-content
+subsets support independent inspection of emission labels.
+See VERIFICATION_SCOPE.md. Full records remain retained separately. No inference
 or additional GPU work was run to assemble this package.
 
-The 27-test multiplicity rule is retrospective, not preregistered. Endpoint
+Native FC adds 1,626 reduced per-item outcomes, including timeout statuses,
+anonymized frozen configuration records (including exact schemas, package versions
+and source hashes), the 540-item descriptive sensitivity and final-submission
+rescue alternative, and
+nine post-hoc exploratory paired contrasts. Full native FC generations, original
+tests and GPU checkpoints are not in this reduction; it supports statistical
+recomputation, not raw-text reclassification or environment re-execution.
+
+The historical 27-test multiplicity rule is retrospective, not preregistered. Endpoint
 intervals cover item-pair uncertainty under independence, not seed or retest noise.
 '''
     forbidden=re.compile(rb'wangwenbo|wenbwang|Wenbo Wang|Di Sang|3120265429|nebula-1999|/Users/|@bit\.edu|@my\.cityu',re.I)

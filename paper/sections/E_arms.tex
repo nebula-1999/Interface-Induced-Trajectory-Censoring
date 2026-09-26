@@ -9,6 +9,14 @@ recorded as \texttt{---} were absent from that generation's provenance schema
 \texttt{max\_tokens} record and are listed in Appendix~A.1; five are inadmissible for pass
 rates and are listed in Appendix~A.3.
 
+The \texttt{strength} column is the recorded CLI selector, not necessarily the effective prompt.
+For \texttt{a14} and \texttt{roleprobe}, records specify \texttt{sys\_file}; the archived probe
+loads this file after selecting the built-in prompt, overriding \texttt{strength=optional}.
+The retained role-disambiguation file explicitly mandates \texttt{run\_tests}.
+The original \texttt{sys\_fc\_mandatory.txt} file was not found in the local archive, so the
+a14 run's exact prompt bytes cannot be independently verified; its name alone is not proof.
+The zero correctly named calls remain an observed outcome, not a fully byte-matched prompt replication.
+
 Not listed: \texttt{v8\_Llama8B\_recheck} (23 items, a targeted qualitative re-run) and
 eight \texttt{*smoke*} files at n=3. Neither is a formal arm.
 

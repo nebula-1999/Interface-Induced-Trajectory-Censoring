@@ -27,8 +27,8 @@ traj_v11_Llama32_3B_react.jsonl    recorded 2048 / actual 1024
 
 \textbf{Direction of the bias.} The contemporaneous FC arms were genuinely at 2048, so in
 every affected ReAct-vs-FC comparison \textbf{the function-calling side had the larger
-generation budget}. ReAct nonetheless won those comparisons, so the reported protocol gaps
-are \emph{conservative}; correcting the asymmetry can only widen them. Re-running the three
+generation budget}. A larger budget need not improve performance, so this asymmetry alone
+does not establish the direction of bias. Re-running the three
 main ReAct arms at a true 2048 changed final pass by at most one item
 ($80\to80$, $74\to74$, $32\to33$), which is why the correction is small in practice.
 
@@ -66,8 +66,9 @@ traj_v13_Llama8B_fcstrict_t06_s3.jsonl      n_err = 1   (rc=2)
 }
 
 For these arms the \textbf{error-rate census remains valid} --- that census is itself a
-result --- but pass rates are not comparable because data are missing, and no $p$-value is
-computed for them. An earlier draft computed $p=0.648$ on one such arm; that number is
+result --- but these arms are excluded from clean-arm pass-rate comparisons, and no
+clean-arm $p$-value is computed for them. Separately reported end-to-end analyses retain
+the full task denominator, including request failures. An earlier draft computed $p=0.648$ on one such arm; that number is
 retracted.
 
 \subsection{Provenance schema drift}

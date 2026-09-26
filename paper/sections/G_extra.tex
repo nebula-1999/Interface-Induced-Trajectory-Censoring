@@ -5,14 +5,14 @@
 
 Historical 1.5B runs showed numerical pass gains of 2.6--2.8 points ($p=0.064/0.078/0.077$),
 not statistically significant. Of newly passing items, 91--94\% passed on turn 1; multi-turn
-rescues ranged from 6 to 9 out of 540. These small exploratory counts prompted the investigation
+rescues ranged from 5 to 10 out of 540 across the reported checkpoint sequences. These small exploratory counts prompted the investigation
 but do not identify an interface effect or independently establish absence of learning.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig4_training_curves.png}
 \caption{Left: pass@1 rises over 150 steps on all three runs, driven by first drafts (dashed)
-rather than final answers. Centre: multi-turn rescues range from 6--9 out of 540 across checkpoints, algorithms and seeds. Right:
+rather than final answers. Centre: multi-turn rescues range from 5--10 out of 540 across checkpoints, algorithms and seeds. Right:
 the seeded-bug repair channel does improve, confirming the model is learning something about
 fixing code; no clear increase in multi-turn rescue counts was detected in these historical runs. \S\ref{sec:rl} shows the tool was
 never successfully called in any of these runs.}
@@ -23,18 +23,23 @@ never successfully called in any of these runs.}
 \label{app:tables}
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
-\captionof{table}{BFCL v4, first HTTP request per case. Intent columns are measured only where the parse failed.}\label{tab:bfclfunnel}
+\captionof{table}{BFCL v4, first HTTP request per case. Emission indicators are measured only where parsing failed; JSON-call, format-marker and JSON-marker checks overlap and must not be summed.}\label{tab:bfclfunnel}
 \setlength{\tabcolsep}{3.5pt}\begin{tabular}{@{}llllllll@{}}
 \toprule
-Arm & cases & HTTP err & first parsed & unparsed & tight & strong & weak \\
+Arm & cases & HTTP err & first parsed & unparsed & JSON-call & format & JSON \\
 \midrule
 \texttt{hermes} (documented) & 200 & 0 & \textbf{0} & 200 & 166 & 169 & 187 \\
 \texttt{qwen2\_5\_coder} (repaired) & 200 & 0 & \textbf{196} & 4 & 0 & 1 & 2 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{$\tau$-bench \texttt{retail}, all 115 tasks paired across arms (none dropped).}\label{tab:tau}
 \begin{tabular}{@{}lrr@{}}
@@ -50,13 +55,16 @@ tasks entering the tool loop at all & \textbf{0} & \textbf{103} \\
 tasks solved & 7 & 10 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Same probe, items and criterion under a \emph{matched} envelope.}\label{tab:counterfactual}
 \begin{tabular}{@{}lll@{}}
 \toprule
-Size & server-parsed & \textbf{silent fraction (tight, unparsed)} \\
+Size & server-parsed & \textbf{silent count / 100 (tight, unparsed)} \\
 \midrule
 Qwen3-0.6B & 86 & \textbf{1} \\
 Qwen3-1.7B & 44 & \textbf{1} \\
@@ -66,13 +74,16 @@ Qwen3-8B & 97 & \textbf{0} \\
 Qwen2.5-Coder 1.5B--32B (mismatched) & 0 at every size & \textbf{0 $\to$ 4 $\to$ 21 $\to$ 36 $\to$ 80} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Qwen2.5-Instruct under the identical mismatched configuration, with both ladders' task outcomes measured on a working executor.}\label{tab:instruct}\label{tab:turn1}
 \setlength{\tabcolsep}{3.5pt}\begin{tabular}{@{}llll|ll|lll@{}}
 \toprule
-& \multicolumn{3}{c|}{Instruct, emitted} & \multicolumn{2}{c|}{Coder} & \multicolumn{3}{c}{Instruct} \\
+& \multicolumn{3}{c|}{Instruct: parsed / unparsed indicators} & \multicolumn{2}{c|}{Coder} & \multicolumn{3}{c}{Instruct} \\
 Size & parsed & \textbf{tight} & weak & parsed & turn-1 = final & turn-1 & final & \textbf{rescued} \\
 \midrule
 1.5B & 1 & 0 & 7 & 0 & 31 & 13 & 13 & \textbf{0} \\
@@ -82,8 +93,11 @@ Size & parsed & \textbf{tight} & weak & parsed & turn-1 = final & turn-1 & final
 \textbf{32B} & \textbf{88} & 8 & 0 & 0 & 68 & 42 & 65 & \textbf{+23} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Llama-3.1-8B arms, paired on the same 100 items.}\label{tab:llama_arms}
 \begin{tabular}{@{}llllll@{}}
@@ -96,34 +110,43 @@ terse (parser only) & 97 & 23 & 74 & 34 & 49 \\
 ReAct (reference) & 98 & 0 & 97 & \textbf{61} & 80 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Decomposing the ReAct--FC gap on Llama, paired McNemar.}\label{tab:decomposition}
 \begin{tabular}{@{}llll@{}}
 \toprule
-Comparison & b/c & \emph{p} & Attributable to \\
+Comparison & b/c & \emph{p} & Descriptive difference \\
 \midrule
-terse-FC $\to$ strict-FC (49 $\to$ 61) & 15/3 & \textbf{0.0075} & \textbf{interface repair, +12} \\
-strict-FC $\to$ ReAct (61 $\to$ 80) & 27/8 & \textbf{0.0019} & \textbf{protocol, +19} \\
+terse-FC $\to$ strict-FC (49 $\to$ 61) & 15/3 & 0.0075 & \textbf{interface repair, +12} \\
+strict-FC $\to$ ReAct (61 $\to$ 80) & 27/8 & 0.0019 & \textbf{protocol, +19} \\
 terse-FC $\to$ ReAct (49 $\to$ 80) & 38/7 & 3.1e-06 & both, +31 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
-\captionof{table}{Repair loop on Qwen2.5-Coder-7B, \texttt{tool\_choice: auto} fixed, changing only the adapter.}\label{tab:repair}
+\captionof{table}{Repair loop on Qwen2.5-Coder-7B. Tested steps count generations with extracted code sent to the sandbox, not all assistant outputs. The historical ReAct row uses v3; the unified v14 rerun has mean tested steps 1.93 with unchanged pass/rescue counts.}\label{tab:repair}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
-Arm & Parsed & Mean turns & $\geq$2 turns & Turn-1 & Final & Rescued \\
+Arm & Parsed & Mean tested steps & $\geq$2 tested steps & Turn-1 & Final & Rescued \\
 \midrule
 ReAct & 95 & 1.92 & 40 & 57 & \textbf{74} & 17 \\
 FC + hermes & \textbf{0} & 0.96 & \textbf{0} & 53 & 53 & \textbf{0} \\
 FC + dedicated adapter & \textbf{84} & 1.82 & \textbf{37} & 53 & \textbf{62} & \textbf{9} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{RL training rollouts, matched in model, data, hyper-parameters, seed and prompt strength.}\label{tab:training}
 \begin{tabular}{@{}lllll@{}}
@@ -134,6 +157,7 @@ FC (\texttt{tool\_agent} + hermes) & 10 & \textbf{2.000} (constant) & \textbf{0.
 ReAct (\texttt{react\_agent}) & 3 & 5.883 & 12.21 s & \textbf{2.052} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \subsection{Offline re-parse matrix and failure-layer decomposition}
@@ -143,6 +167,8 @@ To exclude ``your extractor is simply better than \texttt{hermes}'', we re-parse
 \emph{same stored bytes} under four rules (\texttt{analysis/reparse\_matrix.py}, no GPU).
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{The same bytes, re-parsed offline under four rules. Where the server already parsed a call, \texttt{content} is empty and offline replay has nothing to read; those cells are N/A rather than zero. The gap is a parser mismatch, not a claim that no parser could have read the output.}\label{tab:reparse}
 \begin{tabular}{@{}llllll@{}}
@@ -156,6 +182,7 @@ Qwen-14B & 0 & 0 & 0 & 42 & 36 \\
 Qwen-32B & 0 & \textbf{0} & 0 & \textbf{100} & \textbf{80} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 The \texttt{hermes} column is zero at every scale: the model never produces that format. The
@@ -171,13 +198,15 @@ well-formed and rejected only because \texttt{json.loads} does not tolerate trai
 capture; or a genuine parser loss, meaning the replay succeeds where the server did not.
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
-\captionof{table}{Where the unparsed items are lost. Coder fails entirely at the envelope; Instruct reaches the envelope and fails at the payload. \textbf{Genuine parser loss is zero in every arm} --- and across all 4254 de-duplicated first turns in the archive.}\label{tab:layer}
+\captionof{table}{Where the unparsed items are lost. These are first-failure categories of all unparsed outputs, not counts of identified tool attempts. \textbf{Genuine parser loss is zero in every arm} --- and across all 4254 de-duplicated first turns in the archive.}\label{tab:layer}
 \begin{tabular}{@{}lllll@{}}
 \toprule
 Arm & no envelope & payload malformed & strictness only & \textbf{parser loss} \\
 \midrule
-Coder 1.5B--32B (all sizes) & 100 & 0 & 0 & \textbf{0} \\
+Coder 1.5B--32B (each size) & 100 & 0 & 0 & \textbf{0} \\
 Instruct 1.5B & 93 & 6 & 0 & \textbf{0} \\
 Instruct 3B & 22 & 41 & 26 & \textbf{0} \\
 Instruct 7B & 3 & 33 & 1 & \textbf{0} \\
@@ -185,18 +214,48 @@ Instruct 14B & 13 & 6 & 4 & \textbf{0} \\
 Instruct 32B & 1 & 9 & 2 & \textbf{0} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
-The two ladders fail at different layers: Coder emits a well-formed bare call and never the
-envelope, so \texttt{hermes} not seeing it is \emph{correct behaviour}; Instruct emits the
-envelope and then breaks the JSON, almost always by embedding Python whose docstring quotes or
+Missing envelopes alone do not identify censoring: the 100 Coder outputs at each size include
+both call-shaped and non-call outputs (notably at 1.5B). A separate emission criterion is
+needed to identify candidate masking. Instruct outputs reaching the payload check may break JSON, almost always by embedding Python whose docstring quotes or
 raw newlines are left unescaped inside the \texttt{code} string. And \textbf{in no arm --- across
 the whole archive --- did the server fail to parse a call that its own extractor would have
 accepted.} ``Censoring'' throughout this paper therefore means \emph{the attempt never reaches
 the parser in a form it is defined to accept}, not \emph{the parser discards valid calls}.
 
+The repair-loop table uses the stored \texttt{n\_turns} counter, which advances only when code
+is extracted and tested. The Hermes arm has 100 first assistant outputs but four yield no code,
+hence 96/100 tested steps. Its mean assistant-output count is 1.00; the adapter's is 1.90,
+rather than its 1.82 tested-step mean. Reaching a second tested step is stricter than merely
+receiving feedback: a subsequent unextractable response does not increment this counter.
+
 \subsection{BFCL: gating and the full reproduction record}
 \label{app:bfcl}
+
+\paragraph{Fixed-output replay on single-turn cases.}
+\label{app:fixedreplay}
+We added a post-hoc, answer-blind replay of all 100 \texttt{simple\_python} documented-arm
+responses from the clean run. A deterministic extractor scans left to right for maximal JSON
+objects or arrays, accepts named calls with object arguments (including JSON-encoded argument
+strings), and retains all recovered calls. It neither repairs malformed JSON nor selects a
+call using the answer key. All 97 recovered responses name an offered tool and pass structural
+signature checks (required fields, types, declared parameter names, array items and enums).
+Format annotations are not validated. Of the 100 original responses, 92 pass the official
+BFCL AST checker at the experiment's pinned commit. The 100 repaired-arm outputs reproduce
+96 official successes as a positive control. Scoring code is unchanged; the offline loader
+supplies the same \texttt{underscore\_to\_dot=True} registry property without importing
+online inference SDKs.
+
+This is an additional offline interpretation rule, not the community dedicated parser:
+none of the original 100 responses contains its required \texttt{<tools>} start tag.
+The result demonstrates that correct single-turn calls can be recovered from fixed emitted
+bytes. It does not attribute the remaining difference to template changes alone, establish
+a safe general-purpose fallback parser, or recover a counterfactual multi-turn success rate.
+Changing a multi-turn action would change subsequent environment feedback and generations.
+The supplement includes raw responses, the recorded request schemas, answer keys, per-item
+verdicts and the pinned checker sources; see Appendix~\ref{app:repro}.
 
 Each arm passes a two-case end-to-end smoke test before its full run, and a run is rejected
 unless the result count, the score file's \texttt{total\_count} and the number of distinct case
@@ -207,12 +266,14 @@ byte-identical; a recording proxy sits between benchmark and server and logs eve
 
 We ran the pair twice. The \texttt{hermes} arm is identical across runs in every column: 0/200
 parsed, 166 tight, 480 requests, 0 errors. The repaired arm moves by one case between runs ---
-\textbf{197 versus 196} first parsed, \textbf{99 versus 98} executed --- while success is 19 in
+\textbf{197/200 versus 196/200} first parsed, \textbf{99/100 versus 98/100} executed --- while success is 19 in
 both. Greedy decoding does not make vLLM bitwise deterministic across differing batch
 compositions, and this arm runs eight threads through a multi-turn executor, so we report its
 intermediate funnel columns as $\pm1$ rather than exact.
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{BFCL \texttt{multi\_turn\_base}, n = 100, joined to the HTTP trace by case id.}\label{tab:bfcl5}
 \begin{tabular}{@{}lllllll@{}}
@@ -223,9 +284,12 @@ Arm & tight (unparsed) & first parsed & any parsed & executed & \textbf{success}
 \texttt{qwen2\_5\_coder} & 0 & 97 & 98 & 98 & \textbf{19} & 0 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Two quantified failure layers; the full four-family table is Table~\ref{tab:taxonomy_full}.}\label{tab:taxonomy}
 \begin{tabular}{@{}p{.14\linewidth}p{.10\linewidth}p{.25\linewidth}p{.22\linewidth}p{\dimexpr.29\linewidth-8\tabcolsep\relax}@{}}
@@ -238,14 +302,17 @@ Llama-3.1-8B & schema & calls the \emph{task function} as a tool (23\%)
   & $\times$ requires argument inspection & \texttt{strict: true} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \subsection{The full four-family taxonomy}
 \label{app:taxonomy}
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
-\captionof{table}{Four families, four layers. Only Mistral's failure announces itself.}\label{tab:taxonomy_full}
+\captionof{table}{Four serving diagnostics, not an exhaustive taxonomy. Only Mistral's failure announces itself.}\label{tab:taxonomy_full}
 \begin{tabular}{@{}p{.14\linewidth}p{.10\linewidth}p{.25\linewidth}p{.22\linewidth}p{\dimexpr.29\linewidth-8\tabcolsep\relax}@{}}
 \toprule
 Family & Layer & Symptom & Detectable in advance? & Remedy \\
@@ -260,12 +327,13 @@ Mistral-7B-v0.3 & token & repeats \texttt{[TOOL\_CALLS]} $\to$ HTTP 400
   & $\sim$ errors, but only sometimes & \textbf{none found} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig2_family_taxonomy.png}
-\caption{The same four failures, quantified. Grey is the configuration a reader arrives at by
+\caption{Serving diagnostics with a consistent server-parsed metric. Llama is 97 versus 98 parsed; wrong-tool and executed counts are reported separately. Grey is the configuration a reader arrives at by
 following the documentation; green is the best configuration we found. Mistral never produces an
 error-free run under any of four configurations, so its bars are not comparable with the others
 and are drawn in orange.}
@@ -287,6 +355,8 @@ Table~\ref{tab:scale}.}
 \label{sec:maintable_full}
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \setlength{\tabcolsep}{4pt}
 \captionof{table}{All arms genuinely at \texttt{max\_tokens}=2048, one shared 100-item set, \texttt{temperature}=0. Mistral has no admissible FC arm: all four configurations produce request errors, so no pass rate and no \emph{p}-value are computed.}\label{tab:main}
@@ -296,21 +366,24 @@ Model & \multicolumn{2}{c}{ReAct} & \multicolumn{2}{c}{FC} & b/c & \emph{p} & FC
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}
  & turn-1 & final & turn-1 & final & & & \\
 \midrule
-Llama-3.1-8B & 61 & \textbf{80} & 46 & 61 & 27/8 & \textbf{0.0019} & official tmpl.\ + \texttt{strict} \\
-Qwen2.5-Coder-7B & 57 & \textbf{74} & 53 & 62 & 17/5 & \textbf{0.0169} & dedicated adapter \\
+Llama-3.1-8B & 61 & \textbf{80} & 46 & 61 & 27/8 & 0.0019 & official tmpl.\ + \texttt{strict} \\
+Qwen2.5-Coder-7B & 57 & \textbf{74} & 53 & 62 & 17/5 & 0.0169 & dedicated adapter \\
 Mistral-7B-v0.3 & 26 & 33 & N/A & N/A & N/A & N/A & --- \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \subsection{The four Llama controls, tabulated}
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
-\captionof{table}{Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three rejected their alternative explanations and pointed at the model; the fourth found the actual cause and withdrew that conclusion.}\label{tab:controls}
+\captionof{table}{Four single-variable controls on Llama-3.1-8B's 23\% wrong-tool rate. The first three did not reduce the error; the fourth eliminated it through a schema constraint, without identifying a unique cause of role confusion.}\label{tab:controls}
 \begin{tabular}{@{}p{.27\linewidth}p{.21\linewidth}p{.27\linewidth}p{\dimexpr.25\linewidth-6\tabcolsep\relax}@{}}
 \toprule
-Alternative explanation & Control & Empty-argument rate & Verdict \\
+Alternative explanation & Control & Wrong-tool calls / 100 & Verdict \\
 \midrule
 schema lacks a parameter description & rich vs terse & 23 $\to$ 22 (\emph{p}=1.000) & rejected \\
 ReAct merely adds a reasoning step & FC + Thought scaffold & 23 $\to$ \textbf{59} (\emph{p}\textless0.001, \textbf{worse}) & rejected \\
@@ -318,36 +391,43 @@ server not configured per documentation & + official chat template & 23 $\to$ 22
 \textbf{schema constraint not enabled} & \textbf{+ \texttt{strict: true} on official template} & \textbf{22 $\to$ 0 (22/0, \emph{p}=4.77$\times10^{-7}$)} & \textbf{accepted} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \subsection{Conditioning on a successful parse, and access vs.\ use of feedback}
 \label{app:conditioned}
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Conditioning on items where both protocols parsed successfully. These are descriptive post-treatment subsets; neither nominal test clears the 27-test Bonferroni threshold.}\label{tab:conditioned}
 \begin{tabular}{@{}llllll@{}}
 \toprule
 Family & Items both parsed & ReAct & FC & b/c & \emph{p} \\
 \midrule
-Qwen2.5-Coder-7B & 83 & 63 & 56 & 11/4 & \textbf{0.118 (n.s.)} \\
-Llama-3.1-8B & 96 & 78 & 60 & 25/7 & \textbf{0.0021} \\
+Qwen2.5-Coder-7B & 83 & 63 & 56 & 11/4 & 0.118 (n.s.) \\
+Llama-3.1-8B & 96 & 78 & 60 & 25/7 & 0.0021 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
-\captionof{table}{Descriptive repair success among items receiving feedback. The subset is selected after treatment; these rates do not localize or causally decompose the protocol gap.}\label{tab:given_feedback}
+\captionof{table}{Descriptive repair success among items reaching a second code-bearing, tested step. The subset is selected after treatment; these rates do not localize or causally decompose the protocol gap.}\label{tab:given_feedback}
 \begin{tabular}{@{}llll@{}}
 \toprule
-Arm & Reached turn $\geq$2 & Rescued & Repair success given feedback \\
+Arm & Reached tested step $\geq$2 & Rescued & Repair success given feedback \\
 \midrule
-ReAct & 40 & 17 & \textbf{42\%} \\
-FC + adapter & 37 & 9 & \textbf{24\%} \\
+ReAct & 40 & 17 & 42.5\% \\
+FC + adapter & 37 & 9 & 24.3\% \\
 FC + hermes & \textbf{0} & \textbf{0} & undefined \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \textbf{Adapters are not a universal switch.} The same adapter recovers 84/100 at 7B and
@@ -374,8 +454,10 @@ performance while leaving the tool-call count at zero, which looks like a model 
 unwilling \emph{and} incapable.
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
-\captionof{table}{Probe replication on the 1.5B model actually being trained, same mandatory prompt (n=100). Not one output names \texttt{run\_tests}, so at this scale the missing calls are not a parser mismatch --- there was nothing well-formed to censor.}\label{tab:probe_categories}
+\captionof{table}{Probe replication on the 1.5B model actually being trained, recorded mandatory-prompt override (n=100; exact original file unavailable, Appendix~\ref{app:arms}). Not one output names \texttt{run\_tests}, so at this scale the missing calls are not a parser mismatch --- there was nothing well-formed to censor.}\label{tab:probe_categories}
 \begin{tabular}{@{}lll@{}}
 \toprule
 Category & n & \% \\
@@ -385,9 +467,12 @@ wrong name, \texttt{arguments} are the task function's parameters & \textbf{36} 
 wrong name, executable code present elsewhere in the body & 16 & 31\% \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Increasing pressure on the 1.5B model. Stronger instruction and few-shot examples raise the number of recoverable code payloads but never produce a call that names the tool.}\label{tab:pressure}
 \begin{tabular}{@{}llll@{}}
@@ -398,6 +483,7 @@ mandatory prompt (baseline) & 52 & \textbf{0} & 15 \\
 + role-disambiguation few-shot & \textbf{64} & \textbf{0} & \textbf{13} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \subsection{Formal 7B checkpoint curve and final-lineage audit}
@@ -405,11 +491,13 @@ mandatory prompt (baseline) & 52 & \textbf{0} & 15 \\
 
 All checkpoint evaluations use the same 542-item multi-turn manifest, have zero request failures,
 and attest the indicated native weight step. The accepted curve uses the original repaired steps
-0--90 and resumed steps 120--150; the abandoned original steps 91--116 are excluded. The repeated
+0--90 and resumed evaluation checkpoints 120 and 150; the abandoned original steps 91--116 are excluded. The repeated
 step-90 evaluation after resumption gave 415/426/11 rather than 415/428/13 and is retained as
 test--retest evidence, not substituted into the formal curve.
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Complete formal 7B held-out curve. Each cell is turn-1 pass / final pass / rescued after turn 1, with $n=542$.}\label{tab:p3curve}
 \begin{tabular}{@{}lrr@{}}
@@ -424,6 +512,7 @@ step & broken FC & repaired FC \\
 150 & 418 / 430 / 12 & 415 / 427 / 12 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 The policies did update. The accepted logs contain all 150 steps with non-zero actor gradient
@@ -444,7 +533,8 @@ subsequent calls undispatched (neither merged nor queued by this loop). This acc
 Extraction records lack those identifiers; accepted-generation and dispatch counts match per
 trajectory, rather than through a per-generation join. Tight and accepted are different tests:
 16{,}323 events satisfy both, 1{,}285 are tight but unaccepted, and 521 are accepted but not tight.
-The repository's \texttt{analysis/p3\_final\_evidence.py} verifies all evaluation and event hashes,
+With the separately retained full archive (not included in the anonymous package),
+\texttt{analysis/p3\_final\_evidence.py} verifies all evaluation and event hashes,
 reconstructs the final lineage, and emits the per-file manifest; the server-side checkpoint audit is
 reproducible with \texttt{analysis/p3\_checkpoint\_lora\_audit.py}.
 
@@ -462,6 +552,8 @@ The formal 7B parser control is reported separately in Table~\ref{tab:p3formal}.
 
 \begin{center}
 \small
+\begin{minipage}{\linewidth}
+\centering
 \captionof{table}{Historical ReAct training with a working tool channel, 23{,}676 executed calls. Rescues by turn $\geq$2 do not move. The three historical 1.5B FC runs, in which \textbf{zero} tool calls executed, give rescue sequences $[7,9,6,6,7,6,10,8,9,8,6]$, $[8,7,6,7,7,7,7,5,6,6,8]$ and $[7,5,7,5,7,8,9,9,8,9]$. This is supporting evidence only; Table~\ref{tab:p3formal} is the single-variable control.}\label{tab:sufficiency}
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
@@ -474,6 +566,7 @@ step & turn-1 & final & \textbf{rescued by turn $\geq$2} & repair channel \\
 60 & 341 & 347 & \textbf{6} & 274 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 \subsection{Sampling variance, and an inverted noise structure}
@@ -482,6 +575,8 @@ step & turn-1 & final & \textbf{rescued by turn $\geq$2} & repair channel \\
 Llama-3.1-8B, \texttt{temperature=0.6}, n=100 $\times$ 3 seeds.
 
 \begin{center}
+\begin{minipage}{\linewidth}
+\centering
 \small
 \captionof{table}{Sampling variance. FC seed 3 contains one rejected parallel-call request. We report its complete-denominator endpoint, and treat the two clean arms separately; an SD from two clean seeds would be too unstable to summarize variation reliably.}\label{tab:variance}
 \begin{tabular}{@{}lllll@{}}
@@ -494,6 +589,7 @@ FC turn-1 & 44 & 44 & 45 & --- \\
 FC final & 62 & 66 & 57$^{\dagger}$ & \textbf{2 clean / 3 end-to-end} \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{center}
 
 FC seed 3 contains one request error --- the model emitted parallel tool calls and vLLM returned
@@ -511,7 +607,7 @@ worst --- and in all three seeds the count of ``passed at turn 1 but failed fina
 totals, not identical item sets}, and sd = 0.00 must not be read as ``ReAct is perfectly
 stable''.
 
-\subsection{Multi-turn repair stabilises the total while its composition keeps moving}
+\subsection{Exploratory observations of stable totals and changing item sets}
 \label{sec:composition}
 
 Two independent observations show the same structure. \emph{Across sampling seeds}: ReAct's final
@@ -521,16 +617,11 @@ ReAct run, 85 of 542 first-turn completions changed verbatim and 6 items flipped
 gained, 3 lost), leaving turn-1 and final pass numerically identical (340 / 346 at both
 checkpoints). The policy is demonstrably moving; the aggregate is not.
 
-The common structure is that \textbf{the repair loop absorbs perturbation upstream of it}. Two
-consequences follow. \emph{For measurement}, an aggregate pass rate is a \textbf{poor instrument
-for detecting change in a multi-turn agent}: it is stabilised by the very mechanism under study,
-and item-level set comparison detects movement the total conceals. We report both throughout, and
-note that had we reported only totals we would have concluded --- twice, on two different axes ---
-that nothing was happening. \emph{For deployment}, stability of the total under sampling noise is
-a property practitioners want, it is contributed by the multi-turn loop rather than the base
-policy, and it is invisible in single-turn evaluation. \textbf{Bound}: both observations are on
-one model family and one task, the identical totals are in part coincidence, and we do not claim
-the aggregate is invariant --- only that it is far less sensitive than its components.
+These exploratory observations show that equal aggregate scores can conceal different
+item-level outcomes. Compensation through rescues is consistent with the observed counts,
+but these few runs do not identify a general stabilising effect of repair or establish a
+deployment benefit. We therefore report item-level changes alongside totals; both observations
+come from one model family and one task.
 
 \subsection{The training verifier: seams, audit, and planned fixes}
 \label{app:verifier}
@@ -553,3 +644,88 @@ formal 7B control we anchored the regex to pytest's summary, included
 in full with a SHA-256 digest. Both P3 arms use this fixed verifier. Neither verifier path is used
 for the reported held-out pass rates, which require \texttt{mode="script"}, a zero exit code and
 \texttt{status=="ok"}.
+
+\subsection{Post-hoc common native function-calling evaluation}
+\label{app:nativefc}
+
+This additional evaluation uses the existing base and final-lineage step-150
+broken/repaired checkpoints, not new training. It was designed after review, outside
+the training preregistration. All three weights see the same 542 frozen EvalPlus
+items, original tokenizer/chat template and \texttt{run\_tests} schema, and the same
+working repaired verl extraction logic. The BFCL few-shot adapter is not used.
+Each loaded LoRA has 392 tensors and 80,740,352 parameters; ordered float32 tensor
+digests match the audited checkpoint exports, with rank/alpha 32 and scaling 1.
+Base/tokenizer configuration hashes are checked; full base-weight shards were not
+independently rehashed. Generation uses sequential Transformers with bf16/SDPA,
+greedy decoding, seed 0, at most four assistant generations of 1,024 new tokens,
+an 8,192-token context budget and a 1,200-character observation cap. Context overflow
+fails explicitly, without silent truncation. Package versions and source hashes
+are retained in the configuration records.
+
+Only an accepted, correctly named call with nonempty code triggers interactive
+execution. The first accepted call per generation is dispatched; additional calls
+would be ignored, but none occur here. Feedback is a tool-role message and full
+history is re-rendered on every turn. Passing a tool test alone does not stop the
+loop; a no-call response or the generation cap ends it. A later explicit final
+code submission supersedes the last tool code; plain closing prose does not.
+After the dialogue, final code is scored once independently with no returned
+feedback. That terminal test is not a tool invocation. Tests use EvalPlus script
+mode with a 30-second timeout, not the training reward's pytest partial credit.
+This aligns tool-role feedback, but is not byte-identical replay of AgentLoop or
+an elimination of task/test distribution shift.
+
+\begin{table}[htbp]
+\centering
+\caption{Common native FC evaluation, 542 paired tasks per weight. Calls are
+interactive tool executions; timeouts are terminal scoring timeouts.}
+\label{tab:nativefc}
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+Weight & Final pass & Initiating tasks & Calls & Rescues & Timeouts \\
+\midrule
+Base & 239 & 46 & 91 & 2 & 4 \\
+Broken step 150 & 248 & 50 & 93 & 1 & 5 \\
+Repaired step 150 & 248 & 47 & 90 & 1 & 6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Here a rescue requires a failed first \emph{actual tool test} followed by a passing
+tool test. An untested first response is not a failure rescued later. Thus these
+counts are not interchangeable with the earlier automatic-feedback rescue metric.
+Accepted calls, executions and returned observations agree (91/93/90); generation
+counts are 619/622/619. No output hits the generation length cap. Every interactive
+execution completes with status \texttt{ok}; this denotes successful test execution,
+not necessarily code correctness. Terminal timeouts remain failures in the full
+542-item denominator, with no clean-arm filtering. Base timeouts are MBPP 84, 126,
+388 and 739; broken additionally times out on 603; repaired additionally on 603
+and 765. These observed timeouts are not independently diagnosed as intrinsic
+nontermination. No missing submissions or other terminal infrastructure statuses
+are recorded.
+
+For repaired minus broken final success, gains/losses are 16/16, difference zero
+percentage points, conservative paired 95\% CI $[-3.47,3.47]$, exact two-sided
+McNemar $p=1$. Relative to base, broken has 20 gains and 11 losses
+($+1.66$ points, CI $[-1.74,5.03]$, $p=0.150$), and repaired 22 gains and 13 losses
+($+1.66$ points, CI $[-1.94,5.23]$, $p=0.175$). These intervals use the construction
+in Appendix~\ref{app:statistics}; they cover item-pair uncertainty, not training-seed
+or inference-retest variability. Equal totals do not imply equal passing sets or
+equivalent policies. Neither protocol detects a success benefit of repair in this
+setting; this does not establish that interface repair cannot improve learning.
+
+The three weight contrasts crossed with final success, initiation and rescue form
+nine explicitly post-hoc exploratory tests, with Bonferroni-adjusted values supplied
+alongside nominal values. They are separate from the earlier 27-test reporting
+audit; none is significant even before adjustment. A single 36-test correction
+would not make any of the new results significant. The intervals are pointwise,
+not simultaneous. The deterministic six- and 24-task engineering pilots overlap
+the full set and are not counted as additional observations or seeds.
+
+The package supplies 1,626 item records and
+\texttt{native\_\allowbreak fc\_\allowbreak results.py}. Running this CPU script with \texttt{--outcomes}
+recomputes every listed contrast and timeout inventory without GPU access.
+The reduced records do not contain generated code or full conversations;
+independent reclassification or execution requires the separately retained raw
+archive. Its \texttt{--archive} mode checks raw hashes, matching inputs,
+loaded adapter identity and execution-to-observation links before reduction.

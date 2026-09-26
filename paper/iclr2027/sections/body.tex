@@ -6,17 +6,16 @@ produced by a chain: emission $\rightarrow$ serialization $\rightarrow$ parse $\
 execution $\rightarrow$ observation $\rightarrow$ score or reward. A failure at several of these
 boundaries has the same observable as a model declining to act: HTTP 200 and an empty
 \texttt{tool\_calls} array. We call the resulting measurement failure \emph{interface-induced
-trajectory censoring}. The term covers two distinct effects: \emph{masking}, where a tool-intended
-emission never enters the structured action channel, and \emph{suppression}, where an interface
-constraint prevents an invalid action from entering that channel. Their common methodological
-problem is not a shared mechanism but a shared terminal observation that is easily attributed to
-the model. Figure~\ref{fig:funnel} shows the layers measured in our experiments.
+trajectory censoring}. We distinguish masking of emitted actions from constructive suppression:
+a decoding constraint can change what is emitted by disallowing invalid actions. The latter is
+an intervention on generation, not evidence that a valid emitted action was censored. Figure~\ref{fig:funnel} shows the layers measured in our experiments.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\linewidth]{fig0_funnel.png}
-\caption{A tool-use measurement funnel. Calls present in raw generations can disappear before
-parsing, execution, observation, or scoring. N/A denotes cells that cannot be read from content
+\caption{Measured tool-use milestones ($n{=}100$ per arm). The fourth bar counts tasks reaching
+at least two code-bearing tested steps (37 repaired; 40 ReAct), not returned observations.
+N/A denotes cells that cannot be read from content
 once the server has moved a successful call into \texttt{tool\_calls}.}
 \label{fig:funnel}
 \end{figure}
@@ -35,13 +34,12 @@ decompose its causes, and follow it into interactive evaluation and RL:
 replacement at the documented baseline and 196/200 parses when both are replaced; on
 $\tau$-bench, the same joint repair restores 636 executions over 115 tasks.
 \item A five-checkpoint ladder measures a growing absolute undercount under one mismatched
-interface, while a preregistered matched-interface ladder keeps the silent fraction at 0--2.
+interface, while a preregistered matched-interface ladder keeps the silent count at 0--2 per 100.
 \item A paired Llama intervention shows the opposite interface effect: relative to the
 official-template baseline, \texttt{strict: true} suppresses 22 wrong-tool calls and raises final
 pass from 44 to 61.
 \item A preregistered 7B RL control changes only verl's parser registry. Repair restores 16,844
-executed and observed calls, but no held-out improvement is detected, separating access to
-experience from learning from it.
+executed and observed calls, but neither the programmatic-feedback nor the post-hoc common native FC evaluation detects a success gain.
 \end{itemize}
 
 The resulting claim is narrower than ``the stack matters.'' A serving interface is part of both
@@ -92,7 +90,7 @@ aggregate turn-1 count (53 versus 53) is a consistency check, not layer identifi
 localize the failure with fixed-output replay and event tracing. Llama's \texttt{strict:true}
 intervention acts earlier by constraining generation and therefore can change turn-1 output.
 
-Second, a size trend in $C(Y)-\mathbb{1}[P(Y)\neq\varnothing]$ requires both changing emissions
+Second, a size trend in $C(Y)-\mathbf{1}[P(Y)\neq\varnothing]$ requires both changing emissions
 and a fixed rejection boundary. Across a comparable scale span, our preregistered Qwen3 ladder
 under a matched envelope does not show the same growth. This supporting cross-family observation
 does not isolate family from envelope and is not a strict scale counterfactual. Third, in RL the parser
@@ -116,7 +114,7 @@ uses a locally served Llama-3.1-8B user simulator rather than the original harne
 paired arm differences.
 
 Serving uses vLLM 0.27.1~\citep{kwon2023vllm}. Server-parsed calls are insufficient for the
-question under study. One shared classifier marks a
+question under study. For the KodCode probe, a shared classifier marks a
 generation \emph{tight} using a regex for a call-shaped payload naming \texttt{run\_tests},
 a quoted \texttt{arguments.code} field and Python-like lexical markers. This heuristic rejects
 some schema echoes and placeholders but does not validate JSON syntax or Python executability. Against a third-party-adjudicated gold standard its $\kappa$ is 0.871, and tight-stratum
@@ -124,28 +122,33 @@ precision is 36/40=0.900. Two annotators achieve $\kappa=0.967$ on the 62 items 
 identical bytes. Stored evaluation outputs have a 4,000-character cap, which creates false
 negatives, while 0.900 precision establishes false positives; the net bias is therefore not
 identified. In the stratified validation sample, cap hits by scale are 0/6, 0/13, 0/15, 0/24,
-and 10/40 from 1.5B through 32B, so truncation uncertainty is concentrated at the headline rung.
+and 10/40 from 1.5B through 32B, so truncation uncertainty is concentrated at the headline rung. Across all 100 stored first outputs per scale, cap hits are
+0, 0, 1, 0 and 18; a cap hit does not reveal the omitted continuation.
 Formal RL rollouts are retained in full with hashes. Full validation appears in
 Appendix~\ref{app:humanval}.
 
 Before interpreting a zero we verify that \texttt{tool\_choice:required} produces a correctly
-named, parseable call on the same live server. An arm enters pass-rate analysis only with 100
+named, parseable call on the same live server where this control is available; required-mode
+behavior is not assumed identical to auto-mode parsing. This positive control is distinct from the zero-error admissibility gate; zero auto-mode parses are not an exclusion criterion. An arm enters the clean-arm pass-rate analysis only with 100
 items, exit code 0, zero request errors, and matching provenance; this gate is enforced in code.
+End-to-end analyses are reported separately using full task denominators, including request failures.
 Appendix~\ref{app:errata} records an earlier invalid $p=0.648$ that this rule forced us to withdraw.
 
 For paired binary outcomes we use exact two-sided McNemar tests and report both discordant counts;
 for the formal RL endpoint we report a conservative finite-sample 95\% paired-risk interval
 formed from exact binomial bounds on the two discordance probabilities. It reflects item-pair
-uncertainty, not seed or inference-retest variation. Our explicit retrospective family has 27 tests
-($0.05/27\approx0.00185$; Appendix~\ref{app:statistics}); this policy was not preregistered. We
+uncertainty, not seed or inference-retest variation. The historical retrospective family has 27 tests
+($0.05/27\approx0.00185$); nine later native FC contrasts are separately exploratory
+(Appendix~\ref{app:statistics}). Neither policy was preregistered. We
 distinguish a mechanism count (parse, execution, observation) from a task outcome throughout: a
 large deterministic movement in the former does not license a performance claim when the paired
 outcome test is null. BFCL scores come from its official scorer; $\tau$-bench outcomes come from
 final environment state; code-task outcomes execute the generated program against held-out tests.
 Training events exclude evaluation requests. Historical 1.5B curves exclude two verified
 EvalPlus defects (\texttt{HumanEval/32} and \texttt{Mbpp/599}) and use $n=540$. The preregistered
-7B control retains all 542 items and scores those two as failures in both arms; they affect
-absolute rates but not paired discordances.
+7B programmatic-feedback evaluation retains all 542 items; both flagged items fail in both arms.
+The later native FC evaluation scores them differently; Appendix~\ref{app:nativefc}
+reports its full denominator and a 540-item sensitivity analysis.
 
 \section{Results}
 \label{sec:results}
@@ -154,7 +157,8 @@ absolute rates but not paired discordances.
 \label{sec:bfcl}
 \label{sec:tau}
 
-Holding model weights, cases, decoding, seeds, executor, and scorer fixed on BFCL v4, the
+Using Qwen2.5-Coder-7B-Instruct for both external benchmarks, and holding weights, cases,
+decoding, seeds, executor, and scorer fixed on BFCL v4, the
 documented Hermes configuration yields official scores 0.00 on both \texttt{simple\_python} and
 \texttt{multi\_turn\_base}; the dedicated Qwen2.5-Coder adapter yields 0.96 and 0.19. Because the
 adapter changes both template and parser, we ran the full $2\times2$ (Table~\ref{tab:bfcl2x2}).
@@ -162,10 +166,14 @@ Changing either component alone from the documented baseline recovers none (0/20
 recovers 196/200. Thus the two one-factor simple effects at that baseline are zero, while the joint
 replacement shows strong complementarity. This statement concerns parse counts; official BFCL
 scores were computed for the two end-to-end corner configurations, not all four cells. Each
-component behaves according to its own contract, but the contracts disagree. The documented arm has zero HTTP errors and 166/200 strict
-call emissions despite zero parses. On \texttt{multi\_turn\_base}, repair moves execution from
+component behaves according to its own contract, but the contracts disagree. The documented arm has zero HTTP errors and
+166/200 responses satisfying the BFCL JSON-call criterion despite zero parses. On \texttt{multi\_turn\_base}, repair moves execution from
 0 to 98/100 and success from 0 to 19/100. Complete scorer and funnel tables are in
-Appendix~\ref{app:extra}.
+Appendix~\ref{app:extra}. ``Documented'' refers to applying Qwen2.5 family-level guidance,
+not a Coder-specific guarantee (Appendix~\ref{app:config}). A new, answer-blind offline JSON
+extractor applied to the original 100 \texttt{simple\_python} responses recovers 97 structurally
+schema-compliant calls; 92 pass the pinned official AST checker without regenerating text
+(Appendix~\ref{app:fixedreplay}). This is distinct from the deployed dedicated parser.
 
 \begin{table}[H]
 \caption{BFCL first-request parses, template $\times$ parser ($n=200$).}
@@ -185,8 +193,8 @@ Dedicated parser & 0 & \textbf{196} \\
 On paired $\tau$-bench tasks, the same adapter swap moves parsed and executed calls from
 0 to 636 and tasks reaching any execution from 0/115 to 103/115. All 1,389 documented-arm
 requests carry tools; 789 assistant turns contain call-shaped payloads that are not parsed.
-Replaying vLLM's extractor classifies all 789 as missing the required envelope, with zero malformed
-payloads and zero cases the parser should have accepted. Outcomes move from 7 to 10 solved, with
+Replay assigns all 789 turns to the missing-envelope category; none reaches the
+payload-validation stage, and none is accepted by the configured extractor. Outcomes move from 7 to 10 solved, with
 three discordant pairs in the repaired direction ($p=0.25$); we make no outcome claim. This result
 extends the envelope-layer mechanism to a non-code, stateful environment, but not the scale or RL
 claims, which remain code-only (Table~\ref{tab:external_main}).
@@ -227,7 +235,7 @@ creates false positives; the raw count's net bias is not identified.
 
 The preregistered supporting ladder uses Qwen3 checkpoints up to 8B whose required envelope matches Hermes.
 The prediction ``parsed $>0$ at every size'' was committed before inference. It holds, while the
-silent fraction stays 1, 1, 2, and 0 through 8B; the separate mismatched ladder reaches 80 at
+silent count stays 1, 1, 2, and 0 through 8B; the separate mismatched ladder reaches 80 at
 32B. This cross-family observation is
 consistent with contract mismatch, rather than size alone, driving the undercount; it does not
 isolate the envelope because family and envelope change together. Parsed counts are not monotone, and we disabled thinking because the
@@ -241,20 +249,20 @@ uninformative, not confirmatory.
 \label{tab:scale}
 \centering
 \small
-\begin{tabular}{llrrr}
+\begin{tabular}{llrr}
 \toprule
-family/interface & size & parsed & tight & silent \\
+family/interface & size & parsed & tight, unparsed / 100 \\
 \midrule
-Qwen2.5-Coder/Hermes & 1.5B & 0 & 0 & 0 \\
- & 3B & 0 & 4 & 4 \\
- & 7B & 0 & 21 & 21 \\
- & 14B & 0 & 36 & 36 \\
- & 32B & 0 & 80 & 80 \\
+Qwen2.5-Coder/Hermes & 1.5B & 0 & 0 \\
+ & 3B & 0 & 4 \\
+ & 7B & 0 & 21 \\
+ & 14B & 0 & 36 \\
+ & 32B & 0 & 80 \\
 \midrule
-Qwen3/matched & 0.6B & 86 & 1 & 1 \\
- & 1.7B & 44 & 1 & 1 \\
- & 4B & 70 & 2 & 2 \\
- & 8B & 97 & 0 & 0 \\
+Qwen3/matched & 0.6B & 86 & 1 \\
+ & 1.7B & 44 & 1 \\
+ & 4B & 70 & 2 \\
+ & 8B & 97 & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -300,7 +308,9 @@ comparison, not wrong-tool labels. Adding \texttt{strict:true} to the official-t
 reduces wrong calls from 22 to 0 (22/0, $p=4.77\times10^{-7}$), raises valid execution from 73
 to 97, and final pass from 44 to 61, a 17-point single-variable change. The broader terse-FC to
 official-plus-strict comparison used in the ReAct decomposition is 49 to 61, hence 12 points for
-the interface bundle ($p=0.0075$), followed by 19 for protocol ($p=0.0019$). Thus the model exhibits
+the interface bundle ($p=0.0075$), followed by 19 for protocol ($p=0.0019$). These are descriptive score differences;
+neither contrast survives the retrospective family-wise correction. The official-template
+strict final-pass comparison does survive that correction. Thus the model exhibits
 role confusion under unconstrained function calling, while the interface determines whether that
 confusion reaches the environment. Appendix~\ref{app:errata} corrects the corresponding initiation
 rate from 97 to 74. DeepSeek and Mistral only motivate additional template/token failure layers:
@@ -332,12 +342,12 @@ official template + strict & \textbf{0} & \textbf{$4.77\times10^{-7}$ (official)
 \label{sec:maintable}
 
 On Qwen2.5-Coder-7B, changing only the evaluation adapter moves parses 0$\rightarrow$84, items
-reaching a second turn 0$\rightarrow$37, rescues 0$\rightarrow$9, and final pass
+reaching a second code-bearing tested step 0$\rightarrow$37, rescues 0$\rightarrow$9, and final pass
 53$\rightarrow$62. Aggregate turn-1 pass is 53 in both arms, while Llama's schema intervention
 moves turn-1 pass from 33 to 46 on the official template. Because the Qwen adapter also changes template and few-shot, this
 aggregate pattern is descriptive rather than a failure-layer locator; fixed-output replay and
 event tracing provide that localization. The Qwen final gain is not significant at
-$n=100$ ($p=0.093$) or after the random $n=300$ replication and a Bonferroni threshold of
+$n=100$ (16 gains / 7 losses, $p=0.093$) or after the random $n=300$ replication and a Bonferroni threshold of
 approximately 0.00185 ($160\rightarrow178$, nominal $p=0.0385$). Repair restores the mechanism;
 we do not claim an evaluation outcome effect (Table~\ref{tab:repair_main}).
 
@@ -348,7 +358,7 @@ we do not claim an evaluation outcome effect (Table~\ref{tab:repair_main}).
 \small
 \begin{tabular}{lrrrr}
 \toprule
-arm & parsed & $\geq2$ turns & turn-1/final & rescues \\
+arm & parsed & $\geq2$ tested steps & turn-1/final & rescues \\
 \midrule
 FC + Hermes & 0 & 0 & 53/53 & 0 \\
 FC + dedicated adapter & \textbf{84} & \textbf{37} & 53/62 & \textbf{9} \\
@@ -404,9 +414,19 @@ and single seed, parser repair restores tool-mediated experience, but we detect 
 held-out success or rescue counts. Held-out evaluation is identical across arms and deliberately
 bypasses both training parsers: the current LoRA is queried through verl's native rollout RPC at
 temperature 0 for up to four 1,024-token programmatic-feedback turns, generated code is executed
-on the same 542 EvalPlus items, and test output is appended as a user message. This explains why
+on the same 542 EvalPlus items, and test output is appended as a user message. Training uses
+structured tool-role feedback; this format shift may limit transfer, alongside adaptation
+capacity, training budget and credit assignment. This protocol does not measure native FC initiation. This explains why
 the broken-training arm can still show 12 evaluation rescues. Each evaluation request attests the
 loaded global weight step.
+
+A post-hoc common native FC evaluation of all three weights on the same 542 items
+also detects no repaired-versus-broken success gain: both pass 248/542 versus 239/542
+for base (16 discordances each way; difference 0 points, conservative 95\% CI
+$[-3.47,3.47]$; $p=1$). Accepted-call initiation occurs on 46/50/47 tasks for base/broken/repaired;
+tool-test rescues are 2/1/1. Only accepted calls receive tool-role feedback; terminal scoring
+is separate. This is not an equivalence result or an additional training seed
+(Appendix~\ref{app:nativefc}).
 
 The repaired job was interrupted after step 116 and
 resumed from a validated step-90 checkpoint; model, optimizer, scheduler, RNG, dataloader, source,
@@ -434,8 +454,10 @@ consistent, but remains supporting evidence because it changes protocol as well 
 parser acceptance, dispatch/execution, observation return, request errors, adapter/template/parser
 versions and hashes, and task outcome. We provide a 98-line preflight that sends a canonical
 tools-bearing request, validates the returned name and arguments, and repeats under
-\texttt{tool\_choice:required} as a positive control. It would catch each silent failure studied
-here. This should become a machine-readable conformance report rather than a model-only call rate.
+\texttt{tool\_choice:required} as a positive control. This screening check flags configurations
+that fail to return an expected tool call; it does not by itself identify the underlying
+failure mechanism. Generation constraints are a distinct potential remedy, altering emissions rather than
+reparsing existing bytes; they do not by themselves ensure task success. This should become a machine-readable conformance report rather than a model-only call rate.
 
 At minimum, such a report should persist model and tokenizer revisions, template and parser
 hashes, decoding arguments, request errors, the emitted-intent criterion, acceptance, dispatch,
@@ -446,12 +468,13 @@ model--interface measurement card, making silent zeros auditable and adapter cha
 \paragraph{Interpretation limits.} The scale and RL results use one code task and one tool; only
 the envelope mechanism is replicated on a non-code benchmark. The scale trend is one family under
 one mismatch, with single-sample headline arms and a 32B ceiling. The RL result is one 7B LoRA seed
-and budget, and near-zero samples do not establish zero policy probability. The 27-test retrospective family
+and budget, and near-zero samples do not establish zero policy probability. The historical 27-test family
 has a Bonferroni threshold of 0.00185; only the strongest interventions survive it, and we
 rest no claim on the nominal or null contrasts. A historical verifier used an unanchored pytest
 regex and omitted skipped/expected-failure outcomes; the formal arms use the same repaired verifier
-and retain full rollouts, so that flaw cannot explain their contrast. Results depend on vLLM 0.27.1,
-verl 0.9.0, and mutable publisher templates. Appendix~\ref{app:limitations} states all 17
+and retain full rollouts, so that flaw cannot explain their contrast. Serving/training results depend on vLLM 0.27.1
+and verl 0.9.0; the later native FC evaluation uses Transformers 5.10.4 and PEFT 0.20.0.
+Appendix~\ref{app:limitations} states all 17
 limitations, including the non-random sample, post-treatment conditioning, asymmetric family
 taxonomy, human-validation scope, provenance corrections, and the observations that would change
 our conclusions.
@@ -478,7 +501,7 @@ presented as evidence already obtained.
 \section{Conclusion}
 
 A tool-call rate measures a model--serialization--parser--execution composition. On BFCL, neither
-template nor parser is individually broken, yet their mismatch moves the official score from 0.00
+single-component replacement restores parsing from the baseline, whereas their joint replacement moves the official score from 0.00
 to 0.96; in RL, changing only the parser moves observed executions from 10 to 16,844 without a
-detected held-out improvement. The practical consequence is simple: verify the contract and report each
+detected gain under either common evaluation protocol. The practical consequence is simple: verify the contract and report each
 funnel layer before attributing a terminal zero, a protocol gap, or a training curve to the model.
