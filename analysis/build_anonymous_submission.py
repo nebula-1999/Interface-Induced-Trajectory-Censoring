@@ -15,6 +15,8 @@ OUT = ROOT/'submission_packages'
 
 
 def main():
+    if not (ROOT/'paper/iclr2027/main.tex').is_file():
+        raise SystemExit('Submission-only sources are kept locally and are not distributed in this public repository. The public long manuscript is paper/main.tex.')
     OUT.mkdir(exist_ok=True)
     files = {}
     def add(name, source):

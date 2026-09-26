@@ -52,6 +52,8 @@ paper/**/*.xdv
 # Extracted evidence duplicates the committed, checksummed archive.
 p3/results/formal_20260916_a/raw/
 submission_packages/
+# Submission-only manuscript stays local; the public repository carries the long version.
+paper/iclr2027/
 # Native-FC raw outputs and host receipts stay local; reviewed reduced outcomes
 # are published explicitly under submission_packages/native_fc/.
 p3/results/native_fc_20260923/
